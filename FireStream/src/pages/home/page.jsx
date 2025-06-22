@@ -26,7 +26,7 @@ const HomePage = () => {
   const [showRoomMembers, setShowRoomMembers] = useState(false)
   const [recentReactions, setRecentReactions] = useState([])
   const [currentVideoTime, setCurrentVideoTime] = useState(0)
-  const [videoAnalyzed, setVideoAnalyzed] = useState(false)
+  // const [videoAnalyzed, setVideoAnalyzed] = useState(false)
   
   // Room functionality state
   const [roomStatus, setRoomStatus] = useState("none")
@@ -188,84 +188,6 @@ const HomePage = () => {
   }, [])
 
   // Analyze video when starting to watch
-  const analyzeCurrentVideo = async (movie) => {
-    if (!movie.videoUrl) {
-      console.log("No video URL provided, skipping analysis")
-      setVideoAnalyzed(true)
-      return
-    }
-
-    try {
-      console.log("🎬 Starting video analysis for:", movie.title)
-
-      setChatMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now(),
-          user: "System",
-          text: `🎬 Analyzing "${movie.title}" for Tree.io insights...`,
-          timestamp: new Date().toLocaleTimeString(),
-          isSystem: true,
-        },
-      ])
-
-      const response = await fetch("http://localhost:8000/api/video/analyze", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          video_url: movie.videoUrl,
-          movie_title: movie.title,
-        }),
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        console.log("✅ Video analysis completed:", data)
-        setVideoAnalyzed(true)
-
-        setChatMessages((prev) => [
-          ...prev,
-          {
-            id: Date.now(),
-            user: "System",
-            text: `✅ Video analysis completed! Tree.io can now provide timestamp-based insights for "${movie.title}".`,
-            timestamp: new Date().toLocaleTimeString(),
-            isSystem: true,
-          },
-        ])
-      } else {
-        console.error("❌ Video analysis failed:", response.status)
-        setVideoAnalyzed(true)
-
-        setChatMessages((prev) => [
-          ...prev,
-          {
-            id: Date.now(),
-            user: "System",
-            text: `⚠️ Video analysis service unavailable. Tree.io will use movie knowledge instead.`,
-            timestamp: new Date().toLocaleTimeString(),
-            isSystem: true,
-          },
-        ])
-      }
-    } catch (error) {
-      console.error("💥 Error analyzing video:", error)
-      setVideoAnalyzed(true)
-
-      setChatMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now(),
-          user: "System",
-          text: `⚠️ Video analysis failed. Tree.io will use movie knowledge instead.`,
-          timestamp: new Date().toLocaleTimeString(),
-          isSystem: true,
-        },
-      ])
-    }
-  }
 
   const handleLogout = () => {
     if (wsRef.current) {
@@ -330,16 +252,16 @@ const HomePage = () => {
     setShowChat(false)
     setShowReactions(false)
     setShowRoomMembers(false)
-    setVideoAnalyzed(false)
+    // setVideoAnalyzed(false)
     setCurrentVideoTime(0)
   }
 
   const startWatching = (movie) => {
     setCurrentWatchingMovie(movie)
     setIsWatching(true)
-    setVideoAnalyzed(false)
+    // setVideoAnalyzed(false)
     setCurrentVideoTime(0)
-    analyzeCurrentVideo(movie)
+    // analyzeCurrentVideo(movie)
   }
 
   const updateVideoTime = (time) => {
@@ -506,7 +428,7 @@ const HomePage = () => {
             `}
           >
             {/* Chat toggle button */}
-            {/* {!isFullscreen && (
+            {!isFullscreen && (
               <Button
                 onClick={() => setShowChat(!showChat)}
                 variant="secondary"
@@ -514,7 +436,7 @@ const HomePage = () => {
               >
                 <MessageSquareIcon className="w-5 h-5" />
               </Button>
-            )} */}
+            )}
 
             {!isWatching && (
               <div className="grid grid-cols-1 gap-10 px-4 py-8 md:px-12 lg:px-24">

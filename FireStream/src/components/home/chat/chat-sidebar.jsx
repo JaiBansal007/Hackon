@@ -159,7 +159,7 @@ export function ChatSidebar({
               {roomStatus !== "none" && (
                 <div className="text-sm text-gray-400 mt-1 flex items-center space-x-1">
                   <Users className="w-3 h-3" />
-                  <span>{roomMembers.length + 1} members online</span>
+                  <span>{roomMembers.length} members online</span>
                 </div>
               )}
             </div>
