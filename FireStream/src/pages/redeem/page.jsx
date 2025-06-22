@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
+import { Link,useNavigate } from "react-router-dom"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "../../components/ui/button"
 import { ArrowLeft, Coins, Gift, Check, Sparkles, Star, Crown, Zap, TrendingUp, Award, ShoppingBag, Timer } from "lucide-react"
@@ -75,7 +75,7 @@ export default function RedeemPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-gray-900 to-black text-white relative overflow-hidden">
+    <div className="min-h-screen w-screen bg-gradient-to-br from-slate-950 via-gray-900 to-black text-white relative overflow-hidden">
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-10 left-10 w-72 h-72 bg-yellow-400/10 rounded-full blur-3xl animate-pulse" />
@@ -95,15 +95,10 @@ export default function RedeemPage() {
             whileTap={{ scale: 0.95 }}
             className="order-1 lg:order-1"
           >
-            <Button 
-              onClick={() => navigate("/home")} 
-              variant="ghost" 
-              className="text-gray-400 hover:text-white hover:bg-white/10 backdrop-blur-sm rounded-xl px-4 sm:px-6 py-2 sm:py-3 transition-all duration-300 group text-sm sm:text-base"
-            >
-              <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 mr-2 group-hover:-translate-x-1 transition-transform duration-200" />
-              <span className="hidden sm:inline">Back to Home</span>
-              <span className="sm:hidden">Back</span>
-            </Button>
+            <Link to="/home" className="flex items-center space-x-2">
+            <ArrowLeft className="w-5 h-5 text-orange-400" />
+            <span className="text-orange-400 hover:text-orange-300">Back to Home</span>
+          </Link>
           </motion.div>
 
           <div className="text-center order-3 lg:order-2 w-full lg:w-auto">
@@ -137,9 +132,9 @@ export default function RedeemPage() {
                 <Coins className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-400" />
                 <Sparkles className="absolute -top-1 -right-1 w-3 h-3 text-yellow-300 animate-pulse" />
               </div>
-              <div className="text-right">
+              <div className="text-right flex gap-5 items-center">
                 <div className="text-yellow-400 text-xs sm:text-sm font-medium">Your Points</div>
-                <div className="text-white font-black text-lg sm:text-xl">{userPoints.toLocaleString()}</div>
+                <div className="text-white font-bold text-lg sm:text-xl">{userPoints.toLocaleString()}</div>
               </div>
             </div>
           </motion.div>
@@ -167,7 +162,7 @@ export default function RedeemPage() {
                   className={`relative overflow-hidden px-3 sm:px-6 lg:px-8 py-2 sm:py-3 lg:py-4 rounded-xl sm:rounded-2xl font-bold text-sm sm:text-base lg:text-lg transition-all duration-500 group ${
                     selectedCategory === category.id
                       ? `bg-gradient-to-r ${category.color} text-black shadow-xl shadow-current/25`
-                      : "border-2 border-gray-600/50 text-white hover:bg-white/10 hover:border-white/30 backdrop-blur-sm"
+                      : "border-2 border-gray-600/50 text-black hover:bg-white/10 hover:border-white/30 backdrop-blur-sm"
                   }`}
                 >
                   {selectedCategory === category.id && (
@@ -338,7 +333,6 @@ export default function RedeemPage() {
                             </span>
                           ) : (
                             <span className="flex items-center justify-center space-x-1 sm:space-x-2">
-                              <Timer className="w-3 h-3 sm:w-4 sm:h-4" />
                               <span className="text-xs">Need {(offer.points - userPoints).toLocaleString()} more</span>
                             </span>
                           )}
