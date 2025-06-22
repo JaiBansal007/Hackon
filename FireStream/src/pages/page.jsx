@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { Play, Users, Zap, Target, Star, ArrowRight, Menu, X, ChevronDown, Sparkles, Globe, Shield, Heart, Award, Tv, MessageCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export default function LandingPage() {
   const [scrollY, setScrollY] = useState(0);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeFeature, setActiveFeature] = useState(0);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
@@ -136,11 +138,10 @@ export default function LandingPage() {
                 </button>
               ))}
               <div className="flex items-center space-x-3">
-                <button className="text-black transition-colors">
-                  Sign In
-                </button>
-                <button className="bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-black px-6 py-2.5 rounded-full font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-orange-500/25 hover:scale-105">
+                <button className="bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-black px-6 py-2.5 rounded-full font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-orange-500/25 hover:scale-105"
+                onClick={() => navigate('/signin')}>
                   Get Started
+                  <ArrowRight className="inline ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </button>
               </div>
             </div>
@@ -168,9 +169,12 @@ export default function LandingPage() {
                   </button>
                 ))}
                 <div className="flex flex-col space-y-2 pt-2">
-                  <button className="text-left text-gray-300 hover:text-white">Sign In</button>
-                  <button className="bg-gradient-to-r from-amber-400 to-orange-500 text-black px-4 py-2 rounded-full font-semibold w-fit">
+                  <button
+                    className="bg-gradient-to-r from-amber-400 to-orange-500 text-black px-4 py-2 rounded-full font-semibold w-fit"
+                    onClick={() => navigate('/signin')}
+                  >
                     Get Started
+                    <ArrowRight className="inline ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                   </button>
                 </div>
               </div>

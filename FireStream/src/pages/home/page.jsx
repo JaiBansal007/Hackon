@@ -561,16 +561,19 @@ const HomePage = () => {
 
   return (
     <>
-      <Navbar 
-        user={user} 
-        roomStatus={roomStatus} 
-        roomId={roomId}
-        isFullscreen={isFullscreen}
-        onCreateRoom={() => setShowCreateDialog(true)}
-        onJoinRoom={() => setShowJoinDialog(true)}
-        onLeaveRoom={leaveRoom}
-        onLogout={handleLogout}
-      />
+      {/* Show Navbar only when not watching */}
+      {!isWatching && (
+        <Navbar 
+          user={user} 
+          roomStatus={roomStatus} 
+          roomId={roomId}
+          isFullscreen={isFullscreen}
+          onCreateRoom={() => setShowCreateDialog(true)}
+          onJoinRoom={() => setShowJoinDialog(true)}
+          onLeaveRoom={leaveRoom}
+          onLogout={handleLogout}
+        />
+      )}
       <div className="relative w-full h-full min-h-screen bg-gray-950 text-white overflow-x-hidden flex">
         {/* Sidebar */}
         <Sidebar 
