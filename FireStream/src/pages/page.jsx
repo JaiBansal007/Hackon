@@ -96,7 +96,7 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white overflow-hidden">
+    <div className="min-h-screen w-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white overflow-hidden">
       {/* Animated background elements */}
       <div className="fixed inset-0 opacity-20">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full blur-3xl animate-pulse" />
@@ -124,19 +124,19 @@ export default function LandingPage() {
             </div>
 
             {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center space-x-8">
+            <div className="md:flex items-center space-x-8">
               {['Features', 'About', 'Testimonials'].map((item) => (
                 <button
                   key={item}
                   onClick={() => scrollToSection(item.toLowerCase())}
-                  className="relative group text-gray-300 hover:text-white transition-colors duration-200"
+                  className="relative group text-black transition-colors duration-200"
                 >
                   {item}
                   <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-orange-400 to-amber-400 group-hover:w-full transition-all duration-300" />
                 </button>
               ))}
               <div className="flex items-center space-x-3">
-                <button className="text-gray-300 hover:text-white transition-colors">
+                <button className="text-black transition-colors">
                   Sign In
                 </button>
                 <button className="bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-black px-6 py-2.5 rounded-full font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-orange-500/25 hover:scale-105">
