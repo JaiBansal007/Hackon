@@ -9,6 +9,8 @@ import { ReactionsPanel } from "./reactions-panel"
 
 export function VideoPlayer({
   movie,
+  currentVideoTime,
+  playing,
   isWatching,
   isFullscreen,
   roomStatus,
@@ -23,15 +25,19 @@ export function VideoPlayer({
   onSendReaction,
   showReactions,
   wsRef,
+  onPlay,
+  onPause,
+  onSeek,
 }) {
   const videoRef = useRef(null)
+  const volumeTimeoutRef = useRef(null)
+  const lastSeekRef = useRef(null)
   const [isPlaying, setIsPlaying] = useState(true)
   const [currentTime, setCurrentTime] = useState(0)
   const [videoDuration, setVideoDuration] = useState(0)
   const [volume, setVolume] = useState(1)
   const [isMuted, setIsMuted] = useState(false)
   const [showVolumeSlider, setShowVolumeSlider] = useState(false)
-  const volumeTimeoutRef = useRef(null)
 
   useEffect(() => {
     const video = videoRef.current
@@ -110,6 +116,29 @@ export function VideoPlayer({
     }
   }, [roomStatus, wsRef])
 
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video) return
+
+    // Seek if currentVideoTime changes and is different from current time
+    if (
+      typeof currentVideoTime === "number" &&
+      Math.abs(video.currentTime - currentVideoTime) > 0.5 // avoid micro-jumps
+    ) {
+      video.currentTime = currentVideoTime
+      lastSeekRef.current = currentVideoTime
+    }
+
+    // Play/pause if playing prop changes
+    if (typeof playing === "boolean") {
+      if (playing && video.paused) {
+        video.play()
+      } else if (!playing && !video.paused) {
+        video.pause()
+      }
+    }
+  }, [currentVideoTime, playing, movie?.videoUrl])
+
   const togglePlayPause = () => {
     if (videoRef.current) {
       const currentVideoTime = videoRef.current.currentTime
@@ -168,6 +197,30 @@ export function VideoPlayer({
     volumeTimeoutRef.current = setTimeout(() => setShowVolumeSlider(false), 300)
   }
 
+  // Handle user play/pause/seek events
+  const handlePlay = () => {
+    if (onPlay && videoRef.current) {
+      onPlay(videoRef.current.currentTime, movie?.videoUrl)
+    }
+  }
+  const handlePause = () => {
+    if (onPause && videoRef.current) {
+      onPause(videoRef.current.currentTime, movie?.videoUrl)
+    }
+  }
+  const handleSeek = (e) => {
+    if (onSeek && videoRef.current) {
+      // Only trigger if seek is user-initiated
+      if (
+        lastSeekRef.current === null ||
+        Math.abs(videoRef.current.currentTime - lastSeekRef.current) > 0.5
+      ) {
+        onSeek(videoRef.current.currentTime, movie?.videoUrl)
+        lastSeekRef.current = videoRef.current.currentTime
+      }
+    }
+  }
+
   if (!isWatching) return null
 
   return (
@@ -178,7 +231,17 @@ export function VideoPlayer({
       className={`fixed inset-0 bg-black z-40 flex ${isFullscreen ? "z-50" : ""}`}
     >
       <div className="relative w-full h-full bg-black">
-        <video ref={videoRef} className="w-full h-full object-cover" autoPlay controls={false} poster={movie.image}>
+        <video
+          ref={videoRef}
+          src={movie?.videoUrl}
+          className="w-full h-full object-cover"
+          autoPlay
+          controls={false}
+          poster={movie.image}
+          onPlay={handlePlay}
+          onPause={handlePause}
+          onSeeked={handleSeek}
+        >
           <source
             src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
             type="video/mp4"

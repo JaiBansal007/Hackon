@@ -2,18 +2,18 @@
 
 import { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
-import { motion, AnimatePresence } from "framer-motion"
+import { WebSocketManager } from "@/lib/websocket"
+import { Navbar } from "@/components/home/layout/navbar"
+import { Sidebar } from "@/components/home/layout/sidebar"
 import { FeaturedSection } from "@/components/home/content/featured-section"
 import { MovieCategories } from "@/components/home/content/movie-categories"
-import { ChatSidebar } from "@/components/home/chat/chat-sidebar"
 import { VideoPlayer } from "@/components/home/video/video-player"
+import { ChatSidebar } from "@/components/home/chat/chat-sidebar"
 import { RoomMembersSidebar } from "@/components/home/room/room-members-sidebar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { MessageSquareIcon } from "lucide-react"
-import { Navbar } from "../../components/home/layout/navbar"
-import { Sidebar } from "@/components/home/layout/sidebar"
-import { WebSocketManager } from "../../lib/websocket"
+import { AnimatePresence, motion } from "framer-motion"
 
 const HomePage = () => {
   const [user, setUser] = useState(null)
@@ -111,16 +111,52 @@ const HomePage = () => {
     }
     const parsedUser = JSON.parse(userData)
     setUser(parsedUser)
-    
-    // Initialize WebSocket manager
-    wsRef.current = new WebSocketManager(parsedUser.email, parsedUser.name)
-    
-    // Set up WebSocket event listeners
+
+    // Only create the manager once
+    if (!wsRef.current) {
+      wsRef.current = new WebSocketManager(parsedUser.email, parsedUser.name)
+    }
+
+    return () => {
+      if (wsRef.current) wsRef.current.disconnect()
+    }
+  }, [navigate])
+
+  // Register listeners when roomId changes and connect
+  useEffect(() => {
+    if (!user || !roomId || !wsRef.current) return
+
+    // Prevent multiple connects to the same room
+    if (wsRef.current.roomId !== roomId || !wsRef.current.isConnected) {
+      wsRef.current.connect(roomId)
+    }
+
+    // Fetch current video state on join
+    const fetchVideoState = async () => {
+      const { db } = await import("@/firebase/db")
+      const { doc, getDoc } = await import("firebase/firestore")
+      const videoStateRef = doc(db, "rooms", roomId, "sync", "videoState")
+      const snap = await getDoc(videoStateRef)
+      if (snap.exists()) {
+        const data = snap.data()
+        setCurrentVideoTime(data.currentTime)
+        setIsWatching(true)
+        setCurrentWatchingMovie((prev) => {
+          if (!prev || prev.videoUrl !== data.videoUrl) {
+            const found = featuredMovies.find(m => m.videoUrl === data.videoUrl)
+            return found || prev
+          }
+          return prev
+        })
+      }
+    }
+    fetchVideoState()
+
     wsRef.current.on("user_joined", (data) => {
       setChatMessages((prev) => [
         ...prev,
         {
-          id: Date.now(),
+          id: `system-joined-${data.userId}-${Date.now()}`,
           user: "System",
           text: `${data.userName} joined the room`,
           timestamp: new Date().toLocaleTimeString(),
@@ -128,12 +164,12 @@ const HomePage = () => {
         },
       ])
     })
-    
+
     wsRef.current.on("user_left", (data) => {
       setChatMessages((prev) => [
         ...prev,
         {
-          id: Date.now(),
+          id: `system-left-${data.userId}-${Date.now()}`,
           user: "System",
           text: `${data.userName} left the room`,
           timestamp: new Date().toLocaleTimeString(),
@@ -141,26 +177,26 @@ const HomePage = () => {
         },
       ])
     })
-    
+
     wsRef.current.on("room_members_update", (data) => {
       setRoomMembers(data.members || [])
     })
-    
+
     wsRef.current.on("chat_message", (data) => {
       setChatMessages((prev) => [
         ...prev,
         {
-          id: Date.now(),
+          id: data.id || `${data.userName}-${data.timestamp}`, // Use Firestore doc id if available
           user: data.userName,
           text: data.message,
           timestamp: new Date(data.timestamp).toLocaleTimeString(),
         },
       ])
     })
-    
+
     wsRef.current.on("reaction", (data) => {
       const newReaction = {
-        id: Date.now(),
+        id: `${data.userName}-${data.timestamp}`,
         emoji: data.emoji,
         user: data.userName,
         timestamp: data.timestamp,
@@ -170,13 +206,32 @@ const HomePage = () => {
         setRecentReactions((prev) => prev.filter((r) => r.id !== newReaction.id))
       }, 4000)
     })
-    
+
     return () => {
-      if (wsRef.current) {
-        wsRef.current.disconnect()
-      }
+      // Optionally remove listeners here if you add an off() method
     }
-  }, [navigate])
+  }, [user, roomId, featuredMovies])
+
+  // Add: state for video sync
+  const [syncedVideoState, setSyncedVideoState] = useState(null)
+
+  // Listen for video state updates from Firestore and sync local player
+  useEffect(() => {
+    if (!wsRef.current) return
+
+    wsRef.current.on("video_state_update", (data) => {
+      setSyncedVideoState(data)
+      setCurrentVideoTime(data.currentTime)
+      setIsWatching(true)
+      setCurrentWatchingMovie((prev) => {
+        if (!prev || prev.videoUrl !== data.videoUrl) {
+          const found = featuredMovies.find(m => m.videoUrl === data.videoUrl)
+          return found || prev
+        }
+        return prev
+      })
+    })
+  }, [wsRef, featuredMovies])
 
   // Handle fullscreen changes
   useEffect(() => {
@@ -271,17 +326,9 @@ const HomePage = () => {
   const sendMessage = async (message) => {
     console.log("📤 Sending message:", message)
 
-    const userMessage = {
-      id: Date.now(),
-      user: user?.name || "User",
-      text: message,
-      timestamp: new Date().toLocaleTimeString(),
-    }
+    // Do NOT optimistically update chatMessages here!
+    // Only send to Firestore, let the listener update the UI
 
-    setChatMessages((prev) => [...prev, userMessage])
-    console.log("✅ User message added to chat")
-
-    // Send via WebSocket if in room
     if (wsRef.current && roomStatus !== "none") {
       wsRef.current.sendChatMessage(message)
     }
@@ -392,6 +439,27 @@ const HomePage = () => {
     }
   }
 
+  // Handler to sync play
+  const handlePlay = (currentTime, videoUrl) => {
+    if (wsRef.current && roomStatus !== "none") {
+      wsRef.current.playVideo(currentTime, videoUrl)
+    }
+  }
+
+  // Handler to sync pause
+  const handlePause = (currentTime, videoUrl) => {
+    if (wsRef.current && roomStatus !== "none") {
+      wsRef.current.pauseVideo(currentTime, videoUrl)
+    }
+  }
+
+  // Handler to sync seek
+  const handleSeek = (currentTime, videoUrl) => {
+    if (wsRef.current && roomStatus !== "none") {
+      wsRef.current.seekVideo(currentTime, videoUrl)
+    }
+  }
+
   if (!user) return null
 
   return (
@@ -450,6 +518,7 @@ const HomePage = () => {
         {/* Video Player */}
         {isWatching && (
           <VideoPlayer
+            key={currentWatchingMovie?.videoUrl || "video-player"}
             movie={currentWatchingMovie}
             isWatching={isWatching}
             isFullscreen={isFullscreen}
@@ -466,6 +535,12 @@ const HomePage = () => {
             onTimeUpdate={updateVideoTime}
             showReactions={showReactions}
             wsRef={wsRef}
+            // Video sync props
+            onPlay={handlePlay}
+            onPause={handlePause}
+            onSeek={handleSeek}
+            currentVideoTime={syncedVideoState ? syncedVideoState.currentTime : currentVideoTime}
+            playing={syncedVideoState ? syncedVideoState.playing : undefined}
           />
         )}
 
