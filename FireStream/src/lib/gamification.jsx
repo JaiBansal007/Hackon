@@ -270,7 +270,7 @@ export const redemptionOffers = [
     description: "Get 3 days of Amazon Prime with access to exclusive content and faster delivery",
     points: 500,
     category: "prime",
-    image: "/placeholder.svg?height=200&width=300",
+    image: "https://i0.wp.com/telechargi.com/wp-content/uploads/2023/12/amazon-prime-video-poster.png?fit=512%2C512&ssl=1",
     available: true,
   },
   {
@@ -279,7 +279,7 @@ export const redemptionOffers = [
     description: "Enjoy a full week of Amazon Prime benefits including Prime Video and Music",
     points: 1000,
     category: "prime",
-    image: "/placeholder.svg?height=200&width=300",
+    image: "https://m.media-amazon.com/images/G/01/primevideo/seo/primevideo-seo-logo.png",
     available: true,
   },
   {
@@ -288,7 +288,7 @@ export const redemptionOffers = [
     description: "Get 20% discount on Fire TV Stick 4K with Alexa Voice Remote",
     points: 1500,
     category: "products",
-    image: "/placeholder.svg?height=200&width=300",
+    image: "https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=300&h=200&fit=crop&auto=format",
     available: true,
   },
   {
@@ -297,7 +297,7 @@ export const redemptionOffers = [
     description: "Save 15% on Echo Dot smart speaker with Alexa",
     points: 800,
     category: "products",
-    image: "/placeholder.svg?height=200&width=300",
+    image: "https://images.unsplash.com/photo-1543512214-318c7553f230?w=300&h=200&fit=crop&auto=format",
     available: true,
   },
   {
@@ -306,7 +306,7 @@ export const redemptionOffers = [
     description: "One month free access to Amazon Music Unlimited",
     points: 600,
     category: "services",
-    image: "/placeholder.svg?height=200&width=300",
+    image: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&h=200&fit=crop&auto=format",
     available: true,
   },
   {
@@ -315,7 +315,7 @@ export const redemptionOffers = [
     description: "Two weeks of unlimited access to Kindle books",
     points: 400,
     category: "services",
-    image: "/placeholder.svg?height=200&width=300",
+    image: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=300&h=200&fit=crop&auto=format",
     available: true,
   },
 ]
