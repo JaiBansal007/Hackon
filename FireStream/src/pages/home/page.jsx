@@ -506,7 +506,7 @@ const HomePage = () => {
             `}
           >
             {/* Chat toggle button */}
-            {!isFullscreen && (
+            {/* {!isFullscreen && (
               <Button
                 onClick={() => setShowChat(!showChat)}
                 variant="secondary"
@@ -514,7 +514,7 @@ const HomePage = () => {
               >
                 <MessageSquareIcon className="w-5 h-5" />
               </Button>
-            )}
+            )} */}
 
             {!isWatching && (
               <div className="grid grid-cols-1 gap-10 px-4 py-8 md:px-12 lg:px-24">

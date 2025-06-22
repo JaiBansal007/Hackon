@@ -1,5 +1,6 @@
 "use client";
 
+
 import { motion } from "framer-motion";
 import { Play } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -13,6 +14,30 @@ export function MovieCategories({ onStartWatching }) {
   };
 
   return (
+    <>
+    <style jsx>{`
+        .movie-scroll {
+          scrollbar-width: thin;
+          scrollbar-color: #f97316 transparent;
+        }
+        
+        .movie-scroll::-webkit-scrollbar {
+          height: 6px;
+        }
+        
+        .movie-scroll::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        
+        .movie-scroll::-webkit-scrollbar-thumb {
+          background: #f97316;
+          border-radius: 3px;
+        }
+        
+        .movie-scroll::-webkit-scrollbar-thumb:hover {
+          background: #ea580c;
+        }
+      `}</style>
     <div className="space-y-8 md:space-y-12">
       {movieCategories.map((category, categoryIndex) => (
         <motion.div
@@ -57,5 +82,6 @@ export function MovieCategories({ onStartWatching }) {
         </motion.div>
       ))}
     </div>
+    </>
   );
 }
