@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
+import { Link,useNavigate } from "react-router-dom"
 import { motion } from "framer-motion"
 import { Button } from "../../components/ui/button"
 import { ArrowLeft, Coins, Flame, Trophy, Calendar, Gift, TrendingUp } from "lucide-react"
@@ -64,14 +64,14 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen w-screen bg-black text-white">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
-          <Button onClick={() => navigate("/home")} variant="ghost" className="text-gray-400 hover:text-white">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Home
-          </Button>
+          <Link to="/home" className="flex items-center space-x-2">
+            <ArrowLeft className="w-5 h-5 text-orange-400" />
+            <span className="text-orange-400 hover:text-orange-300">Back to Home</span>
+          </Link>
 
           <div className="text-center">
             <h1 className="text-3xl font-bold bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
@@ -153,10 +153,10 @@ export default function ProfilePage() {
           <Button
             onClick={() => setActiveTab("activity")}
             variant={activeTab === "activity" ? "default" : "outline"}
-            className={`${
+            className={`text-black ${
               activeTab === "activity"
                 ? "bg-gradient-to-r from-yellow-400 to-orange-500 text-black"
-                : "border-gray-600 text-white hover:bg-gray-800"
+                : "border-gray-600 hover:bg-gray-800"
             }`}
           >
             Point Activity
@@ -164,10 +164,10 @@ export default function ProfilePage() {
           <Button
             onClick={() => setActiveTab("redemptions")}
             variant={activeTab === "redemptions" ? "default" : "outline"}
-            className={`${
+            className={`text-black ${
               activeTab === "redemptions"
                 ? "bg-gradient-to-r from-yellow-400 to-orange-500 text-black"
-                : "border-gray-600 text-white hover:bg-gray-800"
+                : "border-gray-600 hover:bg-gray-800"
             }`}
           >
             Redemption History

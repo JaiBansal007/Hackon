@@ -1,5 +1,7 @@
 "use client"
 
+import { useState, useRef } from "react"
+import { useNavigate } from "react-router-dom"
 import { motion } from "framer-motion"
 import { Button } from "../../ui/button"
 import { Input } from "../../ui/input"
@@ -23,6 +25,7 @@ import {
 } from "../../ui/dropdown-menu"
 import { StreakIcon } from "../../gamification/streak-icon"
 import { PointsDisplay } from "../../gamification/points-display"
+import { movieCategories } from "../content/movie-data"
 
 function UserInitialAvatar({ name }) {
   const initial = name?.charAt(0).toUpperCase() || "U"
@@ -43,6 +46,25 @@ export function Navbar({
   onLeaveRoom,
   onLogout,
 }) {
+  const [search, setSearch] = useState("")
+  const [showDropdown, setShowDropdown] = useState(false)
+  const inputRef = useRef(null)
+  const navigate = useNavigate()
+
+  // Flatten all movies from categories
+  const allMovies = movieCategories.flatMap((cat) => cat.movies)
+  const filteredMovies = search
+    ? allMovies.filter((m) =>
+        m.title.toLowerCase().includes(search.toLowerCase())
+      ).slice(0, 6)
+    : []
+
+  const handleMovieSelect = (movieId) => {
+    setSearch("")
+    setShowDropdown(false)
+    navigate(`/movie/${movieId}`)
+  }
+
   if (isFullscreen) return null
 
   return (
@@ -58,7 +80,7 @@ export function Navbar({
             <motion.div whileHover={{ scale: 1.05 }}>
               <Button
                 onClick={onCreateRoom}
-                className="bg-yellow-400 text-gray-900 hover:bg-yellow-300 font-semibold shadow-md"
+                className="bg-gradient-to-r from-yellow-400 via-orange-400 to-yellow-500 text-gray-900 hover:from-yellow-500 hover:to-orange-600 font-semibold shadow-md"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Create Room
@@ -67,8 +89,7 @@ export function Navbar({
             <motion.div whileHover={{ scale: 1.05 }}>
               <Button
                 onClick={onJoinRoom}
-                variant="outline"
-                className="border-yellow-400 text-yellow-300 hover:text-yellow-200 hover:border-yellow-300"
+                className="bg-gradient-to-r from-yellow-400 via-orange-400 to-yellow-500 text-gray-900 hover:from-yellow-500 hover:to-orange-600 font-semibold shadow-md"
               >
                 <Users className="w-4 h-4 mr-2" />
                 Join Room
@@ -88,8 +109,7 @@ export function Navbar({
             </motion.div>
             <Button
               onClick={onLeaveRoom}
-              variant="outline"
-              className="border-red-500 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+              className="bg-gradient-to-r from-yellow-400 via-orange-400 to-yellow-500 text-gray-900 hover:from-yellow-500 hover:to-orange-600 font-semibold shadow-md"
             >
               Leave Room
             </Button>
@@ -98,12 +118,41 @@ export function Navbar({
       </div>
 
       {/* Center: Search */}
-      <div className="hidden md:flex items-center relative w-64">
+      <div className="hidden md:flex items-center relative w-80">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-yellow-400 w-4 h-4" />
         <Input
+          ref={inputRef}
           placeholder="Search for a vibe..."
           className="pl-10 pr-4 h-10 bg-gray-900 border border-yellow-400/30 text-yellow-100 placeholder-yellow-500/60 focus:ring-yellow-400 rounded-lg"
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value)
+            setShowDropdown(!!e.target.value)
+          }}
+          onFocus={() => setShowDropdown(!!search)}
+          onBlur={() => setTimeout(() => setShowDropdown(false), 120)}
         />
+        {showDropdown && filteredMovies.length > 0 && (
+          <div className="absolute top-12 left-0 w-full bg-black border border-yellow-400/20 rounded-lg shadow-lg z-50 max-h-72 overflow-y-auto">
+            {filteredMovies.map((movie) => (
+              <div
+                key={movie.movieId}
+                className="flex items-center gap-3 px-4 py-2 cursor-pointer hover:bg-yellow-400/10"
+                onMouseDown={() => handleMovieSelect(movie.movieId)}
+              >
+                <img
+                  src={movie.image}
+                  alt={movie.title}
+                  className="w-10 h-14 object-cover rounded"
+                />
+                <div>
+                  <div className="text-yellow-100 font-medium">{movie.title}</div>
+                  <div className="text-yellow-400 text-xs">⭐ {movie.rating}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Right: User, Gamification & Dropdown */}
@@ -120,8 +169,7 @@ export function Navbar({
         <motion.div whileHover={{ scale: 1.05 }}>
           <Button
             onClick={() => (window.location.href = "/redeem")}
-            variant="outline"
-            className="border-yellow-400 text-yellow-300 hover:text-yellow-200 hover:border-yellow-300"
+            className="bg-gradient-to-r from-yellow-400 via-orange-400 to-yellow-500 text-gray-900 hover:from-yellow-500 hover:to-orange-600 font-semibold shadow-md"
           >
             <Gift className="w-4 h-4 mr-2" />
             Redeem
@@ -133,7 +181,7 @@ export function Navbar({
           <DropdownMenuTrigger asChild>
             <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
               <Button variant="ghost" className="p-0 h-12 w-12 rounded-full">
-                <Avatar className="h-12 w-12 ring-2 ring-yellow-400/50">
+                <Avatar className="h-11 w-11 ring-2 ring-yellow-400/50">
                   <UserInitialAvatar name={user.name} />
                 </Avatar>
               </Button>

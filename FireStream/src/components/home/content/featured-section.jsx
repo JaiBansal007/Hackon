@@ -62,7 +62,7 @@ export function FeaturedSection({ movie, onStartWatching }) {
           </motion.div>
           <Button
             variant="outline"
-            className="border-gray-600 text-white hover:bg-gray-800 px-8 py-3"
+            className="border-gray-600 text-black hover:bg-gray-800 px-8 py-3"
           >
             More Info
           </Button>
