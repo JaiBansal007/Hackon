@@ -27,6 +27,9 @@ export class WebSocketManager {
   // New variable to unsubscribe from message listener
   unsubscribeMessages = null
 
+  // Add: unsubscribe for video state
+  unsubscribeVideoState = null
+
   constructor(userId, userName) {
     this.userId = userId
     this.userName = userName
@@ -71,6 +74,15 @@ export class WebSocketManager {
       const data = docSnap.data()
       if (data && data.userId !== this.userId) {
         this.handleVideoSyncMessage(data.message)
+      }
+    })
+
+    // Listen for video state changes (new logic)
+    const videoStateRef = doc(db, "rooms", roomId, "sync", "videoState")
+    this.unsubscribeVideoState = onSnapshot(videoStateRef, (docSnap) => {
+      const data = docSnap.data()
+      if (data) {
+        this.emit("video_state_update", data)
       }
     })
 
@@ -126,6 +138,7 @@ export class WebSocketManager {
       if (this.unsubscribeRoom) this.unsubscribeRoom()
       if (this.unsubscribeVideo) this.unsubscribeVideo()
       if (this.unsubscribeMessages) this.unsubscribeMessages()
+      if (this.unsubscribeVideoState) this.unsubscribeVideoState()
     }
     this.isConnected = false
     this.roomId = null
@@ -190,6 +203,33 @@ export class WebSocketManager {
       })
     }
     return null
+  }
+
+  // Store and sync video state (play/pause/time/videoUrl)
+  async setVideoState({ playing, currentTime, videoUrl, updatedBy }) {
+    if (!this.roomId) return
+    const videoStateRef = doc(db, "rooms", this.roomId, "sync", "videoState")
+    await setDoc(videoStateRef, {
+      playing,
+      currentTime,
+      videoUrl,
+      updatedBy: updatedBy || this.userName,
+      updatedAt: Date.now(),
+    })
+  }
+
+  // Call this when play/pause/seek or video changes
+  playVideo(currentTime, videoUrl) {
+    this.setVideoState({ playing: true, currentTime, videoUrl })
+  }
+
+  pauseVideo(currentTime, videoUrl) {
+    this.setVideoState({ playing: false, currentTime, videoUrl })
+  }
+
+  seekVideo(currentTime, videoUrl) {
+    // Optionally treat seek as a pause or play, or just update time
+    this.setVideoState({ playing: this.videoPlaying, currentTime, videoUrl })
   }
 
   // Video sync methods

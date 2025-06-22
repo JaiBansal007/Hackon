@@ -131,6 +131,27 @@ const HomePage = () => {
       wsRef.current.connect(roomId)
     }
 
+    // Fetch current video state on join
+    const fetchVideoState = async () => {
+      const { db } = await import("@/firebase/db")
+      const { doc, getDoc } = await import("firebase/firestore")
+      const videoStateRef = doc(db, "rooms", roomId, "sync", "videoState")
+      const snap = await getDoc(videoStateRef)
+      if (snap.exists()) {
+        const data = snap.data()
+        setCurrentVideoTime(data.currentTime)
+        setIsWatching(true)
+        setCurrentWatchingMovie((prev) => {
+          if (!prev || prev.videoUrl !== data.videoUrl) {
+            const found = featuredMovies.find(m => m.videoUrl === data.videoUrl)
+            return found || prev
+          }
+          return prev
+        })
+      }
+    }
+    fetchVideoState()
+
     wsRef.current.on("user_joined", (data) => {
       setChatMessages((prev) => [
         ...prev,
@@ -189,7 +210,28 @@ const HomePage = () => {
     return () => {
       // Optionally remove listeners here if you add an off() method
     }
-  }, [user, roomId])
+  }, [user, roomId, featuredMovies])
+
+  // Add: state for video sync
+  const [syncedVideoState, setSyncedVideoState] = useState(null)
+
+  // Listen for video state updates from Firestore and sync local player
+  useEffect(() => {
+    if (!wsRef.current) return
+
+    wsRef.current.on("video_state_update", (data) => {
+      setSyncedVideoState(data)
+      setCurrentVideoTime(data.currentTime)
+      setIsWatching(true)
+      setCurrentWatchingMovie((prev) => {
+        if (!prev || prev.videoUrl !== data.videoUrl) {
+          const found = featuredMovies.find(m => m.videoUrl === data.videoUrl)
+          return found || prev
+        }
+        return prev
+      })
+    })
+  }, [wsRef, featuredMovies])
 
   // Handle fullscreen changes
   useEffect(() => {
@@ -475,6 +517,27 @@ const HomePage = () => {
     }
   }
 
+  // Handler to sync play
+  const handlePlay = (currentTime, videoUrl) => {
+    if (wsRef.current && roomStatus !== "none") {
+      wsRef.current.playVideo(currentTime, videoUrl)
+    }
+  }
+
+  // Handler to sync pause
+  const handlePause = (currentTime, videoUrl) => {
+    if (wsRef.current && roomStatus !== "none") {
+      wsRef.current.pauseVideo(currentTime, videoUrl)
+    }
+  }
+
+  // Handler to sync seek
+  const handleSeek = (currentTime, videoUrl) => {
+    if (wsRef.current && roomStatus !== "none") {
+      wsRef.current.seekVideo(currentTime, videoUrl)
+    }
+  }
+
   if (!user) return null
 
   return (
@@ -533,6 +596,7 @@ const HomePage = () => {
         {/* Video Player */}
         {isWatching && (
           <VideoPlayer
+            key={currentWatchingMovie?.videoUrl || "video-player"}
             movie={currentWatchingMovie}
             isWatching={isWatching}
             isFullscreen={isFullscreen}
@@ -549,6 +613,12 @@ const HomePage = () => {
             onTimeUpdate={updateVideoTime}
             showReactions={showReactions}
             wsRef={wsRef}
+            // Video sync props
+            onPlay={handlePlay}
+            onPause={handlePause}
+            onSeek={handleSeek}
+            currentVideoTime={syncedVideoState ? syncedVideoState.currentTime : currentVideoTime}
+            playing={syncedVideoState ? syncedVideoState.playing : undefined}
           />
         )}
 
