@@ -7,7 +7,7 @@ import { Play, Pause, Volume2, VolumeX, Maximize, X, MessageCircle, Smile, UserC
 import { FloatingReactions } from "./floating-reactions"
 import { ReactionsPanel } from "./reactions-panel"
 
-export default function VideoPlayer({
+export function VideoPlayer({
   movie,
   isWatching,
   isFullscreen,

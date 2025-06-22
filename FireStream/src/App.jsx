@@ -10,7 +10,6 @@ import MoviePage from "./pages/movie/page"
 import QuizPage from "./pages/quiz/page"
 import RedeemPage from "./pages/redeem/page"
 import ProfilePage from "./pages/profile/page"
-import { Navbar } from "./components/home/layout/navbar"
 
 function App() {
   const [user, setUser] = useState(true)
