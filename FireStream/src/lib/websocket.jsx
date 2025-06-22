@@ -1,144 +1,227 @@
-import { initializeApp } from "firebase/app"
-import { getDatabase, ref, onValue, set, push, remove, off, get } from "firebase/database"
-
-const firebaseConfig = {
-  apiKey: "AIzaSyBfU99fHdfCGsmO0uXTnQKLVX-2f5IrRd0",
-  authDomain: "firestream-e8465.firebaseapp.com",
-  databaseURL: "https://firestream-e8465-default-rtdb.firebaseio.com",
-  projectId: "firestream-e8465",
-  storageBucket: "firestream-e8465.firebasestorage.app",
-  messagingSenderId: "869857658241",
-  appId: "1:869857658241:web:6bbffa799a37f54e9e9480",
-  measurementId: "G-6RXNYL8D6H"
-}
-
-const app = initializeApp(firebaseConfig)
-const db = getDatabase(app)
+import { db } from "@/firebase/db"
+import { doc, setDoc, getDoc, updateDoc, arrayUnion, onSnapshot, collection, addDoc, deleteDoc } from "firebase/firestore"
 
 export class WebSocketManager {
+  roomId = null
+  userId
+  userName
+  callbacks = {}
+  isConnected = false
+  eventListener = null
+
+  // Video sync variables
+  videoSyncSocket = null
+  clientUid = null
+  correction = 0
+  overEstimates = []
+  underEstimates = []
+  overEstimate = 0
+  underEstimate = 0
+  numTimeSyncCycles = 10
+  playingThresh = 1
+  pausedThresh = 0.01
+  threshIgnorance = 250
+  lastUpdated = 0
+  videoPlaying = false
+
   constructor(userId, userName) {
     this.userId = userId
     this.userName = userName
-    this.roomId = null
     this.callbacks = {}
-    this.listeners = []
-    this.memberRef = null
+    this.unsubscribeRoom = null
+    this.unsubscribeVideo = null
   }
 
   async connect(roomId) {
     this.roomId = roomId
+    this.isConnected = true
 
-    // 1. Create the room node with metadata if it doesn't exist
-    const roomMetaRef = ref(db, `rooms/${roomId}/meta`)
-    await set(roomMetaRef, {
-      createdAt: Date.now(),
-      hostId: this.userId,
-      hostName: this.userName,
-    })
-
-    // 2. Add user to room members
-    this.memberRef = ref(db, `rooms/${roomId}/members/${this.userId}`)
-    try {
-      await set(this.memberRef, {
-        userId: this.userId,
-        userName: this.userName,
-        joinedAt: Date.now(),
-      })
-      console.log("Member set in Firebase")
-    } catch (e) {
-      console.error("Failed to set member:", e)
+    const roomRef = doc(db, "rooms", roomId)
+    const roomSnap = await getDoc(roomRef)
+    if (!roomSnap.exists()) {
+      await setDoc(roomRef, { members: [], messages: [], videoState: null })
     }
+    // Use setDoc with merge to ensure the arrayUnion works even if the doc is new
+    await setDoc(
+      roomRef,
+      {
+        members: arrayUnion({
+          userId: this.userId,
+          userName: this.userName,
+          joinedAt: Date.now(),
+        }),
+      },
+      { merge: true }
+    )
 
-    // 3. Set up listeners (room members, chat, video, reactions)
-    const membersRef = ref(db, `rooms/${roomId}/members`)
-    const membersListener = onValue(membersRef, (snapshot) => {
-      const members = snapshot.val() ? Object.values(snapshot.val()) : []
-      this.emit("room_members_update", { members })
-    })
-    this.listeners.push({ ref: membersRef, listener: membersListener })
-
-    const chatRef = ref(db, `rooms/${roomId}/messages`)
-    const chatListener = onValue(chatRef, (snapshot) => {
-      const messages = snapshot.val() ? Object.values(snapshot.val()) : []
-      if (messages.length > 0) {
-        this.emit("chat_message", messages[messages.length - 1])
+    // Listen for room changes (chat, members, etc.)
+    this.unsubscribeRoom = onSnapshot(roomRef, (docSnap) => {
+      const data = docSnap.data()
+      if (data) {
+        this.emit("room_members_update", { members: data.members })
+        // Handle chat messages, etc. as needed
       }
     })
-    this.listeners.push({ ref: chatRef, listener: chatListener })
 
-    const videoRef = ref(db, `rooms/${roomId}/videoState`)
-    const videoListener = onValue(videoRef, (snapshot) => {
-      const state = snapshot.val()
-      if (state) this.emit("video_sync", state)
-    })
-    this.listeners.push({ ref: videoRef, listener: videoListener })
-
-    const reactionsRef = ref(db, `rooms/${roomId}/reactions`)
-    const reactionsListener = onValue(reactionsRef, (snapshot) => {
-      const reactions = snapshot.val() ? Object.values(snapshot.val()) : []
-      if (reactions.length > 0) {
-        this.emit("reaction", reactions[reactions.length - 1])
+    // Listen for video sync changes
+    const videoRef = doc(db, "rooms", roomId, "sync", "video")
+    this.unsubscribeVideo = onSnapshot(videoRef, (docSnap) => {
+      const data = docSnap.data()
+      if (data && data.userId !== this.userId) {
+        this.handleVideoSyncMessage(data.message)
       }
     })
-    this.listeners.push({ ref: reactionsRef, listener: reactionsListener })
+
+    // Notify others about joining
+    this.sendMessage("user_joined", { userId: this.userId, userName: this.userName })
 
     this.emit("connected", { roomId, userId: this.userId, userName: this.userName })
   }
 
   async disconnect() {
-    if (this.roomId && this.memberRef) {
-      await remove(this.memberRef)
-      this.emit("user_left", { userId: this.userId, userName: this.userName })
+    if (this.roomId && this.isConnected) {
+      // Remove user from room members
+      const roomRef = doc(db, "rooms", this.roomId)
+      const roomSnap = await getDoc(roomRef)
+      if (roomSnap.exists()) {
+        const data = roomSnap.data()
+        const newMembers = (data.members || []).filter((m) => m.userId !== this.userId)
+        await updateDoc(roomRef, { members: newMembers })
+      }
+
+      // Notify others about leaving
+      this.sendMessage("user_left", { userId: this.userId, userName: this.userName })
+
+      // Unsubscribe listeners
+      if (this.unsubscribeRoom) this.unsubscribeRoom()
+      if (this.unsubscribeVideo) this.unsubscribeVideo()
     }
-    this.listeners.forEach(({ ref: r, listener: l }) => off(r, "value", l))
-    this.listeners = []
+    this.isConnected = false
     this.roomId = null
-    this.memberRef = null
     this.emit("disconnected", {})
   }
 
+  async sendMessage(type, payload) {
+    if (this.isConnected && this.roomId) {
+      const messagesRef = collection(db, "rooms", this.roomId, "messages")
+      await addDoc(messagesRef, {
+        type,
+        payload: { ...payload, userId: this.userId, userName: this.userName },
+        timestamp: Date.now(),
+      })
+    }
+  }
+
+  // Add sendChatMessage for chat
   async sendChatMessage(message) {
-    if (!this.roomId) return
-    const chatRef = ref(db, `rooms/${this.roomId}/messages`)
-    await push(chatRef, {
-      userId: this.userId,
-      userName: this.userName,
-      message,
-      timestamp: Date.now(),
-    })
+    if (this.isConnected && this.roomId) {
+      const messagesRef = collection(db, "rooms", this.roomId, "messages")
+      await addDoc(messagesRef, {
+        type: "chat_message",
+        payload: {
+          userId: this.userId,
+          userName: this.userName,
+          message,
+          timestamp: Date.now(),
+        },
+        timestamp: Date.now(),
+      })
+    }
   }
 
+  // Add sendReaction for reactions
   async sendReaction(emoji) {
-    if (!this.roomId) return
-    const reactionsRef = ref(db, `rooms/${this.roomId}/reactions`)
-    await push(reactionsRef, {
-      emoji,
+    if (this.isConnected && this.roomId) {
+      const messagesRef = collection(db, "rooms", this.roomId, "messages")
+      await addDoc(messagesRef, {
+        type: "reaction",
+        payload: {
+          userId: this.userId,
+          userName: this.userName,
+          emoji,
+          timestamp: Date.now(),
+        },
+        timestamp: Date.now(),
+      })
+    }
+  }
+
+  listenForMessages(callback) {
+    if (this.roomId) {
+      const messagesRef = collection(db, "rooms", this.roomId, "messages")
+      return onSnapshot(messagesRef, (snapshot) => {
+        const messages = []
+        snapshot.forEach((doc) => messages.push({ id: doc.id, ...doc.data() }))
+        callback(messages)
+      })
+    }
+    return null
+  }
+
+  // Video sync methods
+  async stateChangeHandler(eventType, currentTime) {
+    const videoRef = doc(db, "rooms", this.roomId, "sync", "video")
+    const stateImage = {
+      video_timestamp: currentTime,
+      last_updated: Date.now(),
+      playing: this.videoPlaying,
+      global_timestamp: Date.now(),
+      client_uid: this.clientUid,
       userId: this.userId,
-      userName: this.userName,
-      timestamp: Date.now(),
-    })
+      message: `state_update_from_server ${JSON.stringify({
+        video_timestamp: currentTime,
+        last_updated: Date.now(),
+        playing: this.videoPlaying,
+        global_timestamp: Date.now(),
+        client_uid: this.clientUid,
+      })}`,
+    }
+    await setDoc(videoRef, stateImage)
   }
 
-  async play(currentTime) {
-    await this.updateVideoState({ playing: true, currentTime, timestamp: Date.now(), action: "play" })
-  }
+  handleVideoSyncMessage(message) {
+    // Time syncing backward server-response
+    if (message.startsWith("time_sync_response_backward")) {
+      const timeAtServer = Number(message.slice("time_sync_response_backward".length + 1))
+      const underEstimateLatest = timeAtServer - this.getGlobalTime(0)
 
-  async pause(currentTime) {
-    await this.updateVideoState({ playing: false, currentTime, timestamp: Date.now(), action: "pause" })
-  }
+      this.underEstimates.push(underEstimateLatest)
+      this.underEstimate = this.median(this.underEstimates)
+      this.correction = (this.underEstimate + this.overEstimate) / 2
 
-  async seek(currentTime) {
-    await this.updateVideoState({ playing: false, currentTime, timestamp: Date.now(), action: "seek" })
-  }
+      console.log(`Updated val for under_estimate is ${this.underEstimate}`)
+      console.log(`New correction time is ${this.correction} milliseconds`)
+    }
 
-  async updateVideoState(state) {
-    if (!this.roomId) return
-    const videoRef = ref(db, `rooms/${this.roomId}/videoState`)
-    await set(videoRef, state)
+    // Time syncing forward server-response
+    if (message.startsWith("time_sync_response_forward")) {
+      const calculatedDiff = Number(message.slice("time_sync_response_forward".length + 1))
+      this.overEstimates.push(calculatedDiff)
+      this.overEstimate = this.median(this.overEstimates)
+      this.correction = (this.underEstimate + this.overEstimate) / 2
+
+      console.log(`Updated val for over_estimate is ${this.overEstimate}`)
+      console.log(`New correction time is ${this.correction} milliseconds`)
+    }
+
+    // Video state update from server
+    if (message.startsWith("state_update_from_server")) {
+      const state = JSON.parse(message.slice("state_update_from_server".length + 1))
+
+      // Whenever the client connects or reconnects
+      if (this.clientUid == null) {
+        this.clientUid = state.client_uid
+      }
+
+      // Emit video sync state to the video player
+      this.emit("video_sync_state", state)
+    }
   }
 
   on(event, callback) {
-    if (!this.callbacks[event]) this.callbacks[event] = []
+    if (!this.callbacks[event]) {
+      this.callbacks[event] = []
+    }
     this.callbacks[event].push(callback)
   }
 
@@ -150,26 +233,78 @@ export class WebSocketManager {
 
   emit(event, data) {
     if (this.callbacks[event]) {
-      this.callbacks[event].forEach((cb) => cb(data))
+      this.callbacks[event].forEach((callback) => callback(data))
     }
   }
 
-  async getRoomMembers() {
-    if (!this.roomId) return []
-    const membersRef = ref(db, `rooms/${this.roomId}/members`)
-    const snapshot = await get(membersRef)
-    return snapshot.val() ? Object.values(snapshot.val()) : []
+  // Video control methods with sync
+  play(currentTime) {
+    this.videoPlaying = true
+    this.stateChangeHandler("play", currentTime)
+    this.sendMessage("video_play", { currentTime })
   }
 
-  async getRoomData(roomId) {
-    const roomRef = ref(db, `rooms/${roomId}`)
-    const snapshot = await get(roomRef)
-    return snapshot.val() || {}
+  pause(currentTime) {
+    this.videoPlaying = false
+    this.stateChangeHandler("pause", currentTime)
+    this.sendMessage("video_pause", { currentTime })
   }
 
-  async roomExists(roomId) {
-    const membersRef = ref(db, `rooms/${roomId}/members`)
-    const snapshot = await get(membersRef)
-    return !!snapshot.val()
+  seek(currentTime) {
+    this.stateChangeHandler("seeking", currentTime)
+    this.sendMessage("video_seek", { currentTime })
+  }
+
+  // Helper functions for video sync
+  getGlobalTime(delta = 0) {
+    const d = new Date()
+    return d.getTime() + delta
+  }
+
+  median(values) {
+    if (values.length === 0) {
+      return 0
+    }
+    values.sort((x, y) => x - y)
+    const half = Math.floor(values.length / 2)
+    if (values.length % 2) {
+      return values[half]
+    }
+    return (values[half - 1] + values[half]) / 2.0
+  }
+
+  timeout(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms))
+  }
+
+  doTimeSyncOneCycleBackward() {
+    if (this.videoSyncSocket) {
+      this.videoSyncSocket.send("time_sync_request_backward")
+      // Mock server response
+      setTimeout(() => {
+        this.handleVideoSyncMessage(`time_sync_response_backward ${this.getGlobalTime()}`)
+      }, 50)
+    }
+  }
+
+  doTimeSyncOneCycleForward() {
+    if (this.videoSyncSocket) {
+      const currentTime = this.getGlobalTime()
+      this.videoSyncSocket.send(`time_sync_request_forward ${currentTime}`)
+      // Mock server response
+      setTimeout(() => {
+        const serverTime = this.getGlobalTime()
+        this.handleVideoSyncMessage(`time_sync_response_forward ${serverTime - currentTime}`)
+      }, 50)
+    }
+  }
+
+  async doTimeSync() {
+    for (let i = 0; i < this.numTimeSyncCycles; i++) {
+      await this.timeout(500)
+      this.doTimeSyncOneCycleBackward()
+      await this.timeout(500)
+      this.doTimeSyncOneCycleForward()
+    }
   }
 }

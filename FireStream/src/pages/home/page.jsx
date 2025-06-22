@@ -2,95 +2,18 @@
 
 import { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
-import { initializeApp } from "firebase/app"
-import { getDatabase, ref, set, push, onValue, remove, off, get } from "firebase/database"
-import { motion, AnimatePresence } from "framer-motion"
+import { WebSocketManager } from "@/lib/websocket"
+import { Navbar } from "@/components/home/layout/navbar"
+import { Sidebar } from "@/components/home/layout/sidebar"
 import { FeaturedSection } from "@/components/home/content/featured-section"
 import { MovieCategories } from "@/components/home/content/movie-categories"
-import { ChatSidebar } from "@/components/home/chat/chat-sidebar"
 import { VideoPlayer } from "@/components/home/video/video-player"
+import { ChatSidebar } from "@/components/home/chat/chat-sidebar"
 import { RoomMembersSidebar } from "@/components/home/room/room-members-sidebar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { MessageSquareIcon } from "lucide-react"
-import { Navbar } from "../../components/home/layout/navbar"
-import { Sidebar } from "@/components/home/layout/sidebar"
-
-// --- Firebase config and initialization ---
-const firebaseConfig = {
-  apiKey: "AIzaSyBfU99fHdfCGsmO0uXTnQKLVX-2f5IrRd0",
-  authDomain: "firestream-e8465.firebaseapp.com",
-  databaseURL: "https://firestream-e8465-default-rtdb.firebaseio.com",
-  projectId: "firestream-e8465",
-  storageBucket: "firestream-e8465.firebasestorage.app",
-  messagingSenderId: "869857658241",
-  appId: "1:869857658241:web:6bbffa799a37f54e9e9480",
-  measurementId: "G-6RXNYL8D6H"
-}
-const app = initializeApp(firebaseConfig)
-const db = getDatabase(app)
-
-// --- WebSocket-like manager ---
-function useFirebaseRoom(user, roomId, setRoomMembers, setChatMessages) {
-  const listenersRef = useRef([])
-
-  useEffect(() => {
-    if (!user || !roomId) return
-
-    // 1. Create room meta if not exists
-    const metaRef = ref(db, `rooms/${roomId}/meta`)
-    set(metaRef, {
-      createdAt: Date.now(),
-      hostId: user.email,
-      hostName: user.name,
-    })
-
-    // 2. Add user to members
-    const memberRef = ref(db, `rooms/${roomId}/members/${user.email.replace(/\W/g, "_")}`)
-    set(memberRef, {
-      userId: user.email,
-      userName: user.name,
-      joinedAt: Date.now(),
-    })
-
-    // 3. Listen for members
-    const membersRef = ref(db, `rooms/${roomId}/members`)
-    const membersListener = onValue(membersRef, (snap) => {
-      const members = snap.val() ? Object.values(snap.val()) : []
-      setRoomMembers(members)
-    })
-    listenersRef.current.push({ ref: membersRef, listener: membersListener })
-
-    // 4. Listen for chat messages
-    const chatRef = ref(db, `rooms/${roomId}/messages`)
-    const chatListener = onValue(chatRef, (snap) => {
-      const messages = snap.val() ? Object.values(snap.val()) : []
-      setChatMessages(messages)
-    })
-    listenersRef.current.push({ ref: chatRef, listener: chatListener })
-
-    // Cleanup on unmount/leave
-    return () => {
-      listenersRef.current.forEach(({ ref: r, listener: l }) => off(r, "value", l))
-      listenersRef.current = []
-      remove(memberRef)
-    }
-  }, [user, roomId, setRoomMembers, setChatMessages])
-
-  // Send chat message
-  const sendChatMessage = (message) => {
-    if (!user || !roomId) return
-    const chatRef = ref(db, `rooms/${roomId}/messages`)
-    push(chatRef, {
-      userId: user.email,
-      userName: user.name,
-      message,
-      timestamp: Date.now(),
-    })
-  }
-
-  return { sendChatMessage }
-}
+import { AnimatePresence, motion } from "framer-motion"
 
 const HomePage = () => {
   const [user, setUser] = useState(null)
