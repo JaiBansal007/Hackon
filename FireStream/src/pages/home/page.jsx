@@ -126,13 +126,16 @@ const HomePage = () => {
   useEffect(() => {
     if (!user || !roomId || !wsRef.current) return
 
-    wsRef.current.connect(roomId)
+    // Prevent multiple connects to the same room
+    if (wsRef.current.roomId !== roomId || !wsRef.current.isConnected) {
+      wsRef.current.connect(roomId)
+    }
 
     wsRef.current.on("user_joined", (data) => {
       setChatMessages((prev) => [
         ...prev,
         {
-          id: Date.now(),
+          id: `system-joined-${data.userId}-${Date.now()}`,
           user: "System",
           text: `${data.userName} joined the room`,
           timestamp: new Date().toLocaleTimeString(),
@@ -145,7 +148,7 @@ const HomePage = () => {
       setChatMessages((prev) => [
         ...prev,
         {
-          id: Date.now(),
+          id: `system-left-${data.userId}-${Date.now()}`,
           user: "System",
           text: `${data.userName} left the room`,
           timestamp: new Date().toLocaleTimeString(),
@@ -162,7 +165,7 @@ const HomePage = () => {
       setChatMessages((prev) => [
         ...prev,
         {
-          id: Date.now(),
+          id: data.id || `${data.userName}-${data.timestamp}`, // Use Firestore doc id if available
           user: data.userName,
           text: data.message,
           timestamp: new Date(data.timestamp).toLocaleTimeString(),
@@ -172,7 +175,7 @@ const HomePage = () => {
 
     wsRef.current.on("reaction", (data) => {
       const newReaction = {
-        id: Date.now(),
+        id: `${data.userName}-${data.timestamp}`,
         emoji: data.emoji,
         user: data.userName,
         timestamp: data.timestamp,
@@ -359,17 +362,9 @@ const HomePage = () => {
   const sendMessage = async (message) => {
     console.log("📤 Sending message:", message)
 
-    const userMessage = {
-      id: Date.now(),
-      user: user?.name || "User",
-      text: message,
-      timestamp: new Date().toLocaleTimeString(),
-    }
+    // Do NOT optimistically update chatMessages here!
+    // Only send to Firestore, let the listener update the UI
 
-    setChatMessages((prev) => [...prev, userMessage])
-    console.log("✅ User message added to chat")
-
-    // Send via WebSocket if in room
     if (wsRef.current && roomStatus !== "none") {
       wsRef.current.sendChatMessage(message)
     }
