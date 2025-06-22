@@ -500,7 +500,7 @@ const HomePage = () => {
               <Button
                 onClick={() => setShowChat(!showChat)}
                 variant="secondary"
-                className="fixed bottom-4 right-4 z-50 rounded-full p-3 shadow-lg"
+                className="fixed bottom-4 text-black right-4 z-50 rounded-full p-3 shadow-lg"
               >
                 <MessageSquareIcon className="w-5 h-5" />
               </Button>

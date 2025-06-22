@@ -136,7 +136,7 @@ export function ChatSidebar({
           initial={{ x: 320 }}
           animate={{ x: 0 }}
           exit={{ x: 320 }}
-          className="fixed right-0 top-0 h-full w-80 bg-gradient-to-b from-black/95 to-gray-900/98 backdrop-blur-md border-l border-gray-700/50 z-50 shadow-2xl"
+          className="fixed right-0 top-0 h-full w-80 bg-black/20 backdrop-blur-lg border-l border-gray-700/50 z-50 shadow-2xl"
         >
           <div className="flex flex-col h-full">
             <div className="p-4 border-b border-gray-700/50 bg-gradient-to-r from-gray-800/50 to-gray-900/50">
@@ -151,7 +151,7 @@ export function ChatSidebar({
                   onClick={onClose}
                   variant="ghost"
                   size="sm"
-                  className="text-gray-400 hover:text-white hover:bg-gray-700/50 rounded-full"
+                  className="text-gray-400 hover:text-black hover:bg-gray-700/50 rounded-full"
                 >
                   <X className="w-4 h-4" />
                 </Button>

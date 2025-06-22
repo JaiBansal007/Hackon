@@ -278,7 +278,7 @@ export function VideoPlayer({
               <Button
                 onClick={togglePlayPause}
                 size="sm"
-                className="bg-white/20 hover:bg-white/30 text-white border-none backdrop-blur-sm"
+                className="bg-white/20 hover:bg-white/30 text-black border-none backdrop-blur-sm"
               >
                 {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
               </Button>
@@ -287,7 +287,7 @@ export function VideoPlayer({
                 <Button
                   onClick={toggleMute}
                   size="sm"
-                  className="bg-white/20 hover:bg-white/30 text-white border-none backdrop-blur-sm"
+                  className="bg-white/20 hover:bg-white/30 text-black border-none backdrop-blur-sm"
                 >
                   {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
                 </Button>
@@ -328,14 +328,14 @@ export function VideoPlayer({
                   <Button
                     onClick={onToggleReactions}
                     size="sm"
-                    className="bg-white/20 hover:bg-white/30 text-white border-none backdrop-blur-sm"
+                    className="bg-white/20 hover:bg-white/30 text-black border-none backdrop-blur-sm"
                   >
                     <Smile className="w-5 h-5" />
                   </Button>
                   <Button
                     onClick={onToggleRoomMembers}
                     size="sm"
-                    className="bg-white/20 hover:bg-white/30 text-white border-none backdrop-blur-sm"
+                    className="bg-white/20 hover:bg-white/30 text-black border-none backdrop-blur-sm"
                   >
                     <UserCheck className="w-5 h-5" />
                     {roomMembers.length > 0 && <span className="ml-1 text-xs">{roomMembers.length}</span>}
@@ -345,21 +345,21 @@ export function VideoPlayer({
               <Button
                 onClick={onToggleChat}
                 size="sm"
-                className="bg-white/20 hover:bg-white/30 text-white border-none backdrop-blur-sm"
+                className="bg-white/20 hover:bg-white/30 text-black border-none backdrop-blur-sm"
               >
                 <MessageCircle className="w-5 h-5" />
               </Button>
               <Button
                 onClick={onToggleFullscreen}
                 size="sm"
-                className="bg-white/20 hover:bg-white/30 text-white border-none backdrop-blur-sm"
+                className="bg-white/20 hover:bg-white/30 text-black border-none backdrop-blur-sm"
               >
                 <Maximize className="w-5 h-5" />
               </Button>
               <Button
                 onClick={onExitVideo}
                 size="sm"
-                className="bg-white/20 hover:bg-white/30 text-white border-none backdrop-blur-sm"
+                className="bg-white/20 hover:bg-white/30 text-black border-none backdrop-blur-sm"
               >
                 <X className="w-5 h-5" />
               </Button>
