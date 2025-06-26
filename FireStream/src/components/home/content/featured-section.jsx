@@ -66,7 +66,16 @@ export function FeaturedSection({ movie, onStartWatching, onStartQuiz }) {
               Play
             </Button>
           </motion.div>
-          <Button variant="outline" className="border-gray-600 text-black hover:bg-gray-800 px-8 py-3">
+          <Button
+            variant="outline" className="border-gray-600 text-black hover:bg-gray-800 px-8 py-3"
+            onClick={() => {
+              const movieSlug = movie.title
+                .toLowerCase()
+                .replace(/\s+/g, "-")
+                .replace(/[^\w-]/g, "")
+              window.location.href = `/info/${movieSlug}`
+            }}
+          >
             More Info
           </Button>
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>

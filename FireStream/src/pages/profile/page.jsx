@@ -1,25 +1,39 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Link,useNavigate } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { motion } from "framer-motion"
 import { Button } from "../../components/ui/button"
-import { ArrowLeft, Coins, Flame, Trophy, Calendar, Gift, TrendingUp } from "lucide-react"
+import { ArrowLeft, Coins, Flame, Trophy, Calendar, Gift, TrendingUp, Play, Clock, Eye, Trash2 } from "lucide-react"
 import { GamificationManager } from "../../lib/gamification"
+import { ViewingHistoryManager } from "../../lib/viewing-history"
 
 export default function ProfilePage() {
   const navigate = useNavigate()
   const [userStats, setUserStats] = useState(GamificationManager.getInstance().getUserStats())
   const [pointHistory, setPointHistory] = useState([])
   const [redemptionHistory, setRedemptionHistory] = useState([])
+  const [viewingHistory, setViewingHistory] = useState([])
   const [activeTab, setActiveTab] = useState("activity")
+
+  const viewingHistoryManager = ViewingHistoryManager.getInstance()
 
   useEffect(() => {
     const gamification = GamificationManager.getInstance()
     setUserStats(gamification.getUserStats())
     setPointHistory(gamification.getPointHistory())
     setRedemptionHistory(gamification.getRedemptionHistory())
+
+    // Load real viewing history
+    setViewingHistory(viewingHistoryManager.getViewingHistory())
   }, [])
+
+  // Refresh viewing history when tab becomes active
+  useEffect(() => {
+    if (activeTab === "viewing") {
+      setViewingHistory(viewingHistoryManager.getViewingHistory())
+    }
+  }, [activeTab])
 
   const formatDate = (dateString) => {
     const date = new Date(dateString)
@@ -31,6 +45,30 @@ export default function ProfilePage() {
       hour: "2-digit",
       minute: "2-digit",
     })
+  }
+
+  const formatDuration = (seconds) => {
+    const hours = Math.floor(seconds / 3600)
+    const minutes = Math.floor((seconds % 3600) / 60)
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`
+    }
+    return `${minutes}m`
+  }
+
+  const getWatchProgress = (watched, total) => {
+    if (!total || total === 0) return 0
+    return Math.min((watched / total) * 100, 100)
+  }
+
+  const handleContinueWatching = (movie) => {
+    // Navigate directly to the movie page - the video player will auto-resume
+    navigate(`/movie/${movie.movieId}`)
+  }
+
+  const handleRemoveFromHistory = (movieId) => {
+    viewingHistoryManager.removeFromHistory(movieId)
+    setViewingHistory(viewingHistoryManager.getViewingHistory())
   }
 
   const getActivityIcon = (type) => {
@@ -139,10 +177,10 @@ export default function ProfilePage() {
             className="bg-gradient-to-r from-blue-400/20 to-purple-500/20 rounded-xl p-6 border border-blue-400/30"
           >
             <div className="flex items-center space-x-3 mb-2">
-              <Calendar className="w-8 h-8 text-blue-400" />
+              <Eye className="w-8 h-8 text-blue-400" />
               <div>
-                <p className="text-2xl font-bold text-white">{Math.floor(userStats.dailyWatchTime)}m</p>
-                <p className="text-blue-400 text-sm">Today's Watch Time</p>
+                <p className="text-2xl font-bold text-white">{viewingHistory.length}</p>
+                <p className="text-blue-400 text-sm">Movies Watched</p>
               </div>
             </div>
           </motion.div>
@@ -160,6 +198,17 @@ export default function ProfilePage() {
             }`}
           >
             Point Activity
+          </Button>
+          <Button
+            onClick={() => setActiveTab("viewing")}
+            variant={activeTab === "viewing" ? "default" : "outline"}
+            className={`text-black ${
+              activeTab === "viewing"
+                ? "bg-gradient-to-r from-yellow-400 to-orange-500 text-black"
+                : "border-gray-600 hover:bg-gray-800"
+            }`}
+          >
+            Viewing History ({viewingHistory.length})
           </Button>
           <Button
             onClick={() => setActiveTab("redemptions")}
@@ -221,6 +270,136 @@ export default function ProfilePage() {
                         <div className={`text-lg font-bold ${activity.points > 0 ? "text-green-400" : "text-red-400"}`}>
                           {activity.points > 0 ? "+" : ""}
                           {activity.points}
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : activeTab === "viewing" ? (
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-white">Your Viewing History</h2>
+                {viewingHistory.length > 0 && (
+                  <Button
+                    onClick={() => {
+                      viewingHistoryManager.clearHistory()
+                      setViewingHistory([])
+                    }}
+                    variant="outline"
+                    className="border-red-600 text-red-400 hover:bg-red-600 text-sm"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Clear All
+                  </Button>
+                )}
+              </div>
+
+              {viewingHistory.length === 0 ? (
+                <div className="text-center py-12">
+                  <Eye className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+                  <h3 className="text-xl font-bold text-gray-400 mb-2">No viewing history yet</h3>
+                  <p className="text-gray-500">Start watching movies to build your viewing history!</p>
+                  <Button
+                    onClick={() => navigate("/home")}
+                    className="mt-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-black hover:from-yellow-500 hover:to-orange-600"
+                  >
+                    Browse Movies
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {viewingHistory.map((movie, index) => (
+                    <motion.div
+                      key={movie.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      className="flex items-center space-x-4 p-4 bg-gray-800/50 rounded-lg hover:bg-gray-800/70 transition-colors group"
+                    >
+                      <div className="flex-shrink-0">
+                        <img
+                          src={movie.image || "/placeholder.svg"}
+                          alt={movie.title}
+                          className="w-20 h-28 object-cover rounded-lg"
+                        />
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-white font-semibold text-lg mb-2">{movie.title}</h3>
+
+                        <div className="flex items-center space-x-4 mb-3">
+                          <div className="flex items-center space-x-2">
+                            <Clock className="w-4 h-4 text-gray-400" />
+                            <span className="text-sm text-gray-400">
+                              {formatDuration(movie.watchedDuration)} / {formatDuration(movie.totalDuration)}
+                            </span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Calendar className="w-4 h-4 text-gray-400" />
+                            <span className="text-sm text-gray-400">
+                              {new Date(movie.lastWatched).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Progress Bar */}
+                        <div className="mb-3">
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="text-xs text-gray-400">Progress</span>
+                            <span className="text-xs text-gray-400">
+                              {Math.round(getWatchProgress(movie.watchedDuration, movie.totalDuration))}%
+                            </span>
+                          </div>
+                          <div className="w-full bg-gray-700 rounded-full h-2">
+                            <div
+                              className={`h-2 rounded-full transition-all duration-300 ${
+                                movie.completed
+                                  ? "bg-gradient-to-r from-green-400 to-emerald-500"
+                                  : "bg-gradient-to-r from-orange-400 to-yellow-500"
+                              }`}
+                              style={{ width: `${getWatchProgress(movie.watchedDuration, movie.totalDuration)}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        <p className="text-sm text-gray-500">Last watched: {formatDate(movie.lastWatched)}</p>
+                      </div>
+
+                      <div className="flex flex-col space-y-2">
+                        {movie.completed ? (
+                          <div className="flex items-center space-x-2 text-green-400 text-sm">
+                            <Trophy className="w-4 h-4" />
+                            <span>Completed</span>
+                          </div>
+                        ) : (
+                          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                            <Button
+                              onClick={() => handleContinueWatching(movie)}
+                              className="bg-gradient-to-r from-orange-400 to-yellow-500 text-black hover:from-orange-500 hover:to-yellow-600 px-4 py-2 text-sm font-semibold rounded-lg"
+                            >
+                              <Play className="w-4 h-4 mr-2" />
+                              Continue
+                            </Button>
+                          </motion.div>
+                        )}
+
+                        <div className="flex space-x-2">
+                          <Button
+                            onClick={() => navigate(`/info/${movie.movieId}`)}
+                            variant="outline"
+                            className="border-gray-600 text-black hover:bg-gray-700 px-3 py-1 text-xs rounded-lg"
+                          >
+                            Info
+                          </Button>
+                          <Button
+                            onClick={() => handleRemoveFromHistory(movie.movieId)}
+                            variant="outline"
+                            className="border-red-600 text-red-400 hover:bg-red-600 px-3 py-1 text-xs rounded-lg transition-opacity"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
                         </div>
                       </div>
                     </motion.div>

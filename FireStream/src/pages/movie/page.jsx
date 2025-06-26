@@ -61,7 +61,7 @@ const MoviePage = () => {
     }
 
     if (currentMovie) {
-      setCurrentWatchingMovie({
+      const movieWithId = {
         movieId: movieId,
         title: currentMovie.title,
         description: currentMovie.description || "A great movie to watch",
@@ -71,7 +71,8 @@ const MoviePage = () => {
         mood: currentMovie.mood || ["thrilling"],
         image: currentMovie.image || "/placeholder.svg",
         videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-      })
+      }
+      setCurrentWatchingMovie(movieWithId)
     }
   }, [movieId, currentMovie, navigate])
 

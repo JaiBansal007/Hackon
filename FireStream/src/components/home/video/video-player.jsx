@@ -3,9 +3,22 @@
 import { useRef, useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "../../ui/button"
-import { Play, Pause, Volume2, VolumeX, Maximize, X, MessageCircle, Smile, UserCheck } from "lucide-react"
+import {
+  Play,
+  Pause,
+  Volume2,
+  VolumeX,
+  Maximize,
+  X,
+  MessageCircle,
+  Smile,
+  UserCheck,
+  PictureInPicture,
+} from "lucide-react"
 import { FloatingReactions } from "./floating-reactions"
 import { ReactionsPanel } from "./reactions-panel"
+import { ViewingHistoryManager } from "../../../lib/viewing-history"
+import { useNavigate } from "react-router-dom"
 
 export function VideoPlayer({
   movie,
@@ -32,37 +45,146 @@ export function VideoPlayer({
   const videoRef = useRef(null)
   const volumeTimeoutRef = useRef(null)
   const lastSeekRef = useRef(null)
+  const progressSaveIntervalRef = useRef(null)
+  const navigate = useNavigate()
   const [isPlaying, setIsPlaying] = useState(true)
   const [currentTime, setCurrentTime] = useState(0)
   const [videoDuration, setVideoDuration] = useState(0)
   const [volume, setVolume] = useState(1)
   const [isMuted, setIsMuted] = useState(false)
   const [showVolumeSlider, setShowVolumeSlider] = useState(false)
+  const [hasResumed, setHasResumed] = useState(false)
+  const [isPiPSupported, setIsPiPSupported] = useState(false)
+  const [isPiPActive, setIsPiPActive] = useState(false)
+
+  const viewingHistoryManager = ViewingHistoryManager.getInstance()
+
+  // Check PiP support on mount
+  useEffect(() => {
+    setIsPiPSupported(document.pictureInPictureEnabled && videoRef.current?.requestPictureInPicture)
+  }, [])
 
   useEffect(() => {
     const video = videoRef.current
     if (video) {
-      const handleTimeUpdate = () => setCurrentTime(video.currentTime)
+      const handleTimeUpdate = () => {
+        setCurrentTime(video.currentTime)
+
+        // Save progress every 10 seconds while playing
+        if (!video.paused && video.duration && movie?.movieId) {
+          const now = Date.now()
+          if (!progressSaveIntervalRef.current || now - progressSaveIntervalRef.current > 10000) {
+            progressSaveIntervalRef.current = now
+            saveProgress()
+          }
+        }
+      }
+
       const handleLoadedMetadata = () => {
         setVideoDuration(video.duration)
         video.volume = volume
+
+        // Auto-resume from saved position
+        if (movie?.movieId && !hasResumed) {
+          const resumeTime = viewingHistoryManager.getResumeTime(movie.movieId)
+          if (resumeTime > 0 && resumeTime < video.duration * 0.95) {
+            video.currentTime = resumeTime
+            setCurrentTime(resumeTime)
+            console.log(
+              `Resuming ${movie.title} from ${Math.floor(resumeTime / 60)}:${Math.floor(resumeTime % 60)
+                .toString()
+                .padStart(2, "0")}`,
+            )
+          }
+          setHasResumed(true)
+        }
       }
+
       const handlePlay = () => setIsPlaying(true)
       const handlePause = () => setIsPlaying(false)
+
+      const handleEnded = () => {
+        // Mark as completed when video ends
+        if (movie?.movieId) {
+          viewingHistoryManager.markAsCompleted(movie.movieId)
+        }
+      }
+
+      // PiP event listeners
+      const handleEnterpictureinpicture = () => {
+        setIsPiPActive(true)
+        // Navigate to home page when entering PiP
+        if (window.location.pathname !== "/home") {
+          navigate("/home")
+        }
+      }
+
+      const handleLeavepictureinpicture = () => {
+        setIsPiPActive(false)
+        // Navigate back to movie page when exiting PiP
+        if (movie?.movieId && window.location.pathname !== `/movie/${movie.movieId}`) {
+          navigate(`/movie/${movie.movieId}`)
+        }
+      }
 
       video.addEventListener("timeupdate", handleTimeUpdate)
       video.addEventListener("loadedmetadata", handleLoadedMetadata)
       video.addEventListener("play", handlePlay)
       video.addEventListener("pause", handlePause)
+      video.addEventListener("ended", handleEnded)
+      video.addEventListener("enterpictureinpicture", handleEnterpictureinpicture)
+      video.addEventListener("leavepictureinpicture", handleLeavepictureinpicture)
 
       return () => {
         video.removeEventListener("timeupdate", handleTimeUpdate)
         video.removeEventListener("loadedmetadata", handleLoadedMetadata)
         video.removeEventListener("play", handlePlay)
         video.removeEventListener("pause", handlePause)
+        video.removeEventListener("ended", handleEnded)
+        video.removeEventListener("enterpictureinpicture", handleEnterpictureinpicture)
+        video.removeEventListener("leavepictureinpicture", handleLeavepictureinpicture)
       }
     }
-  }, [volume])
+  }, [volume, movie?.movieId, hasResumed, navigate, movie])
+
+  // Save progress function
+  const saveProgress = () => {
+    const video = videoRef.current
+    if (video && movie?.movieId && video.duration) {
+      viewingHistoryManager.updateMovieProgress({
+        movieId: movie.movieId,
+        title: movie.title,
+        image: movie.image,
+        watchedDuration: video.currentTime,
+        totalDuration: video.duration,
+        videoUrl: movie.videoUrl,
+      })
+    }
+  }
+
+  // Save progress when component unmounts or video stops
+  useEffect(() => {
+    return () => {
+      saveProgress()
+    }
+  }, [])
+
+  // Save progress when user pauses or seeks
+  useEffect(() => {
+    const video = videoRef.current
+    if (video && movie?.movieId) {
+      const handlePause = () => saveProgress()
+      const handleSeeked = () => saveProgress()
+
+      video.addEventListener("pause", handlePause)
+      video.addEventListener("seeked", handleSeeked)
+
+      return () => {
+        video.removeEventListener("pause", handlePause)
+        video.removeEventListener("seeked", handleSeeked)
+      }
+    }
+  }, [movie?.movieId])
 
   useEffect(() => {
     if (wsRef.current && roomStatus !== "none") {
@@ -155,16 +277,18 @@ export function VideoPlayer({
   }
 
   const handleVideoSeek = (e) => {
-    const newTime = parseFloat(e.target.value)
+    const newTime = Number.parseFloat(e.target.value)
     if (videoRef.current) {
       videoRef.current.currentTime = newTime
       setCurrentTime(newTime)
       if (wsRef.current && roomStatus !== "none") wsRef.current.seek(newTime)
+      // Save progress immediately when user seeks
+      setTimeout(saveProgress, 100)
     }
   }
 
   const handleVolumeChange = (e) => {
-    const newVolume = parseFloat(e.target.value)
+    const newVolume = Number.parseFloat(e.target.value)
     setVolume(newVolume)
     setIsMuted(newVolume === 0)
     if (videoRef.current) videoRef.current.volume = newVolume
@@ -197,6 +321,21 @@ export function VideoPlayer({
     volumeTimeoutRef.current = setTimeout(() => setShowVolumeSlider(false), 300)
   }
 
+  // Picture-in-Picture functionality
+  const togglePictureInPicture = async () => {
+    if (!videoRef.current || !isPiPSupported) return
+
+    try {
+      if (isPiPActive) {
+        await document.exitPictureInPicture()
+      } else {
+        await videoRef.current.requestPictureInPicture()
+      }
+    } catch (error) {
+      console.error("Error toggling Picture-in-Picture:", error)
+    }
+  }
+
   // Handle user play/pause/seek events
   const handlePlay = () => {
     if (onPlay && videoRef.current) {
@@ -211,10 +350,7 @@ export function VideoPlayer({
   const handleSeek = (e) => {
     if (onSeek && videoRef.current) {
       // Only trigger if seek is user-initiated
-      if (
-        lastSeekRef.current === null ||
-        Math.abs(videoRef.current.currentTime - lastSeekRef.current) > 0.5
-      ) {
+      if (lastSeekRef.current === null || Math.abs(videoRef.current.currentTime - lastSeekRef.current) > 0.5) {
         onSeek(videoRef.current.currentTime, movie?.videoUrl)
         lastSeekRef.current = videoRef.current.currentTime
       }
@@ -283,7 +419,11 @@ export function VideoPlayer({
                 {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
               </Button>
 
-              <div className="relative flex items-center space-x-2" onMouseEnter={handleVolumeMouseEnter} onMouseLeave={handleVolumeMouseLeave}>
+              <div
+                className="relative flex items-center space-x-2"
+                onMouseEnter={handleVolumeMouseEnter}
+                onMouseLeave={handleVolumeMouseLeave}
+              >
                 <Button
                   onClick={toggleMute}
                   size="sm"
@@ -349,6 +489,20 @@ export function VideoPlayer({
               >
                 <MessageCircle className="w-5 h-5" />
               </Button>
+              {isPiPSupported && (
+                <Button
+                  onClick={togglePictureInPicture}
+                  size="sm"
+                  className={`border-none backdrop-blur-sm ${
+                    isPiPActive
+                      ? "bg-orange-500/30 hover:bg-orange-500/40 text-orange-400"
+                      : "bg-white/20 hover:bg-white/30 text-black"
+                  }`}
+                  title={isPiPActive ? "Exit Picture-in-Picture" : "Enter Picture-in-Picture"}
+                >
+                  <PictureInPicture className="w-5 h-5" />
+                </Button>
+              )}
               <Button
                 onClick={onToggleFullscreen}
                 size="sm"
@@ -373,6 +527,20 @@ export function VideoPlayer({
               Room {roomId} • {roomStatus === "host" ? "HOST" : "MEMBER"}
             </span>
           </div>
+        )}
+
+        {/* Picture-in-Picture Status Indicator */}
+        {isPiPActive && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="absolute top-4 right-4 bg-orange-500/90 backdrop-blur-sm px-3 py-2 rounded-lg border border-orange-400/50"
+          >
+            <div className="flex items-center space-x-2">
+              <PictureInPicture className="w-4 h-4 text-white" />
+              <span className="text-white text-sm font-medium">Picture-in-Picture Active</span>
+            </div>
+          </motion.div>
         )}
       </div>
     </motion.div>

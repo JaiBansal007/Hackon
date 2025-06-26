@@ -4,6 +4,7 @@ import { motion } from "framer-motion"
 import { Play } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { movieCategories } from "./movie-data"
+import { Button } from "../../ui/button"
 
 export function MovieCategories({ onStartWatching }) {
   const navigate = useNavigate()
@@ -77,14 +78,29 @@ export function MovieCategories({ onStartWatching }) {
                       className="w-full h-52 md:h-72 object-cover rounded-lg"
                     />
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all duration-300 rounded-lg flex items-center justify-center">
-                      <div className="opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center space-y-2">
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center space-y-3">
                         <Play className="w-8 h-8 md:w-12 md:h-12 text-white" />
-                        <button
-                          onClick={(e) => handleQuizClick(movie, e)}
-                          className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black px-3 py-1 rounded-full text-xs font-semibold hover:from-yellow-500 hover:to-orange-600 transition-all"
-                        >
-                          Quiz
-                        </button>
+                        <div className="flex space-x-2">
+                          <Button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              const movieSlug = movie.title
+                                .toLowerCase()
+                                .replace(/\s+/g, "-")
+                                .replace(/[^\w-]/g, "")
+                              navigate(`/info/${movieSlug}`)
+                            }}
+                            variant="outline" className="border-gray-600 text-black hover:bg-gray-800 px-8 py-3"
+                          >
+                            More Info
+                          </Button>
+                          <button
+                            onClick={(e) => handleQuizClick(movie, e)}
+                            className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black px-3 py-1 rounded-full text-xs font-semibold hover:from-yellow-500 hover:to-orange-600 transition-all"
+                          >
+                            Quiz
+                          </button>
+                        </div>
                       </div>
                     </div>
                     <div className="absolute top-2 right-2 bg-black/70 px-2 py-1 rounded text-xs md:text-sm text-yellow-400">

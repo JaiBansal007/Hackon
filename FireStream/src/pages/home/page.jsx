@@ -15,6 +15,8 @@ import { Input } from "@/components/ui/input"
 import { MessageSquareIcon } from "lucide-react"
 import { AnimatePresence, motion } from "framer-motion"
 import { GamificationManager } from "@/lib/gamification"
+import { ViewingHistoryManager } from "@/lib/viewing-history"
+import { featuredMovies } from "../../components/home/content/featured-movies"
 
 const HomePage = () => {
   const [user, setUser] = useState(null)
@@ -41,63 +43,8 @@ const HomePage = () => {
   const wsRef = useRef(null)
   const navigate = useNavigate()
 
-  const featuredMovies = [
-    {
-      movieId: "the-dark-knight",
-      title: "The Dark Knight",
-      description: "When the menace known as the Joker wreaks havoc and chaos on the people of Gotham...",
-      rating: "9.0/10",
-      year: "2008",
-      genre: "Action, Crime, Drama",
-      mood: ["intense", "dark", "thrilling"],
-      image: "https://image.tmdb.org/t/p/w1280/qJ2tW6WMUDux911r6m7haRef0WH.jpg",
-      videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-    },
-    {
-      movieId: "inception",
-      title: "Inception",
-      description: "A thief who steals corporate secrets through dream-sharing technology...",
-      rating: "8.8/10",
-      year: "2010",
-      genre: "Action, Sci-Fi, Thriller",
-      mood: ["mind-bending", "complex", "thrilling"],
-      image: "https://image.tmdb.org/t/p/w1280/edv5CZvWj09upOsy2Y6mWp9AHt6.jpg",
-      videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-    },
-    {
-      movieId: "interstellar",
-      title: "Interstellar",
-      description: "A team of explorers travel through a wormhole in space to ensure humanity's survival.",
-      rating: "8.6/10",
-      year: "2014",
-      genre: "Adventure, Drama, Sci-Fi",
-      mood: ["thought-provoking", "epic", "emotional"],
-      image: "https://image.tmdb.org/t/p/w1280/gEU2QniE6E77NI6lCU6mWp9AHt6.jpg",
-      videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-    },
-    {
-      title: "The Matrix",
-      description:
-        "A computer programmer is led to fight an underground war against powerful computers who have constructed his entire reality with a system called the Matrix.",
-      rating: "8.7/10",
-      year: "1999",
-      genre: "Action, Sci-Fi",
-      mood: ["revolutionary", "mind-bending", "action-packed"],
-      image: "https://image.tmdb.org/t/p/w1280/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg",
-      videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-    },
-    {
-      title: "Pulp Fiction",
-      description:
-        "The lives of two mob hitmen, a boxer, a gangster and his wife, and a pair of diner bandits intertwine in four tales of violence and redemption.",
-      rating: "8.9/10",
-      year: "1994",
-      genre: "Crime, Drama",
-      mood: ["quirky", "violent", "stylish"],
-      image: "https://image.tmdb.org/t/p/w1280/d5iIlFn5s0ImszYzBPb8JPIf3XD.jpg",
-      videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-    },
-  ]
+  // Initialize ViewingHistoryManager
+  const viewingHistoryManager = ViewingHistoryManager.getInstance()
 
   const currentFeatured = featuredMovies[Math.floor(Math.random() * featuredMovies.length)]
 
@@ -241,8 +188,6 @@ const HomePage = () => {
     return () => document.removeEventListener("fullscreenchange", handleFullscreenChange)
   }, [])
 
-  // Analyze video when starting to watch
-
   const handleLogout = () => {
     if (wsRef.current) {
       wsRef.current.disconnect()
@@ -311,11 +256,21 @@ const HomePage = () => {
   }
 
   const startWatching = (movie) => {
-    setCurrentWatchingMovie(movie)
+    // Ensure movie has movieId for tracking
+    const movieWithId = {
+      ...movie,
+      movieId:
+        movie.movieId ||
+        movie.title
+          .toLowerCase()
+          .replace(/\s+/g, "-")
+          .replace(/[^\w-]/g, ""),
+    }
+
+    setCurrentWatchingMovie(movieWithId)
     setIsWatching(true)
     setVideoAnalyzed(false)
     setCurrentVideoTime(0)
-    // analyzeCurrentVideo(movie)
   }
 
   const startQuiz = (movieSlug) => {
@@ -523,11 +478,7 @@ const HomePage = () => {
                   onStartQuiz={startQuiz}
                   quizLocked={quizLocked}
                 />
-                <MovieCategories
-                  onStartWatching={startWatching}
-                  onStartQuiz={startQuiz}
-                  quizLocked={quizLocked}
-                />
+                <MovieCategories onStartWatching={startWatching} onStartQuiz={startQuiz} quizLocked={quizLocked} />
               </div>
             )}
           </div>

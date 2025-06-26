@@ -10,6 +10,7 @@ import MoviePage from "./pages/movie/page"
 import QuizPage from "./pages/quiz/page"
 import RedeemPage from "./pages/redeem/page"
 import ProfilePage from "./pages/profile/page"
+import MovieInfoPage from "./pages/info/page"
 
 function App() {
   const [user, setUser] = useState(true)
@@ -33,6 +34,7 @@ function App() {
         <Route path="/quiz/:movieId" element={<QuizPage />} />
         <Route path="/redeem" element={<RedeemPage />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/info/:movieId" element={<MovieInfoPage />} />
       </Routes>
     </Router>
   )
