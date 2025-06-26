@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { MessageSquareIcon } from "lucide-react"
 import { AnimatePresence, motion } from "framer-motion"
+import { GamificationManager } from "@/lib/gamification"
 
 const HomePage = () => {
   const [user, setUser] = useState(null)
@@ -26,8 +27,9 @@ const HomePage = () => {
   const [showRoomMembers, setShowRoomMembers] = useState(false)
   const [recentReactions, setRecentReactions] = useState([])
   const [currentVideoTime, setCurrentVideoTime] = useState(0)
-  // const [videoAnalyzed, setVideoAnalyzed] = useState(false)
-  
+  const [videoAnalyzed, setVideoAnalyzed] = useState(false)
+  const [quizLocked, setQuizLocked] = useState(false)
+
   // Room functionality state
   const [roomStatus, setRoomStatus] = useState("none")
   const [roomId, setRoomId] = useState("")
@@ -35,7 +37,7 @@ const HomePage = () => {
   const [showJoinDialog, setShowJoinDialog] = useState(false)
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [roomMembers, setRoomMembers] = useState([])
-  
+
   const wsRef = useRef(null)
   const navigate = useNavigate()
 
@@ -43,8 +45,7 @@ const HomePage = () => {
     {
       movieId: "the-dark-knight",
       title: "The Dark Knight",
-      description:
-        "When the menace known as the Joker wreaks havoc and chaos on the people of Gotham...",
+      description: "When the menace known as the Joker wreaks havoc and chaos on the people of Gotham...",
       rating: "9.0/10",
       year: "2008",
       genre: "Action, Crime, Drama",
@@ -55,8 +56,7 @@ const HomePage = () => {
     {
       movieId: "inception",
       title: "Inception",
-      description:
-        "A thief who steals corporate secrets through dream-sharing technology...",
+      description: "A thief who steals corporate secrets through dream-sharing technology...",
       rating: "8.8/10",
       year: "2010",
       genre: "Action, Sci-Fi, Thriller",
@@ -67,8 +67,7 @@ const HomePage = () => {
     {
       movieId: "interstellar",
       title: "Interstellar",
-      description:
-        "A team of explorers travel through a wormhole in space to ensure humanity's survival.",
+      description: "A team of explorers travel through a wormhole in space to ensure humanity's survival.",
       rating: "8.6/10",
       year: "2014",
       genre: "Adventure, Drama, Sci-Fi",
@@ -143,7 +142,7 @@ const HomePage = () => {
         setIsWatching(true)
         setCurrentWatchingMovie((prev) => {
           if (!prev || prev.videoUrl !== data.videoUrl) {
-            const found = featuredMovies.find(m => m.videoUrl === data.videoUrl)
+            const found = featuredMovies.find((m) => m.videoUrl === data.videoUrl)
             return found || prev
           }
           return prev
@@ -225,7 +224,7 @@ const HomePage = () => {
       setIsWatching(true)
       setCurrentWatchingMovie((prev) => {
         if (!prev || prev.videoUrl !== data.videoUrl) {
-          const found = featuredMovies.find(m => m.videoUrl === data.videoUrl)
+          const found = featuredMovies.find((m) => m.videoUrl === data.videoUrl)
           return found || prev
         }
         return prev
@@ -307,16 +306,21 @@ const HomePage = () => {
     setShowChat(false)
     setShowReactions(false)
     setShowRoomMembers(false)
-    // setVideoAnalyzed(false)
+    setVideoAnalyzed(false)
     setCurrentVideoTime(0)
   }
 
   const startWatching = (movie) => {
     setCurrentWatchingMovie(movie)
     setIsWatching(true)
-    // setVideoAnalyzed(false)
+    setVideoAnalyzed(false)
     setCurrentVideoTime(0)
     // analyzeCurrentVideo(movie)
+  }
+
+  const startQuiz = (movieSlug) => {
+    if (quizLocked) return
+    navigate(`/quiz/${movieSlug}`)
   }
 
   const updateVideoTime = (time) => {
@@ -432,7 +436,7 @@ const HomePage = () => {
     setTimeout(() => {
       setRecentReactions((prev) => prev.filter((r) => r.id !== newReaction.id))
     }, 4000)
-    
+
     setShowReactions(false)
     if (wsRef.current && roomStatus !== "none") {
       wsRef.current.sendReaction(reaction.emoji)
@@ -460,15 +464,20 @@ const HomePage = () => {
     }
   }
 
+  useEffect(() => {
+    // Check quiz lock status on mount and when user changes
+    setQuizLocked(!GamificationManager.getInstance().canAttemptQuiz())
+  }, [user])
+
   if (!user) return null
 
   return (
     <>
       {/* Show Navbar only when not watching */}
       {!isWatching && (
-        <Navbar 
-          user={user} 
-          roomStatus={roomStatus} 
+        <Navbar
+          user={user}
+          roomStatus={roomStatus}
           roomId={roomId}
           isFullscreen={isFullscreen}
           onCreateRoom={() => setShowCreateDialog(true)}
@@ -479,9 +488,9 @@ const HomePage = () => {
       )}
       <div className="relative w-full h-full min-h-screen bg-gray-950 text-white overflow-x-hidden flex">
         {/* Sidebar */}
-        <Sidebar 
-          user={user} 
-          roomStatus={roomStatus} 
+        <Sidebar
+          user={user}
+          roomStatus={roomStatus}
           roomMembers={roomMembers}
           isFullscreen={isFullscreen}
           isWatching={isWatching}
@@ -508,8 +517,17 @@ const HomePage = () => {
 
             {!isWatching && (
               <div className="grid grid-cols-1 gap-10 px-4 py-8 md:px-12 lg:px-24">
-                <FeaturedSection movie={currentFeatured} onStartWatching={startWatching} />
-                <MovieCategories onStartWatching={startWatching} />
+                <FeaturedSection
+                  movie={currentFeatured}
+                  onStartWatching={startWatching}
+                  onStartQuiz={startQuiz}
+                  quizLocked={quizLocked}
+                />
+                <MovieCategories
+                  onStartWatching={startWatching}
+                  onStartQuiz={startQuiz}
+                  quizLocked={quizLocked}
+                />
               </div>
             )}
           </div>

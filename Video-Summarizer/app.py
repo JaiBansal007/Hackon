@@ -12,26 +12,27 @@ import time
 import tempfile
 import requests
 from pathlib import Path
+import hashlib
 
 load_dotenv()
 
 app = FastAPI()
 
-# Add CORS middleware
+# CORS setup
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, replace with your frontend URL
+    allow_origins=["*"],  # Replace with frontend origin in prod
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Configure Google API
+# Google API config
 API_KEY = os.getenv("GOOGLE_API_KEY")
 if API_KEY:
     genai.configure(api_key=API_KEY)
 
-# Initialize the agent
+# Agent initialization
 def initialize_agent():
     return Agent(
         name="Video AI Summarizer",
@@ -40,46 +41,50 @@ def initialize_agent():
         markdown=True,
     )
 
-## Initialize the agent
 multimodal_Agent = initialize_agent()
 
-# Big Buck Bunny video URL
+# Video URL
 BIG_BUCK_BUNNY_URL = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
 
-# Global variable to store processed video
-processed_video_cache = None
+# Video cache {video_hash: processed_file}
+processed_video_cache = {}
+
+def get_video_hash(video_bytes: bytes) -> str:
+    return hashlib.sha256(video_bytes).hexdigest()
 
 def download_and_process_video():
-    """Download Big Buck Bunny video and process it for AI analysis"""
-    global processed_video_cache
-    
-    if processed_video_cache is not None:
-        return processed_video_cache
-    
+    """Downloads and processes video only if not already cached."""
     try:
-        # Download the video
+        # Download video
         response = requests.get(BIG_BUCK_BUNNY_URL)
         response.raise_for_status()
-        
-        # Create temporary file
+        video_bytes = response.content
+
+        # Compute hash of video
+        video_hash = get_video_hash(video_bytes)
+
+        if video_hash in processed_video_cache:
+            return processed_video_cache[video_hash]
+
+        # Save temp file
         with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as temp_video:
-            temp_video.write(response.content)
+            temp_video.write(video_bytes)
             video_path = temp_video.name
-        
+
         try:
-            # Upload and process video file
+            # Upload + poll until processed
             processed_video = upload_file(video_path)
             while processed_video.state.name == "PROCESSING":
                 time.sleep(3)
                 processed_video = get_file(processed_video.name)
-            
-            processed_video_cache = processed_video
+
+            # Cache the result
+            processed_video_cache[video_hash] = processed_video
             return processed_video
-            
+
         finally:
-            # Clean up temporary file
             Path(video_path).unlink(missing_ok=True)
-            
+
     except Exception as error:
         raise HTTPException(status_code=500, detail=f"Error processing video: {str(error)}")
 
@@ -91,10 +96,8 @@ class ChatRequest(BaseModel):
 @app.post("/api/chat/tree-io")
 async def chat_with_tree_io(request: ChatRequest):
     try:
-        # Get or process the video
         processed_video = download_and_process_video()
-        
-        # Create analysis prompt similar to the Streamlit version
+
         analysis_prompt = f"""
         Analyze the uploaded video for content and context.
         
@@ -111,17 +114,16 @@ async def chat_with_tree_io(request: ChatRequest):
         
         Do not respond to anything not relevant to the current movie/show or general entertainment topics.
         """
-        
-        # AI agent processing with video
+
         response = multimodal_Agent.run(analysis_prompt, videos=[processed_video])
-        
+
         return {
             "success": True,
             "response": response.content,
             "user": "Tree.io",
             "video_url": BIG_BUCK_BUNNY_URL
         }
-        
+
     except Exception as error:
         raise HTTPException(status_code=500, detail=f"Error processing request: {str(error)}")
 
