@@ -54,7 +54,7 @@ export function FeaturedSection({ movie, onStartWatching, onStartQuiz, quizLocke
   const currentMovie = featuredMovies[currentIndex]
 
   return (
-    <div className="relative h-[80vh] overflow-hidden">
+    <div className="relative inset-0 h-screen w-screen overflow-hidden z-0">
       {/* Background Images with Smooth Transitions */}
       <AnimatePresence mode="wait">
         <motion.div
@@ -63,14 +63,15 @@ export function FeaturedSection({ movie, onStartWatching, onStartQuiz, quizLocke
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
           transition={{ duration: 0.8, ease: "easeInOut" }}
-          className="absolute inset-0"
+          className="absolute inset-0 h-full w-full"
           onMouseEnter={() => setIsPaused(true)}
           onMouseLeave={() => setIsPaused(false)}
         >
           <img
             src={currentMovie.image || "/placeholder.svg?height=1080&width=1920"}
             alt={currentMovie.title}
-            className="w-full h-full object-cover"
+            className="w-screen h-screen object-cover absolute inset-0 left-0 top-0"
+            style={{ marginLeft: 0 }}
           />
           <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/40 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
@@ -79,7 +80,7 @@ export function FeaturedSection({ movie, onStartWatching, onStartQuiz, quizLocke
 
       {/* Main Content */}
       <div className="absolute inset-0 flex items-center z-10">
-        <div className="w-full px-8 md:px-16 lg:px-24">
+        <div className="w-full px-8 md:px-16 lg:px-24 mt-32">
           <div className="max-w-4xl">
             <AnimatePresence mode="wait">
               <motion.div
@@ -153,7 +154,7 @@ export function FeaturedSection({ movie, onStartWatching, onStartQuiz, quizLocke
                     <Button
                       onClick={() => handleQuizClick(currentMovie)}
                       disabled={quizLocked}
-                      className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 text-white font-bold px-8 py-4 text-lg rounded-xl shadow-lg hover:shadow-purple-500/25 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="bg-gradient-to-r from-blue-500 via-indigo-500 to-violet-500 hover:from-blue-400 hover:via-indigo-400 hover:to-violet-400 focus:ring-4 focus:ring-blue-300 text-white font-bold px-8 py-4 text-lg rounded-xl shadow-lg hover:shadow-blue-500/25 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Quiz Challenge
                     </Button>

@@ -267,7 +267,7 @@ export const redemptionOffers = [
   {
     id: "1",
     title: "3-Day Amazon Prime Premium",
-    description: "Get 3 days of Amazon Prime with access to exclusive content and faster delivery",
+    description: "Get 3 days of Amazon Prime with access to exclusive content",
     points: 1,
     category: "prime",
     image: "https://i0.wp.com/telechargi.com/wp-content/uploads/2023/12/amazon-prime-video-poster.png?fit=512%2C512&ssl=1",
@@ -276,7 +276,7 @@ export const redemptionOffers = [
   {
     id: "2",
     title: "7-Day Amazon Prime Premium",
-    description: "Enjoy a full week of Amazon Prime benefits including Prime Video and Music",
+    description: "Enjoy a full week of Amazon Prime benefits including Prime Video",
     points: 1000,
     category: "prime",
     image: "https://m.media-amazon.com/images/G/01/primevideo/seo/primevideo-seo-logo.png",
@@ -289,15 +289,6 @@ export const redemptionOffers = [
     points: 1500,
     category: "products",
     image: "https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=300&h=200&fit=crop&auto=format",
-    available: true,
-  },
-  {
-    id: "4",
-    title: "Echo Dot - 15% Off",
-    description: "Save 15% on Echo Dot smart speaker with Alexa",
-    points: 800,
-    category: "products",
-    image: "https://images.unsplash.com/photo-1543512214-318c7553f230?w=300&h=200&fit=crop&auto=format",
     available: true,
   },
   {

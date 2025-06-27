@@ -107,7 +107,7 @@ export default function LandingPage() {
       </div>
 
       {/* Navigation */}
-      <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrollY > 50 ? 'bg-black/80 backdrop-blur-xl border-b border-white/10' : 'bg-transparent'}`}>
+      <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrollY > 50 ? 'bg-black/80 backdrop-blur-xl ' : 'bg-transparent'}`}>
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
@@ -131,7 +131,7 @@ export default function LandingPage() {
                 <button
                   key={item}
                   onClick={() => scrollToSection(item.toLowerCase())}
-                  className="relative group text-black transition-colors duration-200"
+                  className="relative group transition-colors duration-200"
                 >
                   {item}
                   <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-orange-400 to-amber-400 group-hover:w-full transition-all duration-300" />
@@ -185,14 +185,14 @@ export default function LandingPage() {
 
       <div className="relative z-10">
         {/* Hero Section */}
-        <section className="min-h-screen flex items-center justify-center px-6 pt-20">
-          <div className="text-center max-w-6xl">
-            <div className="mb-8">
+        <section className="min-h-screen flex items-center justify-center px-6 pt-10">
+          <div className="text-center max-w-4xl">
+            {/* <div className="mb-2">
               <div className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 rounded-full px-4 py-2 mb-6">
                 <Sparkles className="w-4 h-4 text-amber-400" />
                 <span className="text-sm font-medium text-amber-300">Powered by Advanced AI</span>
               </div>
-            </div>
+            </div> */}
 
             <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold mb-8 leading-tight">
               <span className="bg-gradient-to-r from-amber-400 via-orange-500 to-red-500 bg-clip-text text-transparent animate-pulse">
@@ -210,7 +210,7 @@ export default function LandingPage() {
               and never miss a beat with <span className="text-violet-400 font-semibold">AI-powered summaries</span>.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-6 justify-center mb-16">
+            {/* <div className="flex flex-col sm:flex-row gap-6 justify-center mb-16">
               <button className="group bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-black px-8 py-4 rounded-full font-bold text-lg transition-all duration-300 hover:shadow-2xl hover:shadow-orange-500/25 hover:scale-105">
                 Start Your Journey
                 <ArrowRight className="inline ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -219,7 +219,7 @@ export default function LandingPage() {
                 <Play className="inline mr-2 w-5 h-5 group-hover:scale-110 transition-transform" />
                 Watch Demo
               </button>
-            </div>
+            </div> */}
 
             {/* Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
