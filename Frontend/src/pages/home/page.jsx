@@ -18,7 +18,7 @@ import { GamificationManager } from "@/lib/gamification"
 import { ViewingHistoryManager } from "@/lib/viewing-history"
 import { featuredMovies } from "../../components/home/content/featured-movies"
 
-const HomePage = () => {
+const HomePage = ({ startPictureInPicture }) => {
   const [user, setUser] = useState(null)
   const [isWatching, setIsWatching] = useState(false)
   const [currentWatchingMovie, setCurrentWatchingMovie] = useState(null)
@@ -167,7 +167,6 @@ const HomePage = () => {
 
     wsRef.current.on("video_state_update", (data) => {
       setSyncedVideoState(data)
-      setCurrentVideoTime(data.currentTime)
       setIsWatching(true)
       setCurrentWatchingMovie((prev) => {
         if (!prev || prev.videoUrl !== data.videoUrl) {
@@ -193,6 +192,7 @@ const HomePage = () => {
       wsRef.current.disconnect()
     }
     localStorage.removeItem("user")
+    sessionStorage.removeItem("pipState")
     navigate("/")
   }
 
@@ -419,6 +419,24 @@ const HomePage = () => {
     }
   }
 
+  const togglePictureInPicture = (movie) => {
+    if (startPictureInPicture) {
+      startPictureInPicture(
+        movie || currentWatchingMovie,
+        currentVideoTime,
+        false, // Default to paused when entering PiP
+        roomStatus,
+        roomId,
+        roomMembers,
+      )
+    }
+
+    setIsWatching(false)
+    setShowChat(false)
+    setShowReactions(false)
+    setShowRoomMembers(false)
+  }
+
   useEffect(() => {
     // Check quiz lock status on mount and when user changes
     setQuizLocked(!GamificationManager.getInstance().canAttemptQuiz())
@@ -479,7 +497,6 @@ const HomePage = () => {
                   className="relative group rounded-full p-4 shadow-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black border-2 border-amber-400/50 hover:border-amber-300 transition-all duration-300 hover:scale-110"
                 >
                   <MessageSquareIcon className="w-6 h-6" />
-                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse" />
                   <div className="absolute inset-0 rounded-full bg-gradient-to-r from-amber-400/20 to-orange-400/20 blur-xl group-hover:blur-2xl transition-all duration-300" />
                 </Button>
               </motion.div>
@@ -563,6 +580,7 @@ const HomePage = () => {
             onSeek={handleSeek}
             currentVideoTime={syncedVideoState ? syncedVideoState.currentTime : currentVideoTime}
             playing={syncedVideoState ? syncedVideoState.playing : undefined}
+            onTogglePiP={() => togglePictureInPicture()}
           />
         )}
 

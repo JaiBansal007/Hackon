@@ -237,12 +237,9 @@ export function Navbar({ user, roomStatus, roomId, isFullscreen, onCreateRoom, o
                   whileTap={{ scale: 0.95 }}
                   transition={{ type: "spring", stiffness: 400, damping: 17 }}
                 >
-                  <Button variant="ghost" className="p-0 h-14 w-14 rounded-full relative group">
                     <Avatar className="h-12 w-12 ring-2 ring-amber-400/50 group-hover:ring-amber-400 transition-all duration-300">
                       <UserInitialAvatar name={user.name} />
                     </Avatar>
-                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-black animate-pulse" />
-                  </Button>
                 </motion.div>
               </DropdownMenuTrigger>
               <DropdownMenuContent

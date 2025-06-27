@@ -14,7 +14,7 @@ import { MessageSquareIcon } from "lucide-react"
 import { AnimatePresence, motion } from "framer-motion"
 import { movieCategories } from "@/components/home/content/movie-data"
 
-const MoviePage = () => {
+const MoviePage = ({ startPictureInPicture }) => {
   const { movieId } = useParams()
   const navigate = useNavigate()
 
@@ -42,6 +42,7 @@ const MoviePage = () => {
   const [showRoomMembers, setShowRoomMembers] = useState(false)
   const [recentReactions, setRecentReactions] = useState([])
   const [currentVideoTime, setCurrentVideoTime] = useState(0)
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false)
 
   // Room functionality state
   const [roomStatus, setRoomStatus] = useState("none")
@@ -52,6 +53,35 @@ const MoviePage = () => {
   const [roomMembers, setRoomMembers] = useState([])
 
   const wsRef = useRef(null)
+  const videoPlayerRef = useRef(null)
+
+  // Check for returning from PiP
+  useEffect(() => {
+    const pipState = sessionStorage.getItem("pipState")
+    if (pipState) {
+      try {
+        const pipData = JSON.parse(pipState)
+        if (pipData.movie && pipData.movie.movieId === movieId) {
+          // Restore video state from PiP
+          setCurrentVideoTime(pipData.currentTime || 0)
+          setIsVideoPlaying(pipData.playing || false)
+
+          // Restore room state if it exists
+          if (pipData.roomStatus && pipData.roomStatus !== "none") {
+            setRoomStatus(pipData.roomStatus)
+            setRoomId(pipData.roomId)
+            setRoomMembers(pipData.roomMembers || [])
+          }
+
+          // Clear the PiP state
+          sessionStorage.removeItem("pipState")
+        }
+      } catch (error) {
+        console.error("Error parsing PiP state:", error)
+        sessionStorage.removeItem("pipState")
+      }
+    }
+  }, [movieId])
 
   // Set up movie data with the specific video URL
   useEffect(() => {
@@ -265,6 +295,10 @@ const MoviePage = () => {
     setCurrentVideoTime(time)
   }
 
+  const updateVideoPlayingState = (playing) => {
+    setIsVideoPlaying(playing)
+  }
+
   const sendMessage = async (message) => {
     console.log("📤 Sending message:", message)
 
@@ -379,6 +413,7 @@ const MoviePage = () => {
 
   // Handler to sync play
   const handlePlay = (currentTime, videoUrl) => {
+    setIsVideoPlaying(true)
     if (wsRef.current && roomStatus !== "none") {
       wsRef.current.playVideo(currentTime, videoUrl)
     }
@@ -386,6 +421,7 @@ const MoviePage = () => {
 
   // Handler to sync pause
   const handlePause = (currentTime, videoUrl) => {
+    setIsVideoPlaying(false)
     if (wsRef.current && roomStatus !== "none") {
       wsRef.current.pauseVideo(currentTime, videoUrl)
     }
@@ -395,6 +431,15 @@ const MoviePage = () => {
   const handleSeek = (currentTime, videoUrl) => {
     if (wsRef.current && roomStatus !== "none") {
       wsRef.current.seekVideo(currentTime, videoUrl)
+    }
+  }
+
+  const togglePictureInPicture = () => {
+    if (currentWatchingMovie && startPictureInPicture) {
+      startPictureInPicture(currentWatchingMovie, currentVideoTime, isVideoPlaying, roomStatus, roomId, roomMembers)
+
+      // Navigate to home
+      navigate("/home")
     }
   }
 
@@ -449,6 +494,7 @@ const MoviePage = () => {
         {/* Video Player */}
         {isWatching && (
           <VideoPlayer
+            ref={videoPlayerRef}
             key={currentWatchingMovie?.videoUrl || "video-player"}
             movie={currentWatchingMovie}
             isWatching={isWatching}
@@ -464,6 +510,7 @@ const MoviePage = () => {
             onToggleRoomMembers={() => setShowRoomMembers(!showRoomMembers)}
             onSendReaction={sendReaction}
             onTimeUpdate={updateVideoTime}
+            onPlayingStateChange={updateVideoPlayingState}
             showReactions={showReactions}
             wsRef={wsRef}
             // Video sync props
@@ -471,7 +518,10 @@ const MoviePage = () => {
             onPause={handlePause}
             onSeek={handleSeek}
             currentVideoTime={syncedVideoState ? syncedVideoState.currentTime : currentVideoTime}
-            playing={syncedVideoState ? syncedVideoState.playing : undefined}
+            playing={syncedVideoState ? syncedVideoState.playing : isVideoPlaying}
+            onTogglePiP={togglePictureInPicture}
+            initialPlaying={isVideoPlaying}
+            initialCurrentTime={currentVideoTime}
           />
         )}
 

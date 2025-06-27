@@ -151,7 +151,7 @@ export function ChatSidebar({
                   onClick={onClose}
                   variant="ghost"
                   size="sm"
-                  className="text-gray-400 hover:text-black hover:bg-gray-700/50 rounded-full"
+                  className="text-black hover:bg-gray-700/50 rounded-full"
                 >
                   <X className="w-4 h-4" />
                 </Button>

@@ -13,12 +13,11 @@ import {
   MessageCircle,
   Smile,
   UserCheck,
-  PictureInPicture,
+  PictureInPicture2,
 } from "lucide-react"
 import { FloatingReactions } from "./floating-reactions"
 import { ReactionsPanel } from "./reactions-panel"
 import { ViewingHistoryManager } from "../../../lib/viewing-history"
-import { useNavigate } from "react-router-dom"
 
 export function VideoPlayer({
   movie,
@@ -35,40 +34,38 @@ export function VideoPlayer({
   onToggleChat,
   onToggleReactions,
   onToggleRoomMembers,
+  onTogglePiP,
   onSendReaction,
   showReactions,
   wsRef,
   onPlay,
   onPause,
   onSeek,
+  onTimeUpdate,
+  onPlayingStateChange,
+  initialPlaying = false,
+  initialCurrentTime = 0,
 }) {
   const videoRef = useRef(null)
   const volumeTimeoutRef = useRef(null)
   const lastSeekRef = useRef(null)
   const progressSaveIntervalRef = useRef(null)
-  const navigate = useNavigate()
-  const [isPlaying, setIsPlaying] = useState(true)
-  const [currentTime, setCurrentTime] = useState(0)
+  const [isPlaying, setIsPlaying] = useState(initialPlaying)
+  const [currentTime, setCurrentTime] = useState(initialCurrentTime)
   const [videoDuration, setVideoDuration] = useState(0)
   const [volume, setVolume] = useState(1)
   const [isMuted, setIsMuted] = useState(false)
   const [showVolumeSlider, setShowVolumeSlider] = useState(false)
   const [hasResumed, setHasResumed] = useState(false)
-  const [isPiPSupported, setIsPiPSupported] = useState(false)
-  const [isPiPActive, setIsPiPActive] = useState(false)
 
   const viewingHistoryManager = ViewingHistoryManager.getInstance()
-
-  // Check PiP support on mount
-  useEffect(() => {
-    setIsPiPSupported(document.pictureInPictureEnabled && videoRef.current?.requestPictureInPicture)
-  }, [])
 
   useEffect(() => {
     const video = videoRef.current
     if (video) {
       const handleTimeUpdate = () => {
         setCurrentTime(video.currentTime)
+        if (onTimeUpdate) onTimeUpdate(video.currentTime)
 
         // Save progress every 10 seconds while playing
         if (!video.paused && video.duration && movie?.movieId) {
@@ -84,8 +81,12 @@ export function VideoPlayer({
         setVideoDuration(video.duration)
         video.volume = volume
 
-        // Auto-resume from saved position
-        if (movie?.movieId && !hasResumed) {
+        // Set initial time if provided
+        if (initialCurrentTime > 0) {
+          video.currentTime = initialCurrentTime
+          setCurrentTime(initialCurrentTime)
+        } else if (movie?.movieId && !hasResumed) {
+          // Auto-resume from saved position only if no initial time provided
           const resumeTime = viewingHistoryManager.getResumeTime(movie.movieId)
           if (resumeTime > 0 && resumeTime < video.duration * 0.95) {
             video.currentTime = resumeTime
@@ -96,12 +97,29 @@ export function VideoPlayer({
                 .padStart(2, "0")}`,
             )
           }
-          setHasResumed(true)
         }
+
+        // Set initial playing state - don't auto-play unless specified
+        if (initialPlaying) {
+          video.play().catch(console.error)
+          setIsPlaying(true)
+        } else {
+          video.pause()
+          setIsPlaying(false)
+        }
+
+        setHasResumed(true)
       }
 
-      const handlePlay = () => setIsPlaying(true)
-      const handlePause = () => setIsPlaying(false)
+      const handlePlay = () => {
+        setIsPlaying(true)
+        if (onPlayingStateChange) onPlayingStateChange(true)
+      }
+
+      const handlePause = () => {
+        setIsPlaying(false)
+        if (onPlayingStateChange) onPlayingStateChange(false)
+      }
 
       const handleEnded = () => {
         // Mark as completed when video ends
@@ -110,30 +128,11 @@ export function VideoPlayer({
         }
       }
 
-      // PiP event listeners
-      const handleEnterpictureinpicture = () => {
-        setIsPiPActive(true)
-        // Navigate to home page when entering PiP
-        if (window.location.pathname !== "/home") {
-          navigate("/home")
-        }
-      }
-
-      const handleLeavepictureinpicture = () => {
-        setIsPiPActive(false)
-        // Navigate back to movie page when exiting PiP
-        if (movie?.movieId && window.location.pathname !== `/movie/${movie.movieId}`) {
-          navigate(`/movie/${movie.movieId}`)
-        }
-      }
-
       video.addEventListener("timeupdate", handleTimeUpdate)
       video.addEventListener("loadedmetadata", handleLoadedMetadata)
       video.addEventListener("play", handlePlay)
       video.addEventListener("pause", handlePause)
       video.addEventListener("ended", handleEnded)
-      video.addEventListener("enterpictureinpicture", handleEnterpictureinpicture)
-      video.addEventListener("leavepictureinpicture", handleLeavepictureinpicture)
 
       return () => {
         video.removeEventListener("timeupdate", handleTimeUpdate)
@@ -141,11 +140,9 @@ export function VideoPlayer({
         video.removeEventListener("play", handlePlay)
         video.removeEventListener("pause", handlePause)
         video.removeEventListener("ended", handleEnded)
-        video.removeEventListener("enterpictureinpicture", handleEnterpictureinpicture)
-        video.removeEventListener("leavepictureinpicture", handleLeavepictureinpicture)
       }
     }
-  }, [volume, movie?.movieId, hasResumed, navigate, movie])
+  }, [volume, movie?.movieId, hasResumed, initialPlaying, initialCurrentTime, onTimeUpdate, onPlayingStateChange])
 
   // Save progress function
   const saveProgress = () => {
@@ -267,10 +264,12 @@ export function VideoPlayer({
       if (isPlaying) {
         videoRef.current.pause()
         setIsPlaying(false)
+        if (onPlayingStateChange) onPlayingStateChange(false)
         if (wsRef.current && roomStatus !== "none") wsRef.current.pause(currentVideoTime)
       } else {
         videoRef.current.play()
         setIsPlaying(true)
+        if (onPlayingStateChange) onPlayingStateChange(true)
         if (wsRef.current && roomStatus !== "none") wsRef.current.play(currentVideoTime)
       }
     }
@@ -281,6 +280,7 @@ export function VideoPlayer({
     if (videoRef.current) {
       videoRef.current.currentTime = newTime
       setCurrentTime(newTime)
+      if (onTimeUpdate) onTimeUpdate(newTime)
       if (wsRef.current && roomStatus !== "none") wsRef.current.seek(newTime)
       // Save progress immediately when user seeks
       setTimeout(saveProgress, 100)
@@ -321,21 +321,6 @@ export function VideoPlayer({
     volumeTimeoutRef.current = setTimeout(() => setShowVolumeSlider(false), 300)
   }
 
-  // Picture-in-Picture functionality
-  const togglePictureInPicture = async () => {
-    if (!videoRef.current || !isPiPSupported) return
-
-    try {
-      if (isPiPActive) {
-        await document.exitPictureInPicture()
-      } else {
-        await videoRef.current.requestPictureInPicture()
-      }
-    } catch (error) {
-      console.error("Error toggling Picture-in-Picture:", error)
-    }
-  }
-
   // Handle user play/pause/seek events
   const handlePlay = () => {
     if (onPlay && videoRef.current) {
@@ -371,7 +356,6 @@ export function VideoPlayer({
           ref={videoRef}
           src={movie?.videoUrl}
           className="w-full h-full object-cover"
-          autoPlay
           controls={false}
           poster={movie.image}
           onPlay={handlePlay}
@@ -489,20 +473,13 @@ export function VideoPlayer({
               >
                 <MessageCircle className="w-5 h-5" />
               </Button>
-              {isPiPSupported && (
-                <Button
-                  onClick={togglePictureInPicture}
-                  size="sm"
-                  className={`border-none backdrop-blur-sm ${
-                    isPiPActive
-                      ? "bg-orange-500/30 hover:bg-orange-500/40 text-orange-400"
-                      : "bg-white/20 hover:bg-white/30 text-black"
-                  }`}
-                  title={isPiPActive ? "Exit Picture-in-Picture" : "Enter Picture-in-Picture"}
-                >
-                  <PictureInPicture className="w-5 h-5" />
-                </Button>
-              )}
+              <Button
+                onClick={onTogglePiP}
+                size="sm"
+                className="bg-white/20 hover:bg-white/30 text-black border-none backdrop-blur-sm"
+              >
+                <PictureInPicture2 className="w-5 h-5" />
+              </Button>
               <Button
                 onClick={onToggleFullscreen}
                 size="sm"
@@ -527,20 +504,6 @@ export function VideoPlayer({
               Room {roomId} • {roomStatus === "host" ? "HOST" : "MEMBER"}
             </span>
           </div>
-        )}
-
-        {/* Picture-in-Picture Status Indicator */}
-        {isPiPActive && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="absolute top-4 right-4 bg-orange-500/90 backdrop-blur-sm px-3 py-2 rounded-lg border border-orange-400/50"
-          >
-            <div className="flex items-center space-x-2">
-              <PictureInPicture className="w-4 h-4 text-white" />
-              <span className="text-white text-sm font-medium">Picture-in-Picture Active</span>
-            </div>
-          </motion.div>
         )}
       </div>
     </motion.div>
