@@ -17,15 +17,6 @@ export function MovieCategories({ onStartWatching }) {
     navigate(`/movie/${movieSlug}`)
   }
 
-  const handleQuizClick = (movie, e) => {
-    e.stopPropagation()
-    const movieSlug = movie.title
-      .toLowerCase()
-      .replace(/\s+/g, "-")
-      .replace(/[^\w-]/g, "")
-    navigate(`/quiz/${movieSlug}`)
-  }
-
   return (
     <>
       <style jsx>{`
@@ -94,12 +85,6 @@ export function MovieCategories({ onStartWatching }) {
                           >
                             More Info
                           </Button>
-                          <button
-                            onClick={(e) => handleQuizClick(movie, e)}
-                            className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black px-3 py-1 rounded-full text-xs font-semibold hover:from-yellow-500 hover:to-orange-600 transition-all"
-                          >
-                            Quiz
-                          </button>
                         </div>
                       </div>
                     </div>

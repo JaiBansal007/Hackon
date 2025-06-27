@@ -75,7 +75,7 @@ export default function RedeemPage() {
   }
 
   return (
-    <div className="min-h-screen w-screen bg-gradient-to-br from-slate-950 via-gray-900 to-black text-white relative overflow-hidden">
+    <div className="min-h-screen w-[98.8vw] bg-gradient-to-br from-slate-950 via-gray-900 to-black text-white relative overflow-hidden">
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-10 left-10 w-72 h-72 bg-yellow-400/10 rounded-full blur-3xl animate-pulse" />
@@ -95,10 +95,17 @@ export default function RedeemPage() {
             whileTap={{ scale: 0.95 }}
             className="order-1 lg:order-1"
           >
-            <Link to="/home" className="flex items-center space-x-2">
-            <ArrowLeft className="w-5 h-5 text-orange-400" />
-            <span className="text-orange-400 hover:text-orange-300">Back to Home</span>
-          </Link>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Link
+              to="/home"
+              className="flex items-center space-x-3 group bg-gray-800/50 backdrop-blur-sm px-6 py-3 rounded-xl border border-amber-500/20 hover:border-amber-500/40 transition-all duration-300"
+            >
+              <ArrowLeft className="w-5 h-5 text-amber-400 group-hover:text-amber-300 transition-colors" />
+              <span className="text-amber-400 group-hover:text-amber-300 font-medium transition-colors">
+                Back to Home
+              </span>
+            </Link>
+          </motion.div>
           </motion.div>
 
           <div className="text-center order-3 lg:order-2 w-full lg:w-auto">
@@ -329,7 +336,6 @@ export default function RedeemPage() {
                           ) : canRedeem(offer) ? (
                             <span className="flex items-center justify-center space-x-1 sm:space-x-2">
                               <span>Redeem Now</span>
-                              <Zap className="w-3 h-3 sm:w-4 sm:h-4 group-hover:scale-110 transition-transform duration-200" />
                             </span>
                           ) : (
                             <span className="flex items-center justify-center space-x-1 sm:space-x-2">

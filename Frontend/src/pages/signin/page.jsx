@@ -19,7 +19,7 @@ export default function SignInPage() {
   }
 
   return (
-    <div className="min-h-screen w-screen flex bg-black">
+    <div className="min-h-screen w-[98.8vw] flex bg-black">
       {/* Left Side - Image and Features */}
       <div className="hidden lg:flex lg:w-2/3 bg-gradient-to-br from-gray-900 via-black to-gray-800 p-12 flex-col justify-center relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/5 via-orange-500/5 to-blue-500/5" />

@@ -12,7 +12,7 @@ import { ChatSidebar } from "@/components/home/chat/chat-sidebar"
 import { RoomMembersSidebar } from "@/components/home/room/room-members-sidebar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { MessageSquareIcon } from "lucide-react"
+import { MessageSquareIcon, Users, Crown } from "lucide-react"
 import { AnimatePresence, motion } from "framer-motion"
 import { GamificationManager } from "@/lib/gamification"
 import { ViewingHistoryManager } from "@/lib/viewing-history"
@@ -428,7 +428,13 @@ const HomePage = () => {
 
   return (
     <>
-      {/* Show Navbar only when not watching */}
+      {/* Enhanced Background with Gradient Overlay */}
+      <div className="fixed inset-0 bg-gradient-to-br from-black via-gray-900 to-black">
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-900/20 via-transparent to-transparent" />
+      </div>
+
+      {/* Show Enhanced Navbar only when not watching */}
       {!isWatching && (
         <Navbar
           user={user}
@@ -441,8 +447,9 @@ const HomePage = () => {
           onLogout={handleLogout}
         />
       )}
-      <div className="relative w-full h-full min-h-screen bg-gray-950 text-white overflow-x-hidden flex">
-        {/* Sidebar */}
+
+      <div className="relative w-full h-full min-h-screen text-white overflow-x-hidden flex">
+        {/* Enhanced Sidebar */}
         <Sidebar
           user={user}
           roomStatus={roomStatus}
@@ -451,34 +458,80 @@ const HomePage = () => {
           isWatching={isWatching}
         />
 
-        {/* Main content */}
-        <div className={`flex-1 ${!isFullscreen ? "ml-16" : ""} min-w-0`}>
+        {/* Main content with enhanced styling */}
+        <div className={`flex-1 ${!isFullscreen ? "ml-16" : ""} min-w-0 relative z-10`}>
           <div
-            className={`transition-all duration-300
-              ${!isFullscreen ? "pt-20" : ""}
+            className={`transition-all duration-500 ease-in-out
+              ${!isFullscreen ? "pt-16" : ""}
               ${(showChat || showRoomMembers) && isWatching && !isFullscreen ? "mr-80" : ""}
             `}
           >
-            {/* Chat toggle button */}
+            {/* Enhanced Chat toggle button */}
             {!isFullscreen && (
-              <Button
-                onClick={() => setShowChat(!showChat)}
-                variant="secondary"
-                className="fixed bottom-4 text-black right-4 z-50 rounded-full p-3 shadow-lg"
+              <motion.div
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.5, type: "spring", stiffness: 200 }}
+                className="fixed bottom-6 right-6 z-50"
               >
-                <MessageSquareIcon className="w-5 h-5" />
-              </Button>
+                <Button
+                  onClick={() => setShowChat(!showChat)}
+                  className="relative group rounded-full p-4 shadow-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black border-2 border-amber-400/50 hover:border-amber-300 transition-all duration-300 hover:scale-110"
+                >
+                  <MessageSquareIcon className="w-6 h-6" />
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse" />
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-r from-amber-400/20 to-orange-400/20 blur-xl group-hover:blur-2xl transition-all duration-300" />
+                </Button>
+              </motion.div>
             )}
 
             {!isWatching && (
-              <div className="grid grid-cols-1 gap-10 px-4 py-8 md:px-12 lg:px-24">
-                <FeaturedSection
-                  movie={currentFeatured}
-                  onStartWatching={startWatching}
-                  onStartQuiz={startQuiz}
-                  quizLocked={quizLocked}
-                />
-                <MovieCategories onStartWatching={startWatching} onStartQuiz={startQuiz} quizLocked={quizLocked} />
+              <div className="relative">
+                {/* Enhanced content grid with better spacing */}
+                <div className="grid grid-cols-1 gap-8 px-6 py-8 md:px-8 lg:px-12 max-w-none">
+                  {/* Room Status Banner */}
+                  {roomStatus !== "none" && (
+                    <motion.div
+                      initial={{ y: -50, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/10 border border-amber-500/30 backdrop-blur-sm mx-2"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-amber-500/5 to-orange-500/5" />
+                      <div className="relative p-6 flex items-center justify-between">
+                        <div className="flex items-center space-x-4">
+                          {roomStatus === "host" ? (
+                            <Crown className="w-8 h-8 text-amber-400" />
+                          ) : (
+                            <Users className="w-8 h-8 text-amber-400" />
+                          )}
+                          <div>
+                            <h3 className="text-xl font-bold text-white">
+                              {roomStatus === "host" ? "Hosting Room" : "In Room"}
+                            </h3>
+                            <p className="text-amber-200">
+                              Room ID: <span className="font-mono text-amber-400">{roomId}</span>
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-3">
+                          <div className="flex items-center space-x-2 text-amber-200">
+                            <Users className="w-5 h-5" />
+                            <span className="font-semibold">{roomMembers.length}</span>
+                          </div>
+                          <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse" />
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  <FeaturedSection
+                    movie={currentFeatured}
+                    onStartWatching={startWatching}
+                    onStartQuiz={startQuiz}
+                    quizLocked={quizLocked}
+                  />
+                  <MovieCategories onStartWatching={startWatching} onStartQuiz={startQuiz} quizLocked={quizLocked} />
+                </div>
               </div>
             )}
           </div>
@@ -513,7 +566,7 @@ const HomePage = () => {
           />
         )}
 
-        {/* Chat sidebar */}
+        {/* Enhanced Chat sidebar */}
         <ChatSidebar
           show={showChat}
           onClose={() => setShowChat(false)}
@@ -524,7 +577,7 @@ const HomePage = () => {
           user={user}
         />
 
-        {/* Room Members Sidebar */}
+        {/* Enhanced Room Members Sidebar */}
         <RoomMembersSidebar
           show={showRoomMembers && roomStatus !== "none"}
           onClose={() => setShowRoomMembers(false)}
@@ -533,85 +586,122 @@ const HomePage = () => {
           roomStatus={roomStatus}
         />
 
-        {/* Create Room Dialog */}
+        {/* Enhanced Create Room Dialog */}
         <AnimatePresence>
           {showCreateDialog && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+              className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
             >
               <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                className="bg-gray-900 p-6 rounded-lg max-w-md w-full mx-4"
+                initial={{ scale: 0.8, opacity: 0, y: 50 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.8, opacity: 0, y: 50 }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-black to-gray-900 border border-amber-500/30 rounded-3xl max-w-md w-full shadow-2xl"
               >
-                <h3 className="text-xl font-bold mb-4 text-white">Create Room</h3>
-                <p className="text-gray-300 mb-6">
-                  Create a room to watch with friends. You'll get a unique room ID to share.
-                </p>
-                <div className="flex space-x-4">
-                  <Button
-                    onClick={createRoom}
-                    className="flex-1 bg-gradient-to-r from-yellow-400 to-orange-500 text-black hover:from-yellow-500 hover:to-orange-600"
-                  >
-                    Create Room
-                  </Button>
-                  <Button
-                    onClick={() => setShowCreateDialog(false)}
-                    variant="outline"
-                    className="flex-1 border-gray-600 text-white hover:bg-gray-800"
-                  >
-                    Cancel
-                  </Button>
+                {/* Animated background */}
+                <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 via-orange-500/5 to-amber-500/5" />
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-400 via-orange-500 to-amber-400" />
+
+                <div className="relative p-8">
+                  <div className="flex items-center space-x-3 mb-6">
+                    <div className="p-3 rounded-full bg-gradient-to-r from-amber-500/20 to-orange-500/20">
+                      <Crown className="w-6 h-6 text-amber-400" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-white">Create Room</h3>
+                  </div>
+
+                  <p className="text-gray-300 mb-8 leading-relaxed">
+                    Create a premium watch party room to enjoy movies with friends. You'll receive a unique room ID to
+                    share.
+                  </p>
+
+                  <div className="flex space-x-4">
+                    <Button
+                      onClick={createRoom}
+                      className="flex-1 h-12 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black font-semibold rounded-xl transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-amber-500/25"
+                    >
+                      <Crown className="w-5 h-5 mr-2" />
+                      Create Room
+                    </Button>
+                    <Button
+                      onClick={() => setShowCreateDialog(false)}
+                      variant="outline"
+                      className="flex-1 h-12 border-2 border-gray-600 hover:border-amber-500/50 text-black hover:bg-amber-500/10 rounded-xl transition-all duration-300"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
                 </div>
               </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Join Room Dialog */}
+        {/* Enhanced Join Room Dialog */}
         <AnimatePresence>
           {showJoinDialog && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+              className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
             >
               <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                className="bg-gray-900 p-6 rounded-lg max-w-md w-full mx-4"
+                initial={{ scale: 0.8, opacity: 0, y: 50 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.8, opacity: 0, y: 50 }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-black to-gray-900 border border-amber-500/30 rounded-3xl max-w-md w-full shadow-2xl"
               >
-                <h3 className="text-xl font-bold mb-4 text-white">Join Room</h3>
-                <p className="text-gray-300 mb-4">Enter the room ID shared by your friend:</p>
-                <Input
-                  value={joinRoomId}
-                  onChange={(e) => setJoinRoomId(e.target.value.toUpperCase())}
-                  placeholder="Enter Room ID"
-                  className="mb-6 bg-gray-800 border-gray-600 text-white"
-                />
-                <div className="flex space-x-4">
-                  <Button
-                    onClick={joinRoom}
-                    className="flex-1 bg-gradient-to-r from-blue-400 to-blue-600 text-white hover:from-blue-500 hover:to-blue-700"
-                  >
-                    Join Room
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      setShowJoinDialog(false)
-                      setJoinRoomId("")
-                    }}
-                    variant="outline"
-                    className="flex-1 border-gray-600 text-white hover:bg-gray-800"
-                  >
-                    Cancel
-                  </Button>
+                {/* Animated background */}
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-blue-500/5" />
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 via-purple-500 to-blue-400" />
+
+                <div className="relative p-8">
+                  <div className="flex items-center space-x-3 mb-6">
+                    <div className="p-3 rounded-full bg-gradient-to-r from-blue-500/20 to-purple-500/20">
+                      <Users className="w-6 h-6 text-blue-400" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-white">Join Room</h3>
+                  </div>
+
+                  <p className="text-gray-300 mb-6 leading-relaxed">
+                    Enter the room ID shared by your friend to join their watch party:
+                  </p>
+
+                  <div className="relative mb-8">
+                    <Input
+                      value={joinRoomId}
+                      onChange={(e) => setJoinRoomId(e.target.value.toUpperCase())}
+                      placeholder="Enter Room ID"
+                      className="h-12 bg-gray-800/50 border-2 border-gray-600 focus:border-blue-500 text-white text-center text-lg font-mono tracking-wider rounded-xl transition-all duration-300"
+                    />
+                    <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-500/10 to-purple-500/10 pointer-events-none" />
+                  </div>
+
+                  <div className="flex space-x-4">
+                    <Button
+                      onClick={joinRoom}
+                      className="flex-1 h-12 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-400 hover:to-purple-500 text-white font-semibold rounded-xl transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-blue-500/25"
+                    >
+                      <Users className="w-5 h-5 mr-2" />
+                      Join Room
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        setShowJoinDialog(false)
+                        setJoinRoomId("")
+                      }}
+                      variant="outline"
+                      className="flex-1 h-12 border-2 border-gray-600 hover:border-blue-500/50 text-black hover:bg-blue-500/10 rounded-xl transition-all duration-300"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
                 </div>
               </motion.div>
             </motion.div>

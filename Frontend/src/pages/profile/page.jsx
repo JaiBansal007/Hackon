@@ -2,9 +2,25 @@
 
 import { useState, useEffect } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "../../components/ui/button"
-import { ArrowLeft, Coins, Flame, Trophy, Calendar, Gift, TrendingUp, Play, Clock, Eye, Trash2 } from "lucide-react"
+import {
+  ArrowLeft,
+  Coins,
+  Flame,
+  Trophy,
+  Calendar,
+  Gift,
+  TrendingUp,
+  Play,
+  Clock,
+  Eye,
+  Trash2,
+  Star,
+  Award,
+  Target,
+  Zap,
+} from "lucide-react"
 import { GamificationManager } from "../../lib/gamification"
 import { ViewingHistoryManager } from "../../lib/viewing-history"
 
@@ -102,350 +118,469 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen w-screen bg-black text-white">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <Link to="/home" className="flex items-center space-x-2">
-            <ArrowLeft className="w-5 h-5 text-orange-400" />
-            <span className="text-orange-400 hover:text-orange-300">Back to Home</span>
-          </Link>
+    <div className="min-h-screen w-[98.8vw] bg-gradient-to-br from-black via-gray-900 to-black text-white">
+      {/* Enhanced Background */}
+      <div className="fixed inset-0 bg-gradient-to-br from-black via-gray-900 to-black">
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-900/20 via-transparent to-transparent" />
+      </div>
+
+      <div className="relative z-10 container mx-auto px-6 py-8 max-w-7xl">
+        {/* Enhanced Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -30 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center justify-between mb-12"
+        >
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Link
+              to="/home"
+              className="flex items-center space-x-3 group bg-gray-800/50 backdrop-blur-sm px-6 py-3 rounded-xl border border-amber-500/20 hover:border-amber-500/40 transition-all duration-300"
+            >
+              <ArrowLeft className="w-5 h-5 text-amber-400 group-hover:text-amber-300 transition-colors" />
+              <span className="text-amber-400 group-hover:text-amber-300 font-medium transition-colors">
+                Back to Home
+              </span>
+            </Link>
+          </motion.div>
 
           <div className="text-center">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
+            <motion.h1
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-amber-400 via-orange-500 to-amber-400 bg-clip-text text-transparent mb-2"
+            >
               Your Profile
-            </h1>
-            <p className="text-gray-400">Track your progress and achievements</p>
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="text-gray-400 text-lg"
+            >
+              Track your progress and achievements
+            </motion.p>
           </div>
 
-          <div className="flex items-center space-x-2 bg-gradient-to-r from-yellow-400/20 to-orange-500/20 rounded-lg px-4 py-2 border border-yellow-400/30">
-            <Coins className="w-5 h-5 text-yellow-400" />
-            <span className="text-white font-bold">{userStats.totalPoints.toLocaleString()}</span>
-          </div>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-gradient-to-r from-yellow-400/20 to-orange-500/20 rounded-xl p-6 border border-yellow-400/30"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.3 }}
+            className="flex items-center space-x-3 bg-gradient-to-r from-amber-500/20 to-orange-500/20 backdrop-blur-sm rounded-xl px-6 py-4 border border-amber-500/30"
           >
-            <div className="flex items-center space-x-3 mb-2">
-              <Coins className="w-8 h-8 text-yellow-400" />
-              <div>
-                <p className="text-2xl font-bold text-white">{userStats.totalPoints.toLocaleString()}</p>
-                <p className="text-yellow-400 text-sm">Total Points</p>
-              </div>
+            <div className="p-2 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full">
+              <Coins className="w-6 h-6 text-black" />
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-white">{userStats.totalPoints.toLocaleString()}</div>
+              <div className="text-amber-300 text-sm font-medium">Total Points</div>
             </div>
           </motion.div>
+        </motion.div>
 
+        {/* Enhanced Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-gradient-to-r from-orange-400/20 to-red-500/20 rounded-xl p-6 border border-orange-400/30"
+            whileHover={{ scale: 1.02, y: -5 }}
+            className="relative overflow-hidden bg-gradient-to-br from-amber-500/10 via-orange-500/10 to-amber-500/10 backdrop-blur-sm rounded-2xl p-8 border border-amber-500/20 group"
           >
-            <div className="flex items-center space-x-3 mb-2">
-              <Flame className="w-8 h-8 text-orange-400" />
-              <div>
-                <p className="text-2xl font-bold text-white">{userStats.currentStreak}</p>
-                <p className="text-orange-400 text-sm">Current Streak</p>
+            <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-orange-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div className="relative flex items-center space-x-4">
+              <div className="p-4 bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl shadow-lg">
+                <Coins className="w-8 h-8 text-black" />
               </div>
+              <div>
+                <p className="text-3xl font-bold text-white mb-1">{userStats.totalPoints.toLocaleString()}</p>
+                <p className="text-amber-300 font-medium">Total Points</p>
+              </div>
+            </div>
+            <div className="absolute top-4 right-4">
+              <Zap className="w-6 h-6 text-amber-400/30" />
             </div>
           </motion.div>
 
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="bg-gradient-to-r from-green-400/20 to-emerald-500/20 rounded-xl p-6 border border-green-400/30"
+            whileHover={{ scale: 1.02, y: -5 }}
+            className="relative overflow-hidden bg-gradient-to-br from-orange-500/10 via-red-500/10 to-orange-500/10 backdrop-blur-sm rounded-2xl p-8 border border-orange-500/20 group"
           >
-            <div className="flex items-center space-x-3 mb-2">
-              <TrendingUp className="w-8 h-8 text-green-400" />
-              <div>
-                <p className="text-2xl font-bold text-white">{userStats.longestStreak}</p>
-                <p className="text-green-400 text-sm">Longest Streak</p>
+            <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-red-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div className="relative flex items-center space-x-4">
+              <div className="p-4 bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl shadow-lg">
+                <Flame className="w-8 h-8 text-white" />
               </div>
+              <div>
+                <p className="text-3xl font-bold text-white mb-1">{userStats.currentStreak}</p>
+                <p className="text-orange-300 font-medium">Current Streak</p>
+              </div>
+            </div>
+            <div className="absolute top-4 right-4">
+              <Target className="w-6 h-6 text-orange-400/30" />
             </div>
           </motion.div>
 
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="bg-gradient-to-r from-blue-400/20 to-purple-500/20 rounded-xl p-6 border border-blue-400/30"
+            whileHover={{ scale: 1.02, y: -5 }}
+            className="relative overflow-hidden bg-gradient-to-br from-green-500/10 via-emerald-500/10 to-green-500/10 backdrop-blur-sm rounded-2xl p-8 border border-green-500/20 group"
           >
-            <div className="flex items-center space-x-3 mb-2">
-              <Eye className="w-8 h-8 text-blue-400" />
-              <div>
-                <p className="text-2xl font-bold text-white">{viewingHistory.length}</p>
-                <p className="text-blue-400 text-sm">Movies Watched</p>
+            <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div className="relative flex items-center space-x-4">
+              <div className="p-4 bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl shadow-lg">
+                <TrendingUp className="w-8 h-8 text-white" />
               </div>
+              <div>
+                <p className="text-3xl font-bold text-white mb-1">{userStats.longestStreak}</p>
+                <p className="text-green-300 font-medium">Longest Streak</p>
+              </div>
+            </div>
+            <div className="absolute top-4 right-4">
+              <Award className="w-6 h-6 text-green-400/30" />
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            whileHover={{ scale: 1.02, y: -5 }}
+            className="relative overflow-hidden bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-blue-500/10 backdrop-blur-sm rounded-2xl p-8 border border-blue-500/20 group"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div className="relative flex items-center space-x-4">
+              <div className="p-4 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl shadow-lg">
+                <Eye className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <p className="text-3xl font-bold text-white mb-1">{viewingHistory.length}</p>
+                <p className="text-blue-300 font-medium">Movies Watched</p>
+              </div>
+            </div>
+            <div className="absolute top-4 right-4">
+              <Star className="w-6 h-6 text-blue-400/30" />
             </div>
           </motion.div>
         </div>
 
-        {/* Tabs */}
-        <div className="flex space-x-2 mb-6">
-          <Button
-            onClick={() => setActiveTab("activity")}
-            variant={activeTab === "activity" ? "default" : "outline"}
-            className={`text-black ${
-              activeTab === "activity"
-                ? "bg-gradient-to-r from-yellow-400 to-orange-500 text-black"
-                : "border-gray-600 hover:bg-gray-800"
-            }`}
-          >
-            Point Activity
-          </Button>
-          <Button
-            onClick={() => setActiveTab("viewing")}
-            variant={activeTab === "viewing" ? "default" : "outline"}
-            className={`text-black ${
-              activeTab === "viewing"
-                ? "bg-gradient-to-r from-yellow-400 to-orange-500 text-black"
-                : "border-gray-600 hover:bg-gray-800"
-            }`}
-          >
-            Viewing History ({viewingHistory.length})
-          </Button>
-          <Button
-            onClick={() => setActiveTab("redemptions")}
-            variant={activeTab === "redemptions" ? "default" : "outline"}
-            className={`text-black ${
-              activeTab === "redemptions"
-                ? "bg-gradient-to-r from-yellow-400 to-orange-500 text-black"
-                : "border-gray-600 hover:bg-gray-800"
-            }`}
-          >
-            Redemption History
-          </Button>
-        </div>
-
-        {/* Content */}
+        {/* Enhanced Tabs */}
         <motion.div
-          key={activeTab}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gray-900/50 rounded-xl p-6"
+          transition={{ delay: 0.5 }}
+          className="flex flex-wrap gap-3 mb-8 p-2 bg-gray-800/30 backdrop-blur-sm rounded-2xl border border-gray-700/50"
         >
-          {activeTab === "activity" ? (
-            <div>
-              <h2 className="text-xl font-bold text-white mb-6">Your Point Activity</h2>
+          {[
+            { id: "activity", label: "Point Activity", icon: Coins },
+            { id: "viewing", label: `Viewing History (${viewingHistory.length})`, icon: Eye },
+            { id: "redemptions", label: "Redemption History", icon: Gift },
+          ].map((tab) => (
+            <motion.button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className={`flex items-center space-x-3 px-6 py-4 rounded-xl font-semibold transition-all duration-300 ${
+                activeTab === tab.id
+                  ? "bg-gradient-to-r from-amber-500 to-orange-500 text-black shadow-lg"
+                  : "text-black hover:bg-gray-700/50"
+              }`}
+            >
+              <tab.icon className="w-5 h-5" />
+              <span>{tab.label}</span>
+            </motion.button>
+          ))}
+        </motion.div>
 
-              {pointHistory.length === 0 ? (
-                <div className="text-center py-12">
-                  <Coins className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                  <h3 className="text-xl font-bold text-gray-400 mb-2">No activity yet</h3>
-                  <p className="text-gray-500">Start watching movies and taking quizzes to earn points!</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {pointHistory.map((activity, index) => (
-                    <motion.div
-                      key={activity.id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                      className="flex items-center space-x-4 p-4 bg-gray-800/50 rounded-lg hover:bg-gray-800/70 transition-colors"
-                    >
-                      <div
-                        className={`w-12 h-12 rounded-full bg-gradient-to-r ${getActivityColor(activity.type)} flex items-center justify-center flex-shrink-0`}
-                      >
-                        {getActivityIcon(activity.type)}
-                      </div>
+        {/* Enhanced Content */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -30 }}
+            transition={{ duration: 0.3 }}
+            className="bg-gray-900/30 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/30"
+          >
+            {activeTab === "activity" ? (
+              <div>
+                <h2 className="text-2xl font-bold text-white mb-8 flex items-center space-x-3">
+                  <Coins className="w-7 h-7 text-amber-400" />
+                  <span>Your Point Activity</span>
+                </h2>
 
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center space-x-2 mb-1">
-                          <span className="text-sm text-gray-400 uppercase tracking-wide">
-                            {activity.type.replace("_", " ")}
-                          </span>
-                        </div>
-                        <p className="text-white font-medium">{activity.description}</p>
-                        <p className="text-sm text-gray-500">{formatDate(activity.date)}</p>
-                      </div>
-
-                      <div className="text-right">
-                        <div className={`text-lg font-bold ${activity.points > 0 ? "text-green-400" : "text-red-400"}`}>
-                          {activity.points > 0 ? "+" : ""}
-                          {activity.points}
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ) : activeTab === "viewing" ? (
-            <div>
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-white">Your Viewing History</h2>
-                {viewingHistory.length > 0 && (
-                  <Button
-                    onClick={() => {
-                      viewingHistoryManager.clearHistory()
-                      setViewingHistory([])
-                    }}
-                    variant="outline"
-                    className="border-red-600 text-red-400 hover:bg-red-600 text-sm"
+                {pointHistory.length === 0 ? (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="text-center py-16"
                   >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Clear All
-                  </Button>
+                    <div className="p-6 bg-gradient-to-r from-amber-500/10 to-orange-500/10 rounded-full w-32 h-32 mx-auto mb-6 flex items-center justify-center">
+                      <Coins className="w-16 h-16 text-amber-400" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-300 mb-4">No activity yet</h3>
+                    <p className="text-gray-500 text-lg mb-6">
+                      Start watching movies and taking quizzes to earn points!
+                    </p>
+                    <Button
+                      onClick={() => navigate("/home")}
+                      className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black font-bold px-8 py-4 rounded-xl"
+                    >
+                      Start Earning Points
+                    </Button>
+                  </motion.div>
+                ) : (
+                  <div className="space-y-4">
+                    {pointHistory.map((activity, index) => (
+                      <motion.div
+                        key={activity.id}
+                        initial={{ opacity: 0, x: -30 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        whileHover={{ scale: 1.01, x: 5 }}
+                        className="flex items-center space-x-6 p-6 bg-gray-800/40 backdrop-blur-sm rounded-xl hover:bg-gray-800/60 transition-all duration-300 border border-gray-700/30"
+                      >
+                        <div
+                          className={`w-16 h-16 rounded-2xl bg-gradient-to-r ${getActivityColor(
+                            activity.type,
+                          )} flex items-center justify-center flex-shrink-0 shadow-lg`}
+                        >
+                          {getActivityIcon(activity.type)}
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center space-x-3 mb-2">
+                            <span className="text-sm text-gray-400 uppercase tracking-wider font-semibold px-3 py-1 bg-gray-700/50 rounded-full">
+                              {activity.type.replace("_", " ")}
+                            </span>
+                          </div>
+                          <p className="text-white font-semibold text-lg mb-1">{activity.description}</p>
+                          <p className="text-gray-400">{formatDate(activity.date)}</p>
+                        </div>
+
+                        <div className="text-right">
+                          <div
+                            className={`text-2xl font-bold ${activity.points > 0 ? "text-green-400" : "text-red-400"}`}
+                          >
+                            {activity.points > 0 ? "+" : ""}
+                            {activity.points}
+                          </div>
+                          <div className="text-sm text-gray-500">points</div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
                 )}
               </div>
+            ) : activeTab === "viewing" ? (
+              <div>
+                <div className="flex items-center justify-between mb-8">
+                  <h2 className="text-2xl font-bold text-white flex items-center space-x-3">
+                    <Eye className="w-7 h-7 text-blue-400" />
+                    <span>Your Viewing History</span>
+                  </h2>
+                  {viewingHistory.length > 0 && (
+                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                      <Button
+                        onClick={() => {
+                          viewingHistoryManager.clearHistory()
+                          setViewingHistory([])
+                        }}
+                        className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-400 hover:to-red-500 text-white font-semibold px-6 py-3 rounded-xl"
+                      >
+                        <Trash2 className="w-5 h-5 mr-2" />
+                        Clear All
+                      </Button>
+                    </motion.div>
+                  )}
+                </div>
 
-              {viewingHistory.length === 0 ? (
-                <div className="text-center py-12">
-                  <Eye className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                  <h3 className="text-xl font-bold text-gray-400 mb-2">No viewing history yet</h3>
-                  <p className="text-gray-500">Start watching movies to build your viewing history!</p>
-                  <Button
-                    onClick={() => navigate("/home")}
-                    className="mt-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-black hover:from-yellow-500 hover:to-orange-600"
+                {viewingHistory.length === 0 ? (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="text-center py-16"
                   >
-                    Browse Movies
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {viewingHistory.map((movie, index) => (
-                    <motion.div
-                      key={movie.id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                      className="flex items-center space-x-4 p-4 bg-gray-800/50 rounded-lg hover:bg-gray-800/70 transition-colors group"
+                    <div className="p-6 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-full w-32 h-32 mx-auto mb-6 flex items-center justify-center">
+                      <Eye className="w-16 h-16 text-blue-400" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-300 mb-4">No viewing history yet</h3>
+                    <p className="text-gray-500 text-lg mb-6">Start watching movies to build your viewing history!</p>
+                    <Button
+                      onClick={() => navigate("/home")}
+                      className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-400 hover:to-purple-500 text-white font-bold px-8 py-4 rounded-xl"
                     >
-                      <div className="flex-shrink-0">
-                        <img
-                          src={movie.image || "/placeholder.svg"}
-                          alt={movie.title}
-                          className="w-20 h-28 object-cover rounded-lg"
-                        />
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-white font-semibold text-lg mb-2">{movie.title}</h3>
-
-                        <div className="flex items-center space-x-4 mb-3">
-                          <div className="flex items-center space-x-2">
-                            <Clock className="w-4 h-4 text-gray-400" />
-                            <span className="text-sm text-gray-400">
-                              {formatDuration(movie.watchedDuration)} / {formatDuration(movie.totalDuration)}
-                            </span>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <Calendar className="w-4 h-4 text-gray-400" />
-                            <span className="text-sm text-gray-400">
-                              {new Date(movie.lastWatched).toLocaleDateString()}
-                            </span>
-                          </div>
+                      Browse Movies
+                    </Button>
+                  </motion.div>
+                ) : (
+                  <div className="space-y-6">
+                    {viewingHistory.map((movie, index) => (
+                      <motion.div
+                        key={movie.id}
+                        initial={{ opacity: 0, x: -30 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        whileHover={{ scale: 1.01, y: -2 }}
+                        className="flex items-center space-x-6 p-6 bg-gray-800/40 backdrop-blur-sm rounded-2xl hover:bg-gray-800/60 transition-all duration-300 border border-gray-700/30 group"
+                      >
+                        <div className="flex-shrink-0 relative overflow-hidden rounded-xl">
+                          <img
+                            src={movie.image || "/placeholder.svg?height=160&width=120"}
+                            alt={movie.title}
+                            className="w-24 h-36 object-cover transition-transform duration-300 group-hover:scale-110"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                         </div>
 
-                        {/* Progress Bar */}
-                        <div className="mb-3">
-                          <div className="flex justify-between items-center mb-1">
-                            <span className="text-xs text-gray-400">Progress</span>
-                            <span className="text-xs text-gray-400">
-                              {Math.round(getWatchProgress(movie.watchedDuration, movie.totalDuration))}%
-                            </span>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-white font-bold text-xl mb-3">{movie.title}</h3>
+
+                          <div className="flex items-center space-x-6 mb-4">
+                            <div className="flex items-center space-x-2">
+                              <Clock className="w-5 h-5 text-gray-400" />
+                              <span className="text-gray-300 font-medium">
+                                {formatDuration(movie.watchedDuration)} / {formatDuration(movie.totalDuration)}
+                              </span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Calendar className="w-5 h-5 text-gray-400" />
+                              <span className="text-gray-300 font-medium">
+                                {new Date(movie.lastWatched).toLocaleDateString()}
+                              </span>
+                            </div>
                           </div>
-                          <div className="w-full bg-gray-700 rounded-full h-2">
-                            <div
-                              className={`h-2 rounded-full transition-all duration-300 ${
-                                movie.completed
-                                  ? "bg-gradient-to-r from-green-400 to-emerald-500"
-                                  : "bg-gradient-to-r from-orange-400 to-yellow-500"
-                              }`}
-                              style={{ width: `${getWatchProgress(movie.watchedDuration, movie.totalDuration)}%` }}
-                            />
+
+                          {/* Enhanced Progress Bar */}
+                          <div className="mb-4">
+                            <div className="flex justify-between items-center mb-2">
+                              <span className="text-sm text-gray-400 font-medium">Progress</span>
+                              <span className="text-sm text-gray-400 font-bold">
+                                {Math.round(getWatchProgress(movie.watchedDuration, movie.totalDuration))}%
+                              </span>
+                            </div>
+                            <div className="w-full bg-gray-700 rounded-full h-3 overflow-hidden">
+                              <motion.div
+                                initial={{ width: 0 }}
+                                animate={{
+                                  width: `${getWatchProgress(movie.watchedDuration, movie.totalDuration)}%`,
+                                }}
+                                transition={{ duration: 1, delay: index * 0.1 }}
+                                className={`h-3 rounded-full ${
+                                  movie.completed
+                                    ? "bg-gradient-to-r from-green-400 to-emerald-500"
+                                    : "bg-gradient-to-r from-amber-400 to-orange-500"
+                                }`}
+                              />
+                            </div>
                           </div>
+
+                          <p className="text-gray-400">Last watched: {formatDate(movie.lastWatched)}</p>
                         </div>
 
-                        <p className="text-sm text-gray-500">Last watched: {formatDate(movie.lastWatched)}</p>
-                      </div>
+                        <div className="flex flex-col space-y-3">
+                          {movie.completed ? (
+                            <div className="flex items-center space-x-3 text-green-400 font-semibold bg-green-500/10 px-4 py-2 rounded-xl">
+                              <Trophy className="w-5 h-5" />
+                              <span>Completed</span>
+                            </div>
+                          ) : (
+                            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                              <Button
+                                onClick={() => handleContinueWatching(movie)}
+                                className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black font-bold px-6 py-3 rounded-xl shadow-lg"
+                              >
+                                <Play className="w-5 h-5 mr-2" />
+                                Continue
+                              </Button>
+                            </motion.div>
+                          )}
 
-                      <div className="flex flex-col space-y-2">
-                        {movie.completed ? (
-                          <div className="flex items-center space-x-2 text-green-400 text-sm">
-                            <Trophy className="w-4 h-4" />
-                            <span>Completed</span>
-                          </div>
-                        ) : (
-                          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                          <div className="flex space-x-2">
                             <Button
-                              onClick={() => handleContinueWatching(movie)}
-                              className="bg-gradient-to-r from-orange-400 to-yellow-500 text-black hover:from-orange-500 hover:to-yellow-600 px-4 py-2 text-sm font-semibold rounded-lg"
+                              onClick={() => navigate(`/info/${movie.movieId}`)}
+                              variant="outline"
+                              className="border-gray-600 text-black hover:bg-gray-700 px-4 py-2 rounded-xl transition-all duration-300"
                             >
-                              <Play className="w-4 h-4 mr-2" />
-                              Continue
+                              Info
                             </Button>
-                          </motion.div>
-                        )}
-
-                        <div className="flex space-x-2">
-                          <Button
-                            onClick={() => navigate(`/info/${movie.movieId}`)}
-                            variant="outline"
-                            className="border-gray-600 text-black hover:bg-gray-700 px-3 py-1 text-xs rounded-lg"
-                          >
-                            Info
-                          </Button>
-                          <Button
-                            onClick={() => handleRemoveFromHistory(movie.movieId)}
-                            variant="outline"
-                            className="border-red-600 text-red-400 hover:bg-red-600 px-3 py-1 text-xs rounded-lg transition-opacity"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </Button>
+                            <Button
+                              onClick={() => handleRemoveFromHistory(movie.movieId)}
+                              variant="outline"
+                              className="border-red-600 text-red-400 hover:bg-red-600 px-4 py-2 rounded-xl transition-all duration-300"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ) : (
-            <div>
-              <h2 className="text-xl font-bold text-white mb-6">Redemption History</h2>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div>
+                <h2 className="text-2xl font-bold text-white mb-8 flex items-center space-x-3">
+                  <Gift className="w-7 h-7 text-red-400" />
+                  <span>Redemption History</span>
+                </h2>
 
-              {redemptionHistory.length === 0 ? (
-                <div className="text-center py-12">
-                  <Gift className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                  <h3 className="text-xl font-bold text-gray-400 mb-2">No redemptions yet</h3>
-                  <p className="text-gray-500">Earn more points to unlock amazing rewards!</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {redemptionHistory.map((redemption, index) => (
-                    <motion.div
-                      key={redemption.id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                      className="flex items-center space-x-4 p-4 bg-gray-800/50 rounded-lg hover:bg-gray-800/70 transition-colors"
+                {redemptionHistory.length === 0 ? (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="text-center py-16"
+                  >
+                    <div className="p-6 bg-gradient-to-r from-red-500/10 to-pink-500/10 rounded-full w-32 h-32 mx-auto mb-6 flex items-center justify-center">
+                      <Gift className="w-16 h-16 text-red-400" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-300 mb-4">No redemptions yet</h3>
+                    <p className="text-gray-500 text-lg mb-6">Earn more points to unlock amazing rewards!</p>
+                    <Button
+                      onClick={() => navigate("/redeem")}
+                      className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-400 hover:to-pink-400 text-white font-bold px-8 py-4 rounded-xl"
                     >
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-r from-red-400 to-pink-500 flex items-center justify-center flex-shrink-0">
-                        <Gift className="w-6 h-6 text-white" />
-                      </div>
+                      View Rewards
+                    </Button>
+                  </motion.div>
+                ) : (
+                  <div className="space-y-4">
+                    {redemptionHistory.map((redemption, index) => (
+                      <motion.div
+                        key={redemption.id}
+                        initial={{ opacity: 0, x: -30 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        whileHover={{ scale: 1.01, x: 5 }}
+                        className="flex items-center space-x-6 p-6 bg-gray-800/40 backdrop-blur-sm rounded-xl hover:bg-gray-800/60 transition-all duration-300 border border-gray-700/30"
+                      >
+                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-r from-red-500 to-pink-500 flex items-center justify-center flex-shrink-0 shadow-lg">
+                          <Gift className="w-8 h-8 text-white" />
+                        </div>
 
-                      <div className="flex-1 min-w-0">
-                        <p className="text-white font-medium">{redemption.description}</p>
-                        <p className="text-sm text-gray-500">{formatDate(redemption.date)}</p>
-                      </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-white font-semibold text-lg mb-1">{redemption.description}</p>
+                          <p className="text-gray-400">{formatDate(redemption.date)}</p>
+                        </div>
 
-                      <div className="text-right">
-                        <div className="text-lg font-bold text-red-400">{redemption.points}</div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </motion.div>
+                        <div className="text-right">
+                          <div className="text-2xl font-bold text-red-400">{redemption.points}</div>
+                          <div className="text-sm text-gray-500">points</div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </motion.div>
+        </AnimatePresence>
       </div>
     </div>
   )

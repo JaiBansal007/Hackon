@@ -80,17 +80,24 @@ export default function MovieInfoPage() {
       <div className="min-h-screen w-screen bg-black flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-white mb-4">Movie Not Found</h1>
-          <Link to="/home" className="flex items-center space-x-2">
-            <ArrowLeft className="w-5 h-5 text-orange-400" />
-            <span className="text-orange-400 hover:text-orange-300">Back to Home</span>
-          </Link>
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Link
+              to="/home"
+              className="flex items-center space-x-3 group bg-gray-800/50 backdrop-blur-sm px-6 py-3 rounded-xl border border-amber-500/20 hover:border-amber-500/40 transition-all duration-300"
+            >
+              <ArrowLeft className="w-5 h-5 text-amber-400 group-hover:text-amber-300 transition-colors" />
+              <span className="text-amber-400 group-hover:text-amber-300 font-medium transition-colors">
+                Back to Home
+              </span>
+            </Link>
+          </motion.div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen w-screen bg-black text-white">
+    <div className="min-h-screen w-[98.8vw] bg-black text-white">
       {/* Background with movie poster */}
       <div className="absolute inset-0 opacity-20">
         <img 
@@ -108,10 +115,17 @@ export default function MovieInfoPage() {
           animate={{ opacity: 1, y: 0 }}
           className="flex items-center justify-between p-6"
         >
-          <Link to="/home" className="flex items-center space-x-2">
-            <ArrowLeft className="w-5 h-5 text-orange-400" />
-            <span className="text-orange-400 hover:text-orange-300">Back to Home</span>
-          </Link>
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Link
+              to="/home"
+              className="flex items-center space-x-3 group bg-gray-800/50 backdrop-blur-sm px-6 py-3 rounded-xl border border-amber-500/20 hover:border-amber-500/40 transition-all duration-300"
+            >
+              <ArrowLeft className="w-5 h-5 text-amber-400 group-hover:text-amber-300 transition-colors" />
+              <span className="text-amber-400 group-hover:text-amber-300 font-medium transition-colors">
+                Back to Home
+              </span>
+            </Link>
+          </motion.div>
 
           <div className="flex items-center space-x-4">
             <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white">

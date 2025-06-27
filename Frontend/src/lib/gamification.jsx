@@ -268,7 +268,7 @@ export const redemptionOffers = [
     id: "1",
     title: "3-Day Amazon Prime Premium",
     description: "Get 3 days of Amazon Prime with access to exclusive content and faster delivery",
-    points: 2,
+    points: 1,
     category: "prime",
     image: "https://i0.wp.com/telechargi.com/wp-content/uploads/2023/12/amazon-prime-video-poster.png?fit=512%2C512&ssl=1",
     available: true,
