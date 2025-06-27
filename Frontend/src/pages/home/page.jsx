@@ -477,7 +477,7 @@ const HomePage = ({ startPictureInPicture }) => {
         />
 
         {/* Main content with enhanced styling */}
-        <div className={`flex-1 ${!isFullscreen ? "ml-16" : ""} min-w-0 relative z-10`}>
+        <div className={`flex-1 ${!isFullscreen ? "" : ""} min-w-0 relative z-10`}>
           <div
             className={`transition-all duration-500 ease-in-out
               ${!isFullscreen ? "pt-16" : ""}
@@ -511,7 +511,7 @@ const HomePage = ({ startPictureInPicture }) => {
                     <motion.div
                       initial={{ y: -50, opacity: 0 }}
                       animate={{ y: 0, opacity: 1 }}
-                      className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/10 border border-amber-500/30 backdrop-blur-sm mx-2"
+                      className="relative ml-18 overflow-hidden rounded-2xl bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/10 border border-amber-500/30 backdrop-blur-sm"
                     >
                       <div className="absolute inset-0 bg-gradient-to-r from-amber-500/5 to-orange-500/5" />
                       <div className="relative p-6 flex items-center justify-between">

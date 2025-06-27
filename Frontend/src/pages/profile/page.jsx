@@ -118,37 +118,38 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen w-[98.8vw] bg-gradient-to-br from-black via-gray-900 to-black text-white">
-      {/* Enhanced Background */}
-      <div className="fixed inset-0 bg-gradient-to-br from-black via-gray-900 to-black">
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-900/20 via-transparent to-transparent" />
+    <div className="min-h-screen w-full bg-gradient-to-br from-[#18181b] via-[#23272f] to-[#18181b] text-white font-inter">
+      {/* Enhanced Glassmorphism Background */}
+      <div className="fixed inset-0 z-0">
+        <div className="absolute inset-0 bg-gradient-to-br from-black/90 via-gray-900/80 to-black/80" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-amber-900/20 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-blue-900/10 via-transparent to-transparent" />
       </div>
 
-      <div className="relative z-10 container mx-auto px-6 py-8 max-w-7xl">
-        {/* Enhanced Header */}
+      <div className="relative z-10 container mx-auto px-4 md:px-8 py-10 max-w-7xl">
+        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -30 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-between mb-12"
+          className="flex flex-col md:flex-row items-center justify-between mb-14 gap-6"
         >
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+          <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}>
             <Link
               to="/home"
-              className="flex items-center space-x-3 group bg-gray-800/50 backdrop-blur-sm px-6 py-3 rounded-xl border border-amber-500/20 hover:border-amber-500/40 transition-all duration-300"
+              className="flex items-center space-x-3 group bg-gray-800/60 backdrop-blur-md px-6 py-3 rounded-xl border border-amber-500/30 hover:border-amber-400/60 shadow-md hover:shadow-lg transition-all duration-300"
             >
               <ArrowLeft className="w-5 h-5 text-amber-400 group-hover:text-amber-300 transition-colors" />
-              <span className="text-amber-400 group-hover:text-amber-300 font-medium transition-colors">
+              <span className="text-amber-400 group-hover:text-amber-300 font-semibold transition-colors">
                 Back to Home
               </span>
             </Link>
           </motion.div>
 
-          <div className="text-center">
+          <div className="text-center flex-1">
             <motion.h1
-              initial={{ opacity: 0, scale: 0.9 }}
+              initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-amber-400 via-orange-500 to-amber-400 bg-clip-text text-transparent mb-2"
+              className="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-amber-400 via-orange-500 to-amber-400 bg-clip-text text-transparent mb-2 drop-shadow-lg"
             >
               Your Profile
             </motion.h1>
@@ -156,111 +157,112 @@ export default function ProfilePage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
-              className="text-gray-400 text-lg"
+              className="text-gray-300 text-lg font-medium"
             >
               Track your progress and achievements
             </motion.p>
           </div>
 
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.3 }}
-            className="flex items-center space-x-3 bg-gradient-to-r from-amber-500/20 to-orange-500/20 backdrop-blur-sm rounded-xl px-6 py-4 border border-amber-500/30"
+            className="flex items-center space-x-3 bg-gradient-to-r from-amber-500/30 to-orange-500/30 backdrop-blur-md rounded-xl px-7 py-5 border border-amber-500/40 shadow-lg"
           >
-            <div className="p-2 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full">
-              <Coins className="w-6 h-6 text-black" />
+            <div className="p-2 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full shadow-md">
+              <Coins className="w-7 h-7 text-black" />
             </div>
             <div>
-              <div className="text-2xl font-bold text-white">{userStats.totalPoints.toLocaleString()}</div>
-              <div className="text-amber-300 text-sm font-medium">Total Points</div>
+              <div className="text-2xl font-bold text-white drop-shadow">{userStats.totalPoints.toLocaleString()}</div>
+              <div className="text-amber-200 text-sm font-semibold">Total Points</div>
             </div>
           </motion.div>
         </motion.div>
 
-        {/* Enhanced Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-7 mb-14">
+          {/* Total Points */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            whileHover={{ scale: 1.02, y: -5 }}
-            className="relative overflow-hidden bg-gradient-to-br from-amber-500/10 via-orange-500/10 to-amber-500/10 backdrop-blur-sm rounded-2xl p-8 border border-amber-500/20 group"
+            whileHover={{ scale: 1.03, y: -3 }}
+            className="relative overflow-hidden bg-gradient-to-br from-amber-500/15 via-orange-500/10 to-amber-500/15 backdrop-blur-md rounded-2xl p-8 border border-amber-500/30 group shadow-lg hover:shadow-2xl transition"
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-orange-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-orange-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             <div className="relative flex items-center space-x-4">
               <div className="p-4 bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl shadow-lg">
                 <Coins className="w-8 h-8 text-black" />
               </div>
               <div>
-                <p className="text-3xl font-bold text-white mb-1">{userStats.totalPoints.toLocaleString()}</p>
-                <p className="text-amber-300 font-medium">Total Points</p>
+                <p className="text-3xl font-extrabold text-white mb-1">{userStats.totalPoints.toLocaleString()}</p>
+                <p className="text-amber-200 font-semibold">Total Points</p>
               </div>
             </div>
             <div className="absolute top-4 right-4">
               <Zap className="w-6 h-6 text-amber-400/30" />
             </div>
           </motion.div>
-
+          {/* Current Streak */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            whileHover={{ scale: 1.02, y: -5 }}
-            className="relative overflow-hidden bg-gradient-to-br from-orange-500/10 via-red-500/10 to-orange-500/10 backdrop-blur-sm rounded-2xl p-8 border border-orange-500/20 group"
+            whileHover={{ scale: 1.03, y: -3 }}
+            className="relative overflow-hidden bg-gradient-to-br from-orange-500/15 via-red-500/10 to-orange-500/15 backdrop-blur-md rounded-2xl p-8 border border-orange-500/30 group shadow-lg hover:shadow-2xl transition"
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-red-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-red-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             <div className="relative flex items-center space-x-4">
               <div className="p-4 bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl shadow-lg">
                 <Flame className="w-8 h-8 text-white" />
               </div>
               <div>
-                <p className="text-3xl font-bold text-white mb-1">{userStats.currentStreak}</p>
-                <p className="text-orange-300 font-medium">Current Streak</p>
+                <p className="text-3xl font-extrabold text-white mb-1">{userStats.currentStreak}</p>
+                <p className="text-orange-200 font-semibold">Current Streak</p>
               </div>
             </div>
             <div className="absolute top-4 right-4">
               <Target className="w-6 h-6 text-orange-400/30" />
             </div>
           </motion.div>
-
+          {/* Longest Streak */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            whileHover={{ scale: 1.02, y: -5 }}
-            className="relative overflow-hidden bg-gradient-to-br from-green-500/10 via-emerald-500/10 to-green-500/10 backdrop-blur-sm rounded-2xl p-8 border border-green-500/20 group"
+            whileHover={{ scale: 1.03, y: -3 }}
+            className="relative overflow-hidden bg-gradient-to-br from-green-500/15 via-emerald-500/10 to-green-500/15 backdrop-blur-md rounded-2xl p-8 border border-green-500/30 group shadow-lg hover:shadow-2xl transition"
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-emerald-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             <div className="relative flex items-center space-x-4">
               <div className="p-4 bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl shadow-lg">
                 <TrendingUp className="w-8 h-8 text-white" />
               </div>
               <div>
-                <p className="text-3xl font-bold text-white mb-1">{userStats.longestStreak}</p>
-                <p className="text-green-300 font-medium">Longest Streak</p>
+                <p className="text-3xl font-extrabold text-white mb-1">{userStats.longestStreak}</p>
+                <p className="text-green-200 font-semibold">Longest Streak</p>
               </div>
             </div>
             <div className="absolute top-4 right-4">
               <Award className="w-6 h-6 text-green-400/30" />
             </div>
           </motion.div>
-
+          {/* Movies Watched */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            whileHover={{ scale: 1.02, y: -5 }}
-            className="relative overflow-hidden bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-blue-500/10 backdrop-blur-sm rounded-2xl p-8 border border-blue-500/20 group"
+            whileHover={{ scale: 1.03, y: -3 }}
+            className="relative overflow-hidden bg-gradient-to-br from-blue-500/15 via-purple-500/10 to-blue-500/15 backdrop-blur-md rounded-2xl p-8 border border-blue-500/30 group shadow-lg hover:shadow-2xl transition"
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             <div className="relative flex items-center space-x-4">
               <div className="p-4 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl shadow-lg">
                 <Eye className="w-8 h-8 text-white" />
               </div>
               <div>
-                <p className="text-3xl font-bold text-white mb-1">{viewingHistory.length}</p>
-                <p className="text-blue-300 font-medium">Movies Watched</p>
+                <p className="text-3xl font-extrabold text-white mb-1">{viewingHistory.length}</p>
+                <p className="text-blue-200 font-semibold">Movies Watched</p>
               </div>
             </div>
             <div className="absolute top-4 right-4">
@@ -269,12 +271,12 @@ export default function ProfilePage() {
           </motion.div>
         </div>
 
-        {/* Enhanced Tabs */}
+        {/* Tabs */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="flex flex-wrap gap-3 mb-8 p-2 bg-gray-800/30 backdrop-blur-sm rounded-2xl border border-gray-700/50"
+          className="flex flex-wrap gap-3 mb-10 p-2 bg-gray-800/40 backdrop-blur-md rounded-2xl border border-gray-700/50 shadow"
         >
           {[
             { id: "activity", label: "Point Activity", icon: Coins },
@@ -284,12 +286,12 @@ export default function ProfilePage() {
             <motion.button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              whileHover={{ scale: 1.02 }}
+              whileHover={{ scale: 1.04 }}
               whileTap={{ scale: 0.98 }}
-              className={`flex items-center space-x-3 px-6 py-4 rounded-xl font-semibold transition-all duration-300 ${
+              className={`flex items-center space-x-3 px-7 py-4 rounded-xl font-semibold transition-all duration-300 shadow-sm ${
                 activeTab === tab.id
                   ? "bg-gradient-to-r from-amber-500 to-orange-500 text-black shadow-lg"
-                  : "text-black hover:bg-gray-700/50"
+                  : "text-white hover:bg-gray-700/60"
               }`}
             >
               <tab.icon className="w-5 h-5" />
@@ -298,7 +300,7 @@ export default function ProfilePage() {
           ))}
         </motion.div>
 
-        {/* Enhanced Content */}
+        {/* Content */}
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
@@ -306,7 +308,7 @@ export default function ProfilePage() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -30 }}
             transition={{ duration: 0.3 }}
-            className="bg-gray-900/30 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/30"
+            className="bg-gray-900/60 backdrop-blur-lg rounded-2xl p-8 border border-gray-700/40 shadow-2xl"
           >
             {activeTab === "activity" ? (
               <div>

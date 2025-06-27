@@ -46,16 +46,16 @@ export const featuredMovies = [
     image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQCWXVvfvZR3oe7PCMM0exwV0dObOTKvLfSM-bjvKpQ1VegKXuCtq6aBrxqbIgUNxMbfavy",
     videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
   },
-  {
-    movieId: "pulp-fiction",
-    title: "Pulp Fiction",
-    description:
-      "The lives of two mob hitmen, a boxer, a gangster and his wife, and a pair of diner bandits intertwine in four tales of violence and redemption.",
-    rating: "8.9/10",
-    year: "1994",
-    genre: "Crime, Drama",
-    mood: ["quirky", "violent", "stylish"],
-    image: "",
-    videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-  },
+  // {
+  //   movieId: "pulp-fiction",
+  //   title: "Pulp Fiction",
+  //   description:
+  //     "The lives of two mob hitmen, a boxer, a gangster and his wife, and a pair of diner bandits intertwine in four tales of violence and redemption.",
+  //   rating: "8.9/10",
+  //   year: "1994",
+  //   genre: "Crime, Drama",
+  //   mood: ["quirky", "violent", "stylish"],
+  //   image: "https://image.tmdb.org/t/p/w1280/dM2w364MScsjFf8pfMbaWUcWrR.jpg", // TMDB direct image link
+  //   videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+  // },
 ]

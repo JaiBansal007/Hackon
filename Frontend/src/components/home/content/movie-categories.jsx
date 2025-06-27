@@ -21,28 +21,20 @@ export function MovieCategories({ onStartWatching }) {
     <>
       <style jsx>{`
         .movie-scroll {
-          scrollbar-width: thin;
-          scrollbar-color: #f97316 transparent;
+          scrollbar-width: none;
         }
-        
         .movie-scroll::-webkit-scrollbar {
-          height: 6px;
-        }
-        
-        .movie-scroll::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        
-        .movie-scroll::-webkit-scrollbar-thumb {
-          background: #f97316;
-          border-radius: 3px;
-        }
-        
-        .movie-scroll::-webkit-scrollbar-thumb:hover {
-          background: #ea580c;
+          display: none;
         }
       `}</style>
-      <div className="space-y-8 md:space-y-12">
+      {/* Netflix-like background */}
+      <div className="fixed inset-0 -z-10">
+        <div className="absolute inset-0 bg-gradient-to-b from-black via-gray-900/90 to-gray-950/95" />
+        <div className="absolute inset-0 bg-gradient-to-tr from-amber-900/10 via-purple-900/10 to-blue-900/10 blur-2xl opacity-60" />
+        <div className="absolute top-0 left-0 w-1/2 h-1/3 bg-gradient-to-br from-amber-500/10 via-orange-500/10 to-transparent rounded-full blur-3xl opacity-40" />
+        <div className="absolute bottom-0 right-0 w-1/3 h-1/4 bg-gradient-to-tr from-blue-500/10 via-purple-500/10 to-transparent rounded-full blur-3xl opacity-30" />
+      </div>
+      <div className="space-y-12 md:space-y-16 ml-16">
         {movieCategories.map((category, categoryIndex) => (
           <motion.div
             key={categoryIndex}
@@ -50,49 +42,61 @@ export function MovieCategories({ onStartWatching }) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: categoryIndex * 0.05, duration: 0.4 }}
           >
-            <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6 text-white">{category.title}</h2>
-            <div className="flex space-x-3 md:space-x-4 overflow-x-auto pb-4 movie-scroll">
+            <h2 className="text-2xl md:text-3xl font-bold mb-6 md:mb-8 text-white px-2">{category.title}</h2>
+            <div className="flex space-x-5 md:space-x-8 overflow-x-auto pb-6 movie-scroll px-2">
               {category.movies.map((movie, movieIndex) => (
                 <motion.div
                   key={movie.id}
                   initial={{ opacity: 0, x: 50 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: movieIndex * 0.02, duration: 0.3 }}
-                  whileHover={{ scale: 1.05, y: -10 }}
-                  className="flex-shrink-0 w-36 md:w-48 group cursor-pointer relative"
+                  whileHover={{ scale: 1.12, y: -18, boxShadow: "0 8px 32px 0 rgba(0,0,0,0.7)" }}
+                  className="flex-shrink-0 w-40 md:w-56 lg:w-64 group cursor-pointer relative rounded-xl overflow-visible transition-all duration-300"
                   onClick={() => handleMovieClick(movie)}
+                  style={{ zIndex: 2 }}
                 >
-                  <div className="relative">
+                  <div className="relative rounded-xl overflow-hidden shadow-2xl">
                     <img
                       src={movie.image || "/placeholder.svg"}
                       alt={movie.title}
-                      className="w-full h-52 md:h-72 object-cover rounded-lg"
+                      className="w-full h-60 md:h-80 lg:h-96 object-cover rounded-xl transition-all duration-300"
                     />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all duration-300 rounded-lg flex items-center justify-center">
-                      <div className="opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center space-y-3">
-                        <Play className="w-8 h-8 md:w-12 md:h-12 text-white" />
-                        <div className="flex space-x-2">
-                          <Button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              const movieSlug = movie.title
-                                .toLowerCase()
-                                .replace(/\s+/g, "-")
-                                .replace(/[^\w-]/g, "")
-                              navigate(`/info/${movieSlug}`)
-                            }}
-                            variant="outline" className="border-gray-600 text-black hover:bg-gray-800 px-8 py-3"
-                          >
-                            More Info
-                          </Button>
-                        </div>
-                      </div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 rounded-xl flex flex-col items-center justify-center">
+                      <motion.button
+                        whileHover={{ scale: 1.15 }}
+                        className="flex items-center justify-center bg-white/90 hover:bg-white text-black rounded-full w-14 h-14 mb-4 shadow-lg transition-all duration-200"
+                        onClick={e => {
+                          e.stopPropagation()
+                          if (onStartWatching) onStartWatching(movie)
+                        }}
+                      >
+                        <Play className="w-7 h-7" />
+                      </motion.button>
+                      <motion.button
+                        whileHover={{ scale: 1.1 }}
+                        className="flex items-center justify-center bg-black/70 hover:bg-black text-white rounded-full w-10 h-10 shadow-md transition-all duration-200"
+                        onClick={e => {
+                          e.stopPropagation()
+                          const movieSlug = movie.title
+                            .toLowerCase()
+                            .replace(/\s+/g, "-")
+                            .replace(/[^\w-]/g, "")
+                          navigate(`/info/${movieSlug}`)
+                        }}
+                      >
+                        <span className="sr-only">More Info</span>
+                        <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                          <circle cx="12" cy="12" r="10" />
+                          <line x1="12" y1="8" x2="12" y2="12" />
+                          <circle cx="12" cy="16" r="1" />
+                        </svg>
+                      </motion.button>
                     </div>
-                    <div className="absolute top-2 right-2 bg-black/70 px-2 py-1 rounded text-xs md:text-sm text-yellow-400">
+                    <div className="absolute top-3 right-3 bg-black/80 px-2 py-1 rounded text-xs md:text-sm text-yellow-400 font-semibold shadow">
                       ⭐ {movie.rating}
                     </div>
                   </div>
-                  <h3 className="mt-2 text-white font-medium truncate text-sm md:text-base">{movie.title}</h3>
+                  <h3 className="mt-3 text-white font-semibold truncate text-base md:text-lg text-center">{movie.title}</h3>
                 </motion.div>
               ))}
             </div>
