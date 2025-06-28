@@ -98,24 +98,25 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="min-h-screen w-[98.8vw] bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white overflow-hidden">
-      {/* Animated background elements */}
-      <div className="fixed inset-0 opacity-20">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute top-3/4 right-1/4 w-80 h-80 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
-        <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-gradient-to-r from-violet-500 to-purple-500 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '4s' }} />
+    <div className="min-h-screen bg-black text-white overflow-x-hidden">
+      {/* Background Elements */}
+      <div className="fixed inset-0 bg-black">
+        <div className="absolute inset-0 bg-gradient-to-b from-gray-900/20 via-transparent to-black/60" />
+        {/* Animated background elements */}
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-to-r from-amber-500/10 to-orange-500/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute top-3/4 right-1/4 w-80 h-80 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-gradient-to-r from-violet-500/10 to-purple-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '4s' }} />
       </div>
 
       {/* Navigation */}
-      <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrollY > 50 ? 'bg-black/80 backdrop-blur-xl ' : 'bg-transparent'}`}>
+      <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrollY > 50 ? 'bg-black/90 backdrop-blur-xl border-b border-gray-800' : 'bg-transparent'}`}>
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="relative">
-                <div className="w-10 h-10 bg-gradient-to-r from-amber-400 to-orange-500 rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/25">
-                  <Play className="w-5 h-5 text-black" />
+                <div className="w-10 h-10 bg-gradient-to-r from-amber-400 to-orange-500 rounded-lg flex items-center justify-center shadow-lg">
+                  <Play className="w-5 h-5 text-black fill-current" />
                 </div>
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-ping" />
               </div>
               <div>
                 <span className="text-2xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
@@ -126,22 +127,24 @@ export default function LandingPage() {
             </div>
 
             {/* Desktop Navigation */}
-            <div className="md:flex items-center space-x-8">
+            <div className="hidden md:flex items-center space-x-8">
               {['Features', 'About', 'Testimonials'].map((item) => (
                 <button
                   key={item}
                   onClick={() => scrollToSection(item.toLowerCase())}
-                  className="relative group transition-colors duration-200"
+                  className="relative group text-gray-300 hover:text-white transition-colors duration-200 font-medium"
                 >
                   {item}
                   <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-orange-400 to-amber-400 group-hover:w-full transition-all duration-300" />
                 </button>
               ))}
-              <div className="flex items-center space-x-3">
-                <button className="bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-black px-6 py-2.5 rounded-full font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-orange-500/25 hover:scale-105"
-                onClick={() => navigate('/signin')}>
-                  Get Started
-                  <ArrowRight className="inline ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              <div className="flex items-center space-x-3 ml-4">
+                <button 
+                  className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-400 hover:to-red-400 text-white px-6 py-2.5 rounded-md font-semibold transition-all duration-300 hover:shadow-lg hover:scale-105 flex items-center space-x-2"
+                  onClick={() => navigate('/signin')}
+                >
+                  <span>Get Started</span>
+                  <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
             </div>
@@ -157,24 +160,24 @@ export default function LandingPage() {
 
           {/* Mobile Navigation */}
           {isMenuOpen && (
-            <div className="md:hidden mt-4 pb-4 border-t border-white/10">
+            <div className="md:hidden mt-4 pb-4 border-t border-gray-700/50">
               <div className="flex flex-col space-y-4 pt-4">
                 {['Features', 'About', 'Testimonials'].map((item) => (
                   <button
                     key={item}
                     onClick={() => scrollToSection(item.toLowerCase())}
-                    className="text-left text-gray-300 hover:text-orange-400 transition-colors"
+                    className="text-left text-gray-300 hover:text-orange-400 transition-colors font-medium"
                   >
                     {item}
                   </button>
                 ))}
                 <div className="flex flex-col space-y-2 pt-2">
                   <button
-                    className="bg-gradient-to-r from-amber-400 to-orange-500 text-black px-4 py-2 rounded-full font-semibold w-fit"
+                    className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-2 rounded-md font-semibold w-fit flex items-center space-x-2"
                     onClick={() => navigate('/signin')}
                   >
-                    Get Started
-                    <ArrowRight className="inline ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                    <span>Get Started</span>
+                    <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>
               </div>
@@ -185,39 +188,43 @@ export default function LandingPage() {
 
       <div className="relative z-10">
         {/* Hero Section */}
-        <section className="min-h-screen flex items-center justify-center px-6 pt-10">
-          <div className="text-center max-w-4xl">
-            {/* <div className="mb-2">
-              <div className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 rounded-full px-4 py-2 mb-6">
-                <Sparkles className="w-4 h-4 text-amber-400" />
-                <span className="text-sm font-medium text-amber-300">Powered by Advanced AI</span>
+        <section className="min-h-screen flex items-center justify-center px-6 pt-16">
+          <div className="text-center max-w-6xl">
+            <div className="mb-8">
+              <div className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-500/20 to-red-500/20 border border-orange-500/30 rounded-full px-6 py-3 mb-8">
+                <Sparkles className="w-5 h-5 text-orange-400" />
+                <span className="text-sm font-semibold text-orange-300">Powered by Advanced AI</span>
               </div>
-            </div> */}
+            </div>
 
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold mb-8 leading-tight">
-              <span className="bg-gradient-to-r from-amber-400 via-orange-500 to-red-500 bg-clip-text text-transparent animate-pulse">
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-8 leading-tight">
+              <span className="bg-gradient-to-r from-white via-gray-100 to-white bg-clip-text text-transparent">
                 Transform Your
               </span>
               <br />
-              <span className="bg-gradient-to-r from-cyan-400 via-blue-500 to-violet-500 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-orange-400 via-red-500 to-orange-400 bg-clip-text text-transparent">
                 Fire TV Experience
               </span>
             </h1>
 
-            <p className="text-xl md:text-2xl mb-12 text-gray-300 max-w-4xl mx-auto leading-relaxed">
-              Discover content that matches your <span className="text-orange-400 font-semibold">mood</span>, 
-              watch with <span className="text-cyan-400 font-semibold">friends anywhere</span>, 
-              and never miss a beat with <span className="text-violet-400 font-semibold">AI-powered summaries</span>.
+            <p className="text-lg md:text-xl mb-12 text-gray-400 max-w-4xl mx-auto leading-relaxed">
+              Discover content that matches your <span className="text-orange-400 font-medium">mood</span>, 
+              watch with <span className="text-cyan-400 font-medium">friends anywhere</span>, 
+              and never miss a beat with <span className="text-violet-400 font-medium">AI-powered summaries</span>.
             </p>
 
-            {/* <div className="flex flex-col sm:flex-row gap-6 justify-center mb-16">
-              <button className="group bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-black px-8 py-4 rounded-full font-bold text-lg transition-all duration-300 hover:shadow-2xl hover:shadow-orange-500/25 hover:scale-105">
-                Start Your Journey
-                <ArrowRight className="inline ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            {/* <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
+              <button 
+                className="group bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-400 hover:to-red-400 text-white px-10 py-4 rounded-md font-bold text-lg transition-all duration-300 hover:shadow-lg hover:scale-105 flex items-center justify-center space-x-2"
+                onClick={() => navigate('/signin')}
+              >
+                <Play className="w-5 h-5 fill-current" />
+                <span>Start Your Journey</span>
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </button>
-              <button className="group border-2 border-cyan-400 text-cyan-400 hover:bg-cyan-400 hover:text-black px-8 py-4 rounded-full font-bold text-lg transition-all duration-300 hover:shadow-2xl hover:shadow-cyan-500/25">
-                <Play className="inline mr-2 w-5 h-5 group-hover:scale-110 transition-transform" />
-                Watch Demo
+              <button className="group border-2 border-gray-600 text-gray-300 hover:border-white hover:text-white px-10 py-4 rounded-md font-bold text-lg transition-all duration-300 flex items-center justify-center space-x-2">
+                <Tv className="w-5 h-5" />
+                <span>Watch Demo</span>
               </button>
             </div> */}
 
@@ -225,11 +232,11 @@ export default function LandingPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
               {stats.map((stat, index) => (
                 <div key={index} className="text-center group">
-                  <div className="mb-2">
+                  <div className="mb-3">
                     <stat.icon className="w-8 h-8 mx-auto text-orange-400 group-hover:scale-110 transition-transform" />
                   </div>
-                  <div className="text-3xl font-bold text-white mb-1">{stat.value}</div>
-                  <div className="text-sm text-gray-400">{stat.label}</div>
+                  <div className="text-2xl md:text-3xl font-bold text-white mb-1">{stat.value}</div>
+                  <div className="text-sm text-gray-500">{stat.label}</div>
                 </div>
               ))}
             </div>
@@ -237,42 +244,42 @@ export default function LandingPage() {
         </section>
 
         {/* Features Section */}
-        <section id="features" className="py-32 px-6">
+        <section id="features" className="py-20 px-6 bg-gradient-to-b from-black via-gray-900/20 to-black">
           <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-20">
-              <h2 className="text-5xl md:text-6xl font-bold mb-6">
-                <span className="bg-gradient-to-r from-orange-400 to-amber-400 bg-clip-text text-transparent">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl md:text-5xl font-bold mb-6">
+                <span className="bg-gradient-to-r from-orange-400 to-red-400 bg-clip-text text-transparent">
                   Revolutionary Features
                 </span>
               </h2>
-              <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+              <p className="text-lg text-gray-400 max-w-3xl mx-auto">
                 Experience the future of entertainment with cutting-edge AI technology
               </p>
             </div>
 
-            <div className="grid lg:grid-cols-2 gap-12 items-center mb-20">
+            <div className="grid lg:grid-cols-2 gap-12 items-center mb-16">
               {/* Feature showcase */}
-              <div className="space-y-6">
+              <div className="space-y-4">
                 {features.map((feature, index) => (
                   <div
                     key={index}
-                    className={`p-6 rounded-2xl border transition-all duration-500 cursor-pointer ${
+                    className={`p-6 rounded-xl border transition-all duration-300 cursor-pointer ${
                       activeFeature === index
-                        ? `bg-gradient-to-r ${feature.bgColor} border-white/20 scale-105`
-                        : 'bg-gray-900/50 border-gray-700/50 hover:border-gray-600/50'
+                        ? 'bg-gray-800/60 border-orange-500/50 scale-[1.02]'
+                        : 'bg-gray-900/30 border-gray-700/30 hover:border-gray-600/50 hover:bg-gray-800/40'
                     }`}
                     onClick={() => setActiveFeature(index)}
                   >
                     <div className="flex items-start gap-4">
-                      <div className={`w-14 h-14 bg-gradient-to-r ${feature.color} rounded-xl flex items-center justify-center shadow-lg`}>
-                        <feature.icon className="w-7 h-7 text-black" />
+                      <div className={`w-12 h-12 bg-gradient-to-r ${feature.color} rounded-lg flex items-center justify-center shadow-lg`}>
+                        <feature.icon className="w-6 h-6 text-black" />
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center justify-between mb-2">
-                          <h3 className="text-xl font-bold text-white">{feature.title}</h3>
-                          <span className="text-sm font-medium text-orange-400">{feature.stats}</span>
+                          <h3 className="text-lg font-bold text-white">{feature.title}</h3>
+                          <span className="text-xs font-medium text-orange-400 bg-orange-400/10 px-2 py-1 rounded">{feature.stats}</span>
                         </div>
-                        <p className="text-gray-300 leading-relaxed">{feature.desc}</p>
+                        <p className="text-gray-400 text-sm leading-relaxed">{feature.desc}</p>
                       </div>
                     </div>
                   </div>
@@ -281,22 +288,22 @@ export default function LandingPage() {
 
               {/* Visual showcase */}
               <div className="relative">
-                <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-3xl p-8 backdrop-blur-sm border border-white/10">
-                  <div className="aspect-video bg-gradient-to-br from-gray-700 to-gray-800 rounded-2xl mb-6 relative overflow-hidden">
+                <div className="bg-gradient-to-br from-gray-800/40 to-gray-900/40 rounded-2xl p-6 backdrop-blur-sm border border-gray-700/30">
+                  <div className="aspect-video bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl mb-4 relative overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-pulse" />
-                    <div className="absolute top-4 left-4 flex items-center gap-2">
-                      <div className="w-3 h-3 bg-red-500 rounded-full" />
-                      <div className="w-3 h-3 bg-yellow-500 rounded-full" />
-                      <div className="w-3 h-3 bg-green-500 rounded-full" />
+                    <div className="absolute top-3 left-3 flex items-center gap-2">
+                      <div className="w-2.5 h-2.5 bg-red-500 rounded-full" />
+                      <div className="w-2.5 h-2.5 bg-yellow-500 rounded-full" />
+                      <div className="w-2.5 h-2.5 bg-green-500 rounded-full" />
                     </div>
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <Tv className="w-16 h-16 text-orange-400" />
+                      <Tv className="w-12 h-12 text-orange-400" />
                     </div>
                   </div>
-                  <div className="space-y-3">
-                    <div className="h-3 bg-gradient-to-r from-orange-400 to-transparent rounded-full w-3/4" />
-                    <div className="h-3 bg-gradient-to-r from-cyan-400 to-transparent rounded-full w-1/2" />
-                    <div className="h-3 bg-gradient-to-r from-violet-400 to-transparent rounded-full w-2/3" />
+                  <div className="space-y-2">
+                    <div className="h-2 bg-gradient-to-r from-orange-400 to-transparent rounded-full w-3/4" />
+                    <div className="h-2 bg-gradient-to-r from-cyan-400 to-transparent rounded-full w-1/2" />
+                    <div className="h-2 bg-gradient-to-r from-violet-400 to-transparent rounded-full w-2/3" />
                   </div>
                 </div>
               </div>
@@ -305,34 +312,34 @@ export default function LandingPage() {
         </section>
 
         {/* Testimonials Section */}
-        <section id="testimonials" className="py-32 px-6 bg-gradient-to-r from-gray-900/50 to-black/50">
+        <section id="testimonials" className="py-20 px-6 bg-gray-900/20">
           <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-20">
-              <h2 className="text-5xl md:text-6xl font-bold mb-6">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl md:text-5xl font-bold mb-6">
                 <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
                   What Users Say
                 </span>
               </h2>
-              <p className="text-xl text-gray-300">Join millions who've transformed their viewing experience</p>
+              <p className="text-lg text-gray-400">Join millions who've transformed their viewing experience</p>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-8">
+            <div className="grid md:grid-cols-3 gap-6">
               {testimonials.map((testimonial, index) => (
                 <div
                   key={index}
-                  className="bg-gradient-to-br from-gray-800/60 to-gray-900/60 p-8 rounded-2xl border border-white/10 backdrop-blur-sm hover:scale-105 transition-all duration-300 hover:shadow-2xl"
+                  className="bg-gray-800/40 p-6 rounded-xl border border-gray-700/30 backdrop-blur-sm hover:scale-105 transition-all duration-300 hover:bg-gray-800/60"
                 >
                   <div className="flex items-center mb-4">
                     {[...Array(testimonial.rating)].map((_, i) => (
-                      <Star key={i} className="w-5 h-5 text-yellow-400 fill-current" />
+                      <Star key={i} className="w-4 h-4 text-yellow-400 fill-current" />
                     ))}
                   </div>
-                  <p className="text-gray-300 mb-6 italic leading-relaxed">"{testimonial.text}"</p>
+                  <p className="text-gray-300 mb-6 italic text-sm leading-relaxed">"{testimonial.text}"</p>
                   <div className="flex items-center gap-3">
-                    <div className="text-3xl">{testimonial.avatar}</div>
+                    <div className="text-2xl">{testimonial.avatar}</div>
                     <div>
-                      <div className="font-semibold text-white">{testimonial.name}</div>
-                      <div className="text-sm text-gray-400">{testimonial.role}</div>
+                      <div className="font-semibold text-white text-sm">{testimonial.name}</div>
+                      <div className="text-xs text-gray-500">{testimonial.role}</div>
                     </div>
                   </div>
                 </div>
@@ -342,20 +349,20 @@ export default function LandingPage() {
         </section>
 
         {/* About Section */}
-        <section id="about" className="py-32 px-6">
+        <section id="about" className="py-20 px-6 bg-gradient-to-b from-black via-gray-900/20 to-black">
           <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-20">
-              <h2 className="text-5xl md:text-6xl font-bold mb-6">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl md:text-5xl font-bold mb-6">
                 <span className="bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">
                   Built for Everyone
                 </span>
               </h2>
-              <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+              <p className="text-lg text-gray-400 max-w-3xl mx-auto">
                 Whether you're a casual viewer or entertainment enthusiast, FireStream adapts to your unique style
               </p>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-8">
+            <div className="grid md:grid-cols-3 gap-6">
               {[
                 {
                   title: "Casual Viewers",
@@ -381,11 +388,11 @@ export default function LandingPage() {
               ].map((item, index) => (
                 <div
                   key={index}
-                  className={`bg-gradient-to-br ${item.color} p-8 rounded-2xl border ${item.border} backdrop-blur-sm hover:scale-105 transition-all duration-300 group`}
+                  className={`bg-gradient-to-br ${item.color} p-6 rounded-xl border ${item.border} backdrop-blur-sm hover:scale-105 transition-all duration-300 group`}
                 >
-                  <div className="text-6xl mb-6 group-hover:scale-110 transition-transform">{item.icon}</div>
-                  <h3 className="text-2xl font-bold mb-4 text-white">{item.title}</h3>
-                  <p className="text-gray-300 leading-relaxed">{item.desc}</p>
+                  <div className="text-4xl mb-4 group-hover:scale-110 transition-transform">{item.icon}</div>
+                  <h3 className="text-xl font-bold mb-3 text-white">{item.title}</h3>
+                  <p className="text-gray-300 text-sm leading-relaxed">{item.desc}</p>
                 </div>
               ))}
             </div>
@@ -393,7 +400,7 @@ export default function LandingPage() {
         </section>
 
         {/* CTA Section */}
-        <section className="py-32 px-6 bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-red-500/10">
+        <section className="py-20 px-6 bg-gradient-to-r from-gray-900/30 via-black to-gray-900/30">
           <div className="max-w-4xl mx-auto text-center">
             <div className="mb-8">
               <div className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-500/20 to-red-500/20 border border-orange-500/30 rounded-full px-6 py-3 mb-8">
@@ -402,57 +409,60 @@ export default function LandingPage() {
               </div>
             </div>
 
-            <h2 className="text-5xl md:text-6xl font-bold mb-8">
+            <h2 className="text-3xl md:text-5xl font-bold mb-8">
               Ready to <span className="bg-gradient-to-r from-orange-400 to-red-400 bg-clip-text text-transparent">Revolutionize</span>
               <br />
               Your Entertainment?
             </h2>
-            <p className="text-xl text-gray-300 mb-12 max-w-2xl mx-auto">
+            <p className="text-lg text-gray-400 mb-12 max-w-2xl mx-auto">
               Start your free trial today and discover why millions choose FireStream for their entertainment needs.
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-6 justify-center">
-              <button className="group bg-gradient-to-r from-orange-400 to-red-500 hover:from-orange-500 hover:to-red-600 text-white px-12 py-6 rounded-full font-bold text-xl transition-all duration-300 hover:shadow-2xl hover:shadow-orange-500/25 hover:scale-105">
-                Start Free Trial
-                <ArrowRight className="inline ml-3 w-6 h-6 group-hover:translate-x-1 transition-transform" />
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <button 
+                className="group bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-400 hover:to-red-400 text-white px-10 py-4 rounded-md font-bold text-lg transition-all duration-300 hover:shadow-lg hover:scale-105 flex items-center justify-center space-x-2"
+                onClick={() => navigate('/signin')}
+              >
+                <span>Start Free Trial</span>
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </button>
-              <button className="group border-2 border-gray-600 text-gray-300 hover:border-white hover:text-white px-12 py-6 rounded-full font-bold text-xl transition-all duration-300">
-                <MessageCircle className="inline mr-3 w-6 h-6 group-hover:scale-110 transition-transform" />
-                Contact Sales
+              <button className="group border-2 border-gray-600 text-gray-300 hover:border-white hover:text-white px-10 py-4 rounded-md font-bold text-lg transition-all duration-300 flex items-center justify-center space-x-2">
+                <MessageCircle className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                <span>Contact Sales</span>
               </button>
             </div>
           </div>
         </section>
 
         {/* Footer */}
-        <footer className="py-16 px-6 bg-black/90 border-t border-white/10">
+        <footer className="py-12 px-6 bg-gray-900/50 border-t border-gray-800">
           <div className="max-w-6xl mx-auto">
-            <div className="flex flex-col md:flex-row items-center justify-between mb-8">
-              <div className="flex items-center space-x-3 mb-6 md:mb-0">
-                <div className="w-12 h-12 bg-gradient-to-r from-amber-400 to-orange-500 rounded-xl flex items-center justify-center shadow-lg">
-                  <Play className="w-6 h-6 text-black" />
+            <div className="flex flex-col md:flex-row items-center justify-between mb-6">
+              <div className="flex items-center space-x-3 mb-4 md:mb-0">
+                <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg flex items-center justify-center shadow-lg">
+                  <Play className="w-5 h-5 text-white fill-current" />
                 </div>
                 <div>
-                  <span className="text-2xl font-bold">
+                  <span className="text-xl font-bold">
                     Fire<span className="text-orange-400">Stream</span>
                   </span>
                   <div className="text-xs text-orange-400 font-medium">AI-POWERED</div>
                 </div>
               </div>
               
-              <div className="flex items-center space-x-8">
+              <div className="flex items-center space-x-6">
                 <div className="flex items-center gap-2">
                   <Shield className="w-4 h-4 text-green-400" />
-                  <span className="text-sm text-gray-400">Secure & Private</span>
+                  <span className="text-sm text-gray-500">Secure & Private</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Globe className="w-4 h-4 text-blue-400" />
-                  <span className="text-sm text-gray-400">Available Worldwide</span>
+                  <span className="text-sm text-gray-500">Available Worldwide</span>
                 </div>
               </div>
             </div>
             
-            <div className="text-center text-gray-400 text-sm">
+            <div className="text-center text-gray-500 text-sm border-t border-gray-800 pt-6">
               © 2024 FireStream. Transforming entertainment with AI-powered innovation.
               <br />
               <span className="text-orange-400">Built with ❤️ for the future of streaming</span>

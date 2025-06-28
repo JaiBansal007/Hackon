@@ -116,367 +116,237 @@ export default function MovieInfoPage() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-black via-gray-950 to-black text-white overflow-hidden">
-      {/* Enhanced Background with movie poster */}
-      <div className="absolute inset-0">
-        <img src={movie.image || "/placeholder.svg"} alt={movie.title} className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black via-black/90 to-black/80"></div>
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/50"></div>
-        <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 via-transparent to-yellow-500/5"></div>
+    <div className="relative min-h-screen w-full bg-black text-white overflow-x-hidden">
+      
+      <div className="fixed inset-0 z-0">
+        <img
+          src={movie.image || "/placeholder.svg"}
+          alt={movie.title}
+          className="w-full h-full object-cover object-top opacity-60"
+        />
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(90deg, rgba(16,18,27,0.98) 0%, rgba(16,18,27,0.95) 60%, rgba(16,18,27,0.0) 100%)",
+            backdropFilter: "blur(18px)",
+            WebkitBackdropFilter: "blur(18px)",
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/60" />
       </div>
 
-      {/* Floating particles effect */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(20)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-1 h-1 bg-orange-400/30 rounded-full"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
-            animate={{
-              y: [-20, -100],
-              opacity: [0, 1, 0],
-            }}
-            transition={{
-              duration: Math.random() * 3 + 2,
-              repeat: Number.POSITIVE_INFINITY,
-              delay: Math.random() * 2,
-            }}
-          />
-        ))}
-      </div>
-
-      <div className="relative z-10">
-        {/* Enhanced Header */}
+      {/* Sticky navbar-like header */}
+      <div className="sticky top-0 z-30">
         <motion.div
-          initial={{ opacity: 0, y: -30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="flex items-center justify-between p-8"
+          initial={{ y: -40, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+          className="flex items-center justify-between px-8 py-4 bg-black/70 backdrop-blur-md border-b border-gray-800"
         >
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Link
-              to="/home"
-              className="flex items-center space-x-3 group bg-gradient-to-r from-gray-800/60 to-gray-900/60 backdrop-blur-xl px-8 py-4 rounded-2xl border border-amber-500/30 hover:border-amber-500/60 transition-all duration-300 shadow-xl hover:shadow-amber-500/20"
+          <Link
+            to="/home"
+            className="flex items-center space-x-2 group bg-gray-900/60 px-5 py-2 rounded-full border border-gray-700 hover:border-orange-400 transition-all"
+          >
+            <ArrowLeft className="w-5 h-5 text-orange-400 group-hover:-translate-x-1 transition-all" />
+            <span className="text-orange-300 font-semibold">Home</span>
+          </Link>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={handleQuizClick}
+              variant="outline"
+              className="border-orange-400/60 text-orange-400 hover:bg-orange-400 hover:text-black rounded-full px-4 py-2 text-sm font-bold"
             >
-              <ArrowLeft className="w-5 h-5 text-amber-400 group-hover:text-amber-300 transition-all duration-300 group-hover:-translate-x-1" />
-              <span className="text-amber-400 group-hover:text-amber-300 font-semibold transition-colors">
-                Back to Home
-              </span>
-            </Link>
-          </motion.div>
-
-          <div className="flex items-center space-x-3">
-            {[
-              { icon: Heart, color: "text-red-400 hover:text-red-300" },
-              { icon: Bookmark, color: "text-blue-400 hover:text-blue-300" },
-              { icon: Share2, color: "text-green-400 hover:text-green-300" },
-            ].map(({ icon: Icon, color }, index) => (
-              <motion.div key={index} whileHover={{ scale: 1.1, y: -2 }} whileTap={{ scale: 0.9 }}>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className={`${color} bg-gray-800/40 backdrop-blur-sm hover:bg-gray-700/60 rounded-xl border border-gray-600/30 hover:border-gray-500/50 transition-all duration-300 w-12 h-12`}
-                >
-                  <Icon className="w-5 h-5" />
-                </Button>
-              </motion.div>
-            ))}
+              <Award className="w-4 h-4 mr-2" />
+              Take Quiz
+            </Button>
+            <Button
+              onClick={handleWatchMovie}
+              className="bg-gradient-to-r from-yellow-400 via-orange-500 to-yellow-400 text-black hover:from-yellow-300 hover:via-orange-400 hover:to-yellow-300 rounded-full px-6 py-2 text-sm font-bold"
+            >
+              <Play className="w-4 h-4 mr-2" />
+              Watch Now
+            </Button>
           </div>
         </motion.div>
+      </div>
 
-        {/* Enhanced Main Content */}
-        <div className="container mx-auto px-8 py-4">
-          <div className="grid lg:grid-cols-3 gap-12">
-            {/* Left Side - Enhanced Movie Poster */}
-            <motion.div
-              initial={{ opacity: 0, x: -60 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3, duration: 0.8 }}
-              className="lg:col-span-1"
-            >
-              <div className="bg-gradient-to-br from-gray-900/90 via-gray-800/80 to-black/90 backdrop-blur-2xl rounded-3xl p-8 border border-orange-500/30 shadow-2xl hover:shadow-orange-500/20 transition-all duration-500">
-                <div className="relative group">
-                  <div className="absolute -inset-1 bg-gradient-to-r from-orange-400 via-yellow-400 to-orange-400 rounded-3xl blur opacity-20 group-hover:opacity-40 transition-opacity duration-500"></div>
-                  <img
-                    src={movie.image || "/placeholder.svg"}
-                    alt={movie.title}
-                    className="relative w-full rounded-2xl shadow-2xl transition-all duration-500 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                  <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-sm rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                    <Sparkles className="w-5 h-5 text-yellow-400" />
-                  </div>
-                </div>
-
-                {/* Enhanced Action Buttons */}
-                <div className="mt-8 space-y-4">
-                  <motion.div
-                    whileHover={{ scale: 1.03, y: -2 }}
-                    whileTap={{ scale: 0.97 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                  >
-                    <Button
-                      onClick={handleWatchMovie}
-                      className="w-full bg-gradient-to-r from-yellow-400 via-orange-500 to-yellow-400 text-black hover:from-yellow-300 hover:via-orange-400 hover:to-yellow-300 py-5 text-lg font-bold rounded-2xl shadow-xl hover:shadow-orange-500/30 transition-all duration-400 border border-orange-300/30 relative overflow-hidden group"
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-400" />
-                      <Play className="w-6 h-6 mr-3 relative z-10" />
-                      <span className="relative z-10">Watch Now</span>
-                    </Button>
-                  </motion.div>
-
-                  <motion.div
-                    whileHover={{ scale: 1.03, y: -2 }}
-                    whileTap={{ scale: 0.97 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                  >
-                    <Button
-                      onClick={handleQuizClick}
-                      variant="outline"
-                      className="w-full border-2 border-orange-400/60 text-orange-400 hover:bg-orange-400 hover:text-black py-5 text-lg font-bold rounded-2xl backdrop-blur-sm bg-orange-400/5 hover:shadow-xl hover:shadow-orange-500/20 transition-all duration-400"
-                    >
-                      <Award className="w-6 h-6 mr-3" />
-                      Take Quiz
-                    </Button>
-                  </motion.div>
-                </div>
-
-                {/* Enhanced Ratings */}
-                <div className="mt-8 grid grid-cols-3 gap-4">
-                  {[
-                    {
-                      rating: movie.imdbRating,
-                      label: "IMDb",
-                      color: "yellow",
-                      bg: "bg-yellow-400/20",
-                      border: "border-yellow-400/40",
-                    },
-                    {
-                      rating: movie.rottenTomatoes,
-                      label: "RT",
-                      color: "red",
-                      bg: "bg-red-400/20",
-                      border: "border-red-400/40",
-                    },
-                    {
-                      rating: movie.metacritic,
-                      label: "Meta",
-                      color: "green",
-                      bg: "bg-green-400/20",
-                      border: "border-green-400/40",
-                    },
-                  ].map((item, index) => (
-                    <motion.div
-                      key={index}
-                      whileHover={{ scale: 1.05, y: -2 }}
-                      className={`text-center ${item.bg} backdrop-blur-sm rounded-2xl p-4 border ${item.border} hover:shadow-lg transition-all duration-300`}
-                    >
-                      <div className={`text-${item.color}-400 font-bold text-xl`}>{item.rating}</div>
-                      <div className="text-xs text-gray-400 font-medium mt-1">{item.label}</div>
-                    </motion.div>
-                  ))}
-                </div>
+      {/* Main Content */}
+      <div className="relative z-10 container mx-auto px-4 py-10">
+        <div className="flex flex-col lg:flex-row gap-10">
+          {/* Poster & Actions Card */}
+          <motion.div
+            initial={{ opacity: 0, x: -40 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2, duration: 0.7 }}
+            className="w-full max-w-xs mx-auto lg:mx-0 bg-gradient-to-br from-gray-900/90 via-gray-800/80 to-black/90 backdrop-blur-2xl rounded-3xl p-6 border border-orange-500/20 shadow-2xl"
+          >
+            <div className="relative group mb-6">
+              <img
+                src={movie.image || "/placeholder.svg"}
+                alt={movie.title}
+                className="w-full rounded-2xl shadow-xl transition-all duration-500 group-hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            </div>
+            {/* Ratings */}
+            <div className="flex justify-between items-center mb-6">
+              <div className="flex items-center gap-2">
+                <Star className="w-5 h-5 text-yellow-400" />
+                <span className="text-yellow-300 font-bold">{movie.imdbRating}</span>
+                <span className="text-xs text-gray-400">IMDb</span>
               </div>
+              <div className="flex items-center gap-2">
+                <span className="text-red-400 font-bold">{movie.rottenTomatoes}</span>
+                <span className="text-xs text-gray-400">RT</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-green-400 font-bold">{movie.metacritic}</span>
+                <span className="text-xs text-gray-400">Meta</span>
+              </div>
+            </div>
+            {/* Quick Info */}
+            <div className="flex flex-wrap gap-2 mb-6">
+              <span className="bg-gray-800/60 px-3 py-1 rounded-full text-xs text-gray-300 flex items-center gap-1">
+                <Calendar className="w-4 h-4 text-orange-400" /> {movie.year}
+              </span>
+              <span className="bg-gray-800/60 px-3 py-1 rounded-full text-xs text-gray-300 flex items-center gap-1">
+                <Clock className="w-4 h-4 text-orange-400" /> {movie.duration}
+              </span>
+              <span className="bg-gray-800/60 px-3 py-1 rounded-full text-xs text-gray-300 flex items-center gap-1">
+                <Star className="w-4 h-4 text-orange-400" /> {movie.ageRating}
+              </span>
+            </div>
+            {/* Genres */}
+            <div className="flex flex-wrap gap-2 mb-6">
+              {movie.genre.split(", ").map((genre, idx) => (
+                <span
+                  key={idx}
+                  className="bg-gradient-to-r from-orange-400/20 to-yellow-400/20 border border-orange-400/40 rounded-full px-3 py-1 text-xs font-semibold text-orange-300"
+                >
+                  {genre}
+                </span>
+              ))}
+            </div>
+            {/* Social/Bookmark/Share */}
+            <div className="flex justify-between items-center mt-4">
+              <Button variant="ghost" size="icon" className="text-red-400 hover:text-red-300 bg-gray-800/40 rounded-xl">
+                <Heart className="w-5 h-5" />
+              </Button>
+              <Button variant="ghost" size="icon" className="text-blue-400 hover:text-blue-300 bg-gray-800/40 rounded-xl">
+                <Bookmark className="w-5 h-5" />
+              </Button>
+              <Button variant="ghost" size="icon" className="text-green-400 hover:text-green-300 bg-gray-800/40 rounded-xl">
+                <Share2 className="w-5 h-5" />
+              </Button>
+            </div>
+          </motion.div>
 
-              {/* Enhanced Trivia */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6 }}
-                className="bg-gradient-to-br from-gray-900/80 to-black/80 backdrop-blur-2xl rounded-3xl p-8 border border-gray-700/50 mt-8 hover:border-gray-600/60 transition-all duration-500"
-              >
-                <h2 className="text-2xl font-bold bg-gradient-to-r from-orange-400 to-yellow-400 bg-clip-text text-transparent mb-6 flex items-center">
-                  <Sparkles className="w-6 h-6 text-orange-400 mr-3" />
-                  Did You Know?
-                </h2>
-                <div className="space-y-4">
-                  {movie.trivia.map((fact, index) => (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.7 + index * 0.1 }}
-                      className="flex items-start space-x-4 group"
-                    >
-                      <div className="w-3 h-3 bg-gradient-to-r from-orange-400 to-yellow-400 rounded-full mt-2 flex-shrink-0 group-hover:scale-125 transition-transform duration-300"></div>
-                      <p className="text-gray-300 leading-relaxed group-hover:text-white transition-colors duration-300">
-                        {fact}
-                      </p>
-                    </motion.div>
-                  ))}
-                </div>
-              </motion.div>
-            </motion.div>
-
-            {/* Right Side - Enhanced Movie Details */}
-            <motion.div
-              initial={{ opacity: 0, x: 60 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.5, duration: 0.8 }}
-              className="lg:col-span-2"
-            >
-              <div className="space-y-8">
-                {/* Enhanced Title and Basic Info */}
+          {/* Details Section */}
+          <motion.div
+            initial={{ opacity: 0, x: 40 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3, duration: 0.7 }}
+            className="flex-1 space-y-8"
+          >
+            {/* Title */}
+            <h1 className="text-5xl font-black mb-2 bg-gradient-to-r from-yellow-400 via-orange-500 to-yellow-400 bg-clip-text text-transparent leading-tight">
+              {movie.title}
+            </h1>
+            {/* Description */}
+            <div className="bg-gradient-to-br from-gray-900/80 to-black/80 backdrop-blur-2xl rounded-3xl p-6 border border-gray-700/40">
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-orange-400 to-yellow-400 bg-clip-text text-transparent mb-2">
+                Synopsis
+              </h2>
+              <p className="text-gray-300 leading-relaxed text-lg mb-2">{movie.description}</p>
+              <p className="text-gray-400 leading-relaxed">{movie.plot}</p>
+            </div>
+            {/* Cast & Crew */}
+            <div className="bg-gradient-to-br from-gray-900/80 to-black/80 backdrop-blur-2xl rounded-3xl p-6 border border-gray-700/40">
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-orange-400 to-yellow-400 bg-clip-text text-transparent mb-4">
+                Cast & Crew
+              </h2>
+              <div className="grid md:grid-cols-2 gap-6">
                 <div>
-                  <motion.h1
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.6 }}
-                    className="text-6xl font-black mb-6 bg-gradient-to-r from-yellow-400 via-orange-500 to-yellow-400 bg-clip-text text-transparent leading-tight"
-                  >
-                    {movie.title}
-                  </motion.h1>
-
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.7 }}
-                    className="flex flex-wrap items-center gap-4 mb-8"
-                  >
-                    {[
-                      { icon: Calendar, text: movie.year },
-                      { icon: Clock, text: movie.duration },
-                      { icon: Star, text: movie.ageRating },
-                    ].map((item, index) => (
-                      <motion.div
-                        key={index}
-                        whileHover={{ scale: 1.05, y: -2 }}
-                        className="flex items-center space-x-3 bg-gradient-to-r from-gray-800/60 to-gray-900/60 backdrop-blur-sm rounded-2xl px-6 py-3 border border-gray-600/40 hover:border-orange-400/40 transition-all duration-300"
-                      >
-                        <item.icon className="w-5 h-5 text-orange-400" />
-                        <span className="text-gray-300 font-medium">{item.text}</span>
-                      </motion.div>
-                    ))}
-                  </motion.div>
-
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.8 }}
-                    className="flex flex-wrap gap-3 mb-8"
-                  >
-                    {movie.genre.split(", ").map((genre, index) => (
-                      <motion.span
-                        key={index}
-                        whileHover={{ scale: 1.05, y: -2 }}
-                        className="bg-gradient-to-r from-orange-400/20 to-yellow-400/20 backdrop-blur-sm border border-orange-400/40 rounded-2xl px-6 py-3 text-sm font-semibold text-orange-300 hover:text-orange-200 hover:border-orange-400/60 transition-all duration-300"
-                      >
-                        {genre}
-                      </motion.span>
-                    ))}
-                  </motion.div>
+                  <h3 className="text-lg font-semibold text-white mb-2 flex items-center">
+                    <Users className="w-5 h-5 text-orange-400 mr-2" />
+                    Director
+                  </h3>
+                  <p className="text-gray-300 text-base">{movie.director}</p>
                 </div>
-
-                {/* Enhanced Description */}
-                <motion.div
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.9 }}
-                  className="bg-gradient-to-br from-gray-900/80 to-black/80 backdrop-blur-2xl rounded-3xl p-8 border border-gray-700/50 hover:border-gray-600/60 transition-all duration-500"
-                >
-                  <h2 className="text-3xl font-bold bg-gradient-to-r from-orange-400 to-yellow-400 bg-clip-text text-transparent mb-6">
-                    Synopsis
-                  </h2>
-                  <p className="text-gray-300 leading-relaxed text-lg mb-6 hover:text-white transition-colors duration-300">
-                    {movie.description}
-                  </p>
-                  <p className="text-gray-400 leading-relaxed hover:text-gray-300 transition-colors duration-300">
-                    {movie.plot}
-                  </p>
-                </motion.div>
-
-                {/* Enhanced Cast and Crew */}
-                <motion.div
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 1.0 }}
-                  className="bg-gradient-to-br from-gray-900/80 to-black/80 backdrop-blur-2xl rounded-3xl p-8 border border-gray-700/50 hover:border-gray-600/60 transition-all duration-500"
-                >
-                  <h2 className="text-3xl font-bold bg-gradient-to-r from-orange-400 to-yellow-400 bg-clip-text text-transparent mb-6">
-                    Cast & Crew
-                  </h2>
-                  <div className="grid md:grid-cols-2 gap-8">
-                    <div>
-                      <h3 className="text-xl font-semibold text-white mb-4 flex items-center">
-                        <Users className="w-5 h-5 text-orange-400 mr-2" />
-                        Director
-                      </h3>
-                      <p className="text-gray-300 text-lg hover:text-white transition-colors duration-300">
-                        {movie.director}
-                      </p>
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-semibold text-white mb-4 flex items-center">
-                        <Star className="w-5 h-5 text-orange-400 mr-2" />
-                        Starring
-                      </h3>
-                      <div className="space-y-2">
-                        {movie.cast.map((actor, index) => (
-                          <motion.p
-                            key={index}
-                            whileHover={{ x: 5 }}
-                            className="text-gray-300 hover:text-white transition-all duration-300 cursor-pointer"
-                          >
-                            {actor}
-                          </motion.p>
-                        ))}
-                      </div>
-                    </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-white mb-2 flex items-center">
+                    <Star className="w-5 h-5 text-orange-400 mr-2" />
+                    Starring
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {movie.cast.map((actor, idx) => (
+                      <span
+                        key={idx}
+                        className="bg-gray-800/60 px-3 py-1 rounded-full text-xs text-gray-300 hover:text-white transition"
+                      >
+                        {actor}
+                      </span>
+                    ))}
                   </div>
-                </motion.div>
-
-                {/* Enhanced Technical Details */}
-                <motion.div
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 1.1 }}
-                  className="bg-gradient-to-br from-gray-900/80 to-black/80 backdrop-blur-2xl rounded-3xl p-8 border border-gray-700/50 hover:border-gray-600/60 transition-all duration-500"
-                >
-                  <h2 className="text-3xl font-bold bg-gradient-to-r from-orange-400 to-yellow-400 bg-clip-text text-transparent mb-6">
-                    Details
-                  </h2>
-                  <div className="grid md:grid-cols-2 gap-8">
-                    <div className="space-y-4">
-                      {[
-                        { label: "Language", value: movie.language },
-                        { label: "Country", value: movie.country },
-                        { label: "Duration", value: movie.duration },
-                      ].map((item, index) => (
-                        <motion.div
-                          key={index}
-                          whileHover={{ x: 5 }}
-                          className="flex justify-between items-center py-2 border-b border-gray-700/30 hover:border-orange-400/30 transition-all duration-300"
-                        >
-                          <span className="text-gray-400 font-medium">{item.label}:</span>
-                          <span className="text-white font-semibold">{item.value}</span>
-                        </motion.div>
-                      ))}
-                    </div>
-                    <div>
-                      <span className="text-gray-400 block mb-4 font-medium">Awards:</span>
-                      <div className="space-y-3">
-                        {movie.awards.map((award, index) => (
-                          <motion.div
-                            key={index}
-                            whileHover={{ scale: 1.02, x: 5 }}
-                            className="flex items-center space-x-3 p-3 bg-gradient-to-r from-yellow-400/10 to-orange-400/10 rounded-xl border border-yellow-400/20 hover:border-yellow-400/40 transition-all duration-300"
-                          >
-                            <Award className="w-5 h-5 text-yellow-400 flex-shrink-0" />
-                            <span className="text-white font-medium">{award}</span>
-                          </motion.div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
+                </div>
               </div>
-            </motion.div>
-          </div>
+            </div>
+            {/* Technical Details & Awards */}
+            <div className="bg-gradient-to-br from-gray-900/80 to-black/80 backdrop-blur-2xl rounded-3xl p-6 border border-gray-700/40">
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-orange-400 to-yellow-400 bg-clip-text text-transparent mb-4">
+                Details & Awards
+              </h2>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center py-1 border-b border-gray-700/30">
+                    <span className="text-gray-400 font-medium">Language:</span>
+                    <span className="text-white font-semibold">{movie.language}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-1 border-b border-gray-700/30">
+                    <span className="text-gray-400 font-medium">Country:</span>
+                    <span className="text-white font-semibold">{movie.country}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-1 border-b border-gray-700/30">
+                    <span className="text-gray-400 font-medium">Duration:</span>
+                    <span className="text-white font-semibold">{movie.duration}</span>
+                  </div>
+                </div>
+                <div>
+                  <span className="text-gray-400 block mb-2 font-medium">Awards:</span>
+                  <div className="flex flex-wrap gap-2">
+                    {movie.awards.map((award, idx) => (
+                      <span
+                        key={idx}
+                        className="flex items-center gap-2 bg-gradient-to-r from-yellow-400/10 to-orange-400/10 rounded-xl border border-yellow-400/20 px-3 py-1 text-sm text-yellow-300"
+                      >
+                        <Award className="w-4 h-4 text-yellow-400" />
+                        {award}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+            {/* Trivia */}
+            <div className="bg-gradient-to-br from-gray-900/80 to-black/80 backdrop-blur-2xl rounded-3xl p-6 border border-gray-700/40">
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-orange-400 to-yellow-400 bg-clip-text text-transparent mb-4 flex items-center">
+                <Sparkles className="w-6 h-6 text-orange-400 mr-2" />
+                Did You Know?
+              </h2>
+              <ul className="space-y-2">
+                {movie.trivia.map((fact, idx) => (
+                  <li key={idx} className="flex items-start gap-2">
+                    <span className="w-2 h-2 mt-2 bg-gradient-to-r from-orange-400 to-yellow-400 rounded-full flex-shrink-0" />
+                    <span className="text-gray-300">{fact}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </motion.div>
         </div>
       </div>
     </div>
   )
 }
+                  
