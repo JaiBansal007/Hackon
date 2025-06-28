@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom"
 import LandingPage from "./pages/page"
-import SignInPage from "./pages/signin/page-new"
+import SignInPage from "./pages/signin/page"
 import SignUpPage from "./pages/signup/page"
 import HomePage from "./pages/home/page"
 import MoviePage from "./pages/movie/page"

@@ -596,7 +596,7 @@ const MoviePage = ({ startPictureInPicture }) => {
             `}
           >
             {/* Chat toggle button */}
-            {!isFullscreen && (
+            {!isFullscreen && roomStatus !== "none" && (
               <Button
                 onClick={() => setShowChat(!showChat)}
                 variant="secondary"

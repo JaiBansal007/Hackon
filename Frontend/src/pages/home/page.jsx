@@ -685,10 +685,9 @@ const HomePage = ({ startPictureInPicture }) => {
 
   return (
     <>
-      {/* Enhanced Background with Gradient Overlay */}
-      <div className="fixed inset-0 bg-gradient-to-br from-black via-gray-900 to-black">
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-900/20 via-transparent to-transparent" />
+      
+      <div className="fixed inset-0 bg-black">
+        <div className="absolute inset-0 bg-gradient-to-b from-gray-900/20 via-transparent to-black/60" />
       </div>
 
       {/* Show Enhanced Navbar only when not watching */}
@@ -697,6 +696,7 @@ const HomePage = ({ startPictureInPicture }) => {
           user={user}
           roomStatus={roomStatus}
           roomId={roomId}
+          roomMembers={roomMembers}
           isFullscreen={isFullscreen}
           onCreateRoom={() => setShowCreateDialog(true)}
           onJoinRoom={() => setShowJoinDialog(true)}
@@ -723,7 +723,7 @@ const HomePage = ({ startPictureInPicture }) => {
               ${(showChat || showRoomMembers) && isWatching && !isFullscreen ? "mr-80" : ""}
             `}
           >
-            {/* Enhanced Chat toggle button */}
+            {/* Chat toggle button */}
             {!isFullscreen && (
               <motion.div
                 initial={{ scale: 0, opacity: 0 }}
@@ -733,60 +733,26 @@ const HomePage = ({ startPictureInPicture }) => {
               >
                 <Button
                   onClick={() => setShowChat(!showChat)}
-                  className="relative group rounded-full p-4 shadow-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black border-2 border-amber-400/50 hover:border-amber-300 transition-all duration-300 hover:scale-110"
+                  className="rounded-full p-3 bg-amber-400 hover:bg-amber-600 text-white shadow-lg transition-all duration-300 hover:scale-110"
                 >
-                  <MessageSquareIcon className="w-6 h-6" />
-                  <div className="absolute inset-0 rounded-full bg-gradient-to-r from-amber-400/20 to-orange-400/20 blur-xl group-hover:blur-2xl transition-all duration-300" />
+                  <MessageSquareIcon className="w-5 h-5" />
                 </Button>
               </motion.div>
             )}
 
             {!isWatching && (
               <div className="relative">
-                {/* Enhanced content grid with better spacing */}
-                <div className="grid grid-cols-1 gap-8 px-6 py-8 md:px-8 lg:px-12 max-w-none">
-                  {/* Room Status Banner */}
-                  {roomStatus !== "none" && (
-                    <motion.div
-                      initial={{ y: -50, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      className="relative ml-18 overflow-hidden rounded-2xl bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/10 border border-amber-500/30 backdrop-blur-sm"
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-r from-amber-500/5 to-orange-500/5" />
-                      <div className="relative p-6 flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                          {roomStatus === "host" ? (
-                            <Crown className="w-8 h-8 text-amber-400" />
-                          ) : (
-                            <Users className="w-8 h-8 text-amber-400" />
-                          )}
-                          <div>
-                            <h3 className="text-xl font-bold text-white">
-                              {roomStatus === "host" ? "Hosting Room" : "In Room"}
-                            </h3>
-                            <p className="text-amber-200">
-                              Room ID: <span className="font-mono text-amber-400">{roomId}</span>
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-3">
-                          <div className="flex items-center space-x-2 text-amber-200">
-                            <Users className="w-5 h-5" />
-                            <span className="font-semibold">{roomMembers.length}</span>
-                          </div>
-                          <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse" />
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-
-                  <FeaturedSection
-                    movie={currentFeatured}
-                    onStartWatching={startWatching}
-                    onStartQuiz={startQuiz}
-                    quizLocked={quizLocked}
-                  />
-                  <MovieCategories onStartWatching={startWatching} onStartQuiz={startQuiz} quizLocked={quizLocked} />
+                {/* Featured Section with fixed height */}
+                <FeaturedSection
+                  movie={currentFeatured}
+                  onStartWatching={startWatching}
+                  onStartQuiz={startQuiz}
+                  quizLocked={quizLocked}
+                />
+                
+                {/* Movie Categories - positioned after the fixed height featured section */}
+                <div className="relative z-20 bg-black">
+                  <MovieCategories onStartWatching={startWatching} onStartQuiz={startQuiz} quizLocked={quizLocked} user={user} />
                 </div>
               </div>
             )}
