@@ -52,6 +52,9 @@ const MoviePage = ({ startPictureInPicture }) => {
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [roomMembers, setRoomMembers] = useState([])
 
+  const [polls, setPolls] = useState({})
+  const [pollsEnabled, setPollsEnabled] = useState(true)
+
   const wsRef = useRef(null)
   const videoPlayerRef = useRef(null)
 
@@ -203,6 +206,54 @@ const MoviePage = ({ startPictureInPicture }) => {
       }, 4000)
     })
 
+    wsRef.current.on("poll", (data) => {
+      const pollMessage = `POLL:${JSON.stringify(data.pollData)}`
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          id: data.id,
+          user: data.userName,
+          text: pollMessage,
+          timestamp: new Date(data.timestamp).toLocaleTimeString(),
+        },
+      ])
+
+      // Store poll data
+      setPolls((prev) => ({
+        ...prev,
+        [data.pollData.id]: data.pollData,
+      }))
+    })
+
+    wsRef.current.on("poll_vote", (data) => {
+      // Update poll data with new vote
+      setPolls((prev) => {
+        const updatedPolls = { ...prev }
+        const poll = updatedPolls[data.pollId]
+        if (poll) {
+          poll.options.forEach((option) => {
+            if (option.id === data.optionId) {
+              if (!option.votes.includes(data.userName)) {
+                option.votes.push(data.userName)
+                option.count = option.votes.length
+              }
+            } else if (!poll.allowMultiple) {
+              // Remove vote from other options if single selection
+              option.votes = option.votes.filter((voter) => voter !== data.userName)
+              option.count = option.votes.length
+            }
+          })
+        }
+        return updatedPolls
+      })
+    })
+
+    wsRef.current.on("poll_settings", (data) => {
+      if (data.settings.pollsEnabled !== undefined) {
+        setPollsEnabled(data.settings.pollsEnabled)
+      }
+    })
+
     return () => {
       // Optionally remove listeners here if you add an off() method
     }
@@ -302,6 +353,46 @@ const MoviePage = ({ startPictureInPicture }) => {
   const sendMessage = async (message) => {
     console.log("📤 Sending message:", message)
 
+    // Handle poll messages
+    if (message.startsWith("POLL:")) {
+      try {
+        const pollData = JSON.parse(message.substring(5))
+        if (wsRef.current && roomStatus !== "none") {
+          wsRef.current.sendPoll(pollData)
+        }
+        return
+      } catch (e) {
+        console.error("Error parsing poll data:", e)
+      }
+    }
+
+    // Handle poll vote messages
+    if (message.startsWith("POLL_VOTE:")) {
+      try {
+        const voteData = JSON.parse(message.substring(10))
+        if (wsRef.current && roomStatus !== "none") {
+          wsRef.current.sendPollVote(voteData.pollId, voteData.optionId)
+        }
+        return
+      } catch (e) {
+        console.error("Error parsing poll vote data:", e)
+      }
+    }
+
+    // Handle poll settings messages
+    if (message.startsWith("POLL_SETTINGS:")) {
+      try {
+        const settingsData = JSON.parse(message.substring(14))
+        if (wsRef.current && roomStatus !== "none") {
+          wsRef.current.sendPollSettings(settingsData)
+        }
+        return
+      } catch (e) {
+        console.error("Error parsing poll settings data:", e)
+      }
+    }
+
+    // Rest of the existing sendMessage logic...
     if (wsRef.current && roomStatus !== "none") {
       wsRef.current.sendChatMessage(message)
     }
@@ -512,6 +603,8 @@ const MoviePage = ({ startPictureInPicture }) => {
             onTimeUpdate={updateVideoTime}
             onPlayingStateChange={updateVideoPlayingState}
             showReactions={showReactions}
+            showChat={showChat}
+            showRoomMembers={showRoomMembers}
             wsRef={wsRef}
             // Video sync props
             onPlay={handlePlay}
@@ -534,6 +627,7 @@ const MoviePage = ({ startPictureInPicture }) => {
           roomStatus={roomStatus}
           roomMembers={roomMembers}
           user={user}
+          polls={polls}
         />
 
         {/* Room Members Sidebar */}
