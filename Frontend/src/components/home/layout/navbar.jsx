@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "../../ui/button"
 import { Input } from "../../ui/input"
 import { Avatar, AvatarFallback } from "../../ui/avatar"
-import { Search, Users, LogOut, User, Gift, Crown, PartyPopper } from "lucide-react"
+import { Search, Users, LogOut, User, Gift, Crown, Play } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,7 +19,7 @@ import { movieCategories } from "../content/movie-data"
 function UserInitialAvatar({ name }) {
   const initial = name?.charAt(0).toUpperCase() || "U"
   return (
-    <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold text-sm">
+    <AvatarFallback className="bg-gradient-to-br from-red-500 to-orange-600 text-white font-bold text-sm">
       {initial}
     </AvatarFallback>
   )
@@ -52,7 +52,17 @@ export function Navbar({ user, roomStatus, roomId, roomMembers, isFullscreen, on
       transition={{ duration: 0.4, ease: "easeOut" }}
       className="fixed top-0 left-0 right-0 z-40 bg-black/95 backdrop-blur-sm border-b border-gray-800"
     >
-      <div className="flex items-center justify-between px-4 py-3 ml-16">
+      <div className="flex items-center justify-between px-4 py-3 ml-2">
+        {/* FireStream Logo */}
+        <div className="flex items-center space-x-3 mr-6">
+          <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-orange-600 rounded-xl flex items-center justify-center shadow-xl">
+            <Play className="w-5 h-5 text-white fill-white" />
+          </div>
+          <span className="text-2xl font-black text-white">
+            Fire
+            <span className="text-transparent bg-gradient-to-r from-red-400 to-orange-500 bg-clip-text">Stream</span>
+          </span>
+        </div>
         {/* Search */}
         <div className="relative flex-1 max-w-md">
           <div className="relative">
@@ -108,7 +118,8 @@ export function Navbar({ user, roomStatus, roomId, roomMembers, isFullscreen, on
               <Button
                 onClick={onCreateRoom}
                 size="sm"
-                className="bg-blue-600 hover:bg-blue-700 text-white rounded-full px-3 py-1 text-xs h-8"
+                // Updated to FireStream logo color scheme
+                className="bg-gradient-to-r from-red-500 via-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white rounded-full px-3 py-1 text-xs h-8 font-bold shadow-md transition-all duration-300"
               >
                 <Crown className="w-3 h-3 mr-1" />
                 Create Room
@@ -117,7 +128,7 @@ export function Navbar({ user, roomStatus, roomId, roomMembers, isFullscreen, on
                 onClick={onJoinRoom}
                 size="sm"
                 variant="outline"
-                className="border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white rounded-full px-3 py-1 text-xs h-8"
+                className="border-gray-600 text-gray-600 hover:bg-gray-300 hover:text-white rounded-full px-3 py-1 text-xs h-8"
               >
                 <Users className="w-3 h-3 mr-1" />
                 Join Room

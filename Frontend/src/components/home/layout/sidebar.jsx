@@ -24,7 +24,7 @@ export function Sidebar({ isFullscreen, isWatching }) {
       initial={{ x: -100, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
-      className={`fixed left-0 top-0 h-full z-50 transition-all duration-300 ease-in-out ${
+      className={`fixed left-0 top-16 h-full z-50 transition-all duration-300 ease-in-out ${
         sidebarExpanded ? "w-60" : "w-20"
       }`}
       onMouseEnter={() => setSidebarExpanded(true)}
@@ -43,14 +43,14 @@ export function Sidebar({ isFullscreen, isWatching }) {
       
       <div className="relative p-4 pl-2 pt-0 h-full overflow-y-auto">
         {/* Logo Section */}
-        <div className="w-16 h-16 flex items-center justify-center mb-8">
-          <motion.div
-            className="w-8 h-8 bg-gradient-to-r from-amber-400 to-orange-500 rounded-lg flex items-center justify-center"
+        <div className="w-16 h-16 flex items-center justify-center ">
+          {/* <motion.div
+            className="w-10 h-10 bg-gradient-to-br from-red-500 to-orange-600 rounded-xl flex items-center justify-center shadow-xl"
             whileHover={{ scale: 1.1 }}
             transition={{ duration: 0.3 }}
           >
-            <Play className="w-4 h-4 text-white " />
-          </motion.div>
+            <Play className="w-5 h-5 text-white fill-white" />
+          </motion.div> */}
           
           {/* Brand name - only visible when expanded */}
           {/* <AnimatePresence>

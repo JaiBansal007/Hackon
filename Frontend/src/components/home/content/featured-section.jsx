@@ -306,7 +306,7 @@ export function FeaturedSection({ movie, onStartWatching, onStartSoloWatching, o
                   <Button
                     onClick={() => handleQuizClick(currentMovie)}
                     disabled={quizLocked}
-                    className="bg-gradient-to-r from-blue-500 via-indigo-500 to-violet-500 hover:from-blue-400 hover:via-indigo-400 hover:to-violet-400 text-white font-bold px-6 py-3 rounded-md flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="bg-gradient-to-r from-red-500 via-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white font-bold px-6 py-3 rounded-md flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <span>Quiz Challenge</span>
                   </Button>
