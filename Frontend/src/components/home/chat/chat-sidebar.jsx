@@ -26,7 +26,6 @@ export function ChatSidebar({
   const [mentionSuggestions, setMentionSuggestions] = useState([]);
   const [cursorPosition, setCursorPosition] = useState(0);
   
-  // Poll-related state
   const [showCreatePoll, setShowCreatePoll] = useState(false);
   const [showPollOptions, setShowPollOptions] = useState(false);
   const [pollQuestion, setPollQuestion] = useState("");
@@ -37,16 +36,12 @@ export function ChatSidebar({
   const [pollsEnabled, setPollsEnabled] = useState(true);
   const [firebasePolls, setFirebasePolls] = useState({});
   const [isCreatingPoll, setIsCreatingPoll] = useState(false);
-  
-  // Reaction state
   const [showReactions, setShowReactions] = useState(false);
   const [reactionCooldown, setReactionCooldown] = useState(false);
 
-  // Refs for auto-scroll functionality
   const inputRef = useRef(null);
   const messagesContainerRef = useRef(null);
 
-  // Auto-scroll to bottom function
   const scrollToBottom = (smooth = true) => {
     if (messagesContainerRef.current) {
       const scrollOptions = {
@@ -57,21 +52,15 @@ export function ChatSidebar({
     }
   };
 
-  // Listen to Firebase polls
   useEffect(() => {
     if (!roomId || roomStatus === "none") return;
-
-    // Add immediate callback with empty data to prevent infinite loading
     setFirebasePolls({});
-
     const unsubscribe = pollsService.listenToPolls(roomId, (polls) => {
       setFirebasePolls(polls);
-      // Auto-scroll when new polls are added
       if (Object.keys(polls).length > 0) {
         setTimeout(() => scrollToBottom(), 100);
       }
     });
-
     return () => {
       if (unsubscribe) {
         unsubscribe();
@@ -79,28 +68,24 @@ export function ChatSidebar({
     };
   }, [roomId, roomStatus]);
 
-  // Auto-scroll when messages change
   useEffect(() => {
     if (messages.length > 0) {
       setTimeout(() => scrollToBottom(), 100);
     }
   }, [messages]);
 
-  // Auto-scroll when Firebase polls change
   useEffect(() => {
     if (Object.keys(firebasePolls).length > 0) {
       setTimeout(() => scrollToBottom(), 100);
     }
   }, [firebasePolls]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       pollsService.cleanup();
     };
   }, []);
 
-  // PollMessage Component - Consistent sizing and styling
   const PollMessage = ({ poll, onVote, currentUser }) => {
     const [votingFor, setVotingFor] = useState(null);
     const [showVoters, setShowVoters] = useState({});
@@ -111,9 +96,7 @@ export function ChatSidebar({
 
     const handleVote = async (optionId) => {
       if (votingFor) return;
-      
       setVotingFor(optionId);
-      
       try {
         await onVote(poll.id, optionId);
       } catch (error) {
@@ -142,7 +125,6 @@ export function ChatSidebar({
         className="w-full max-w-sm mx-auto"
       >
         <div className="bg-gradient-to-br from-purple-500/10 via-blue-500/5 to-indigo-500/10 border border-purple-500/30 rounded-xl p-4 backdrop-blur-sm">
-          {/* Poll Header - Fixed height */}
           <div className="flex items-start justify-between mb-3 min-h-[2.5rem]">
             <div className="flex items-center space-x-2 flex-1">
               <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -167,7 +149,6 @@ export function ChatSidebar({
             </div>
           </div>
 
-          {/* Poll Options - Consistent sizing */}
           <div className="space-y-2">
             {poll.options.map((option, index) => {
               const percentage = totalVotes > 0 ? Math.round((option.count / totalVotes) * 100) : 0;
@@ -276,7 +257,6 @@ export function ChatSidebar({
             })}
           </div>
 
-          {/* Poll Footer - Fixed height */}
           <div className="mt-3 pt-3 border-t border-gray-600/30 min-h-[1.5rem]">
             <div className="flex items-center justify-between text-xs text-gray-400">
               <div className="flex items-center space-x-4">
@@ -332,12 +312,10 @@ export function ChatSidebar({
     }
   }
 
-  // WhatsApp-style time formatting function
   const formatWhatsAppTime = (timestamp) => {
     const now = new Date();
     let time;
     
-    // Handle different timestamp formats
     if (!timestamp) {
       time = now;
     } else if (typeof timestamp === 'string') {
@@ -350,7 +328,6 @@ export function ChatSidebar({
       time = new Date(timestamp);
     }
     
-    // Check for invalid date
     if (isNaN(time.getTime())) {
       return 'now';
     }
@@ -359,20 +336,16 @@ export function ChatSidebar({
     const messageDate = new Date(time.getFullYear(), time.getMonth(), time.getDate());
     
     if (messageDate.getTime() === today.getTime()) {
-      // Today - show time
       return time.toLocaleTimeString('en-US', { 
         hour: 'numeric', 
         minute: '2-digit',
         hour12: true 
       });
     } else if (messageDate.getTime() === today.getTime() - 86400000) {
-      // Yesterday
       return 'Yesterday';
     } else if (now.getTime() - time.getTime() < 7 * 24 * 60 * 60 * 1000) {
-      // This week - show day
       return time.toLocaleDateString('en-US', { weekday: 'short' });
     } else {
-      // Older - show date
       return time.toLocaleDateString('en-US', { 
         month: 'short', 
         day: 'numeric' 
@@ -888,35 +861,17 @@ export function ChatSidebar({
                   </motion.div>
                 )}
 
-                {/* Create Poll Form - Enhanced */}
                 {showCreatePoll && (roomStatus === "host" || pollsEnabled) && (
                   <motion.div 
-                    initial={{ opacity: 0, height: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, height: "auto", scale: 1 }}
-                    exit={{ opacity: 0, height: 0, scale: 0.95 }}
-                    transition={{ duration: 0.3, ease: "easeOut" }}
-                    className="mb-2 bg-gradient-to-br from-blue-500/15 via-purple-500/10 to-indigo-500/15 rounded-2xl border border-blue-400/40 backdrop-blur-lg shadow-2xl overflow-hidden"
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="mb-2 bg-gray-800/60 rounded-lg border border-gray-600/40 backdrop-blur-sm max-h-96 overflow-y-auto"
                   >
-                    {/* Header with gradient background */}
-                    <div className="relative bg-gradient-to-r from-blue-600/80 to-purple-600/80 p-4">
-                      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 backdrop-blur-sm" />
-                      <div className="relative flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                          <motion.div 
-                            whileHover={{ rotate: 360 }}
-                            transition={{ duration: 0.5 }}
-                            className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/30"
-                          >
-                            <BarChart3 className="w-5 h-5 text-white" />
-                          </motion.div>
-                          <div>
-                            <h4 className="text-white font-bold text-base">Create Poll</h4>
-                            <p className="text-blue-100/80 text-xs">Engage your audience with interactive polls</p>
-                          </div>
-                        </div>
-                        <motion.button
-                          whileHover={{ scale: 1.1, rotate: 90 }}
-                          whileTap={{ scale: 0.9 }}
+                    <div className="p-3 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-white font-semibold text-sm">Create Poll</h4>
+                        <button
                           onClick={() => {
                             setShowCreatePoll(false)
                             setShowPollOptions(false)
@@ -926,363 +881,108 @@ export function ChatSidebar({
                             setShowWhoVoted(false)
                             setAllowPollClose(true)
                           }}
-                          className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center hover:bg-white/30 transition-all backdrop-blur-sm"
+                          className="text-gray-400 hover:text-white"
                         >
-                          <X className="w-4 h-4 text-white" />
-                        </motion.button>
+                          <X className="w-4 h-4" />
+                        </button>
                       </div>
-                    </div>
 
-                    <div className="p-4 space-y-4">
-                      {/* Question Input - Enhanced */}
-                      <motion.div 
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.1 }}
-                        className="space-y-2"
-                      >
-                        <div className="flex items-center space-x-2">
-                          <div className="w-6 h-6 bg-gradient-to-r from-emerald-500 to-blue-500 rounded-lg flex items-center justify-center">
-                            <MessageSquare className="w-3 h-3 text-white" />
-                          </div>
-                          <label className="text-sm font-semibold text-white">Poll Question</label>
-                        </div>
-                        
-                        <div className="relative">
-                          <input
-                            type="text"
-                            placeholder="What's your favorite movie genre?"
-                            value={pollQuestion}
-                            onChange={(e) => setPollQuestion(e.target.value)}
-                            className="w-full p-3 bg-gray-800/50 border-2 border-gray-600/30 rounded-xl text-white placeholder-gray-400 focus:border-blue-400/60 focus:ring-4 focus:ring-blue-400/20 transition-all text-sm font-medium backdrop-blur-sm"
-                          />
-                          <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-500/5 to-purple-500/5 pointer-events-none" />
-                        </div>
-                        
-                        {/* Enhanced Quick Templates */}
-                        <div className="space-y-2">
-                          <span className="text-xs text-gray-400 font-medium">Quick Templates:</span>
-                          <div className="flex flex-wrap gap-2">
-                            {[
-                              { text: "What's your favorite genre?", icon: "🎭", color: "from-pink-500 to-rose-500" },
-                              { text: "Rate this movie scene", icon: "⭐", color: "from-yellow-500 to-orange-500" },
-                              { text: "What happens next?", icon: "🤔", color: "from-purple-500 to-indigo-500" },
-                              { text: "Who's your favorite character?", icon: "👤", color: "from-green-500 to-emerald-500" }
-                            ].map((template, idx) => (
-                              <motion.button
-                                key={idx}
-                                whileHover={{ scale: 1.05, y: -2 }}
-                                whileTap={{ scale: 0.95 }}
-                                onClick={() => setPollQuestion(template.text)}
-                                className={`flex items-center space-x-1.5 bg-gradient-to-r ${template.color} bg-opacity-20 text-white px-3 py-1.5 rounded-lg hover:bg-opacity-30 transition-all text-xs font-medium border border-white/20 backdrop-blur-sm`}
-                              >
-                                <span>{template.icon}</span>
-                                <span>{template.text}</span>
-                              </motion.button>
-                            ))}
-                          </div>
-                        </div>
-                      </motion.div>
-
-                      {/* Options Section - Enhanced */}
-                      <motion.div 
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2 }}
-                        className="space-y-3"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
-                            <div className="w-6 h-6 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg flex items-center justify-center">
-                              <List className="w-3 h-3 text-white" />
-                            </div>
-                            <label className="text-sm font-semibold text-white">Poll Options</label>
-                          </div>
-                          <span className="text-xs text-gray-400 bg-gray-800/40 px-2 py-1 rounded-full">
-                            {pollOptions.filter(opt => opt.trim()).length}/6 options
-                          </span>
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <AnimatePresence mode="popLayout">
-                            {pollOptions.map((option, index) => (
-                              <motion.div 
-                                key={`poll-option-${index}`} 
-                                layout
-                                initial={{ opacity: 0, x: -20, scale: 0.95 }}
-                                animate={{ opacity: 1, x: 0, scale: 1 }}
-                                exit={{ opacity: 0, x: 20, scale: 0.95 }}
-                                transition={{ duration: 0.2, delay: index * 0.05 }}
-                                className="group"
-                              >
-                                <div className="flex items-center space-x-3 p-2 bg-gray-800/30 rounded-lg border border-gray-600/30 hover:border-gray-500/50 transition-all backdrop-blur-sm">
-                                  <motion.div 
-                                    whileHover={{ scale: 1.1, rotate: 5 }}
-                                    className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center text-sm text-white font-bold shadow-lg"
-                                  >
-                                    {String.fromCharCode(65 + index)}
-                                  </motion.div>
-                                  <input
-                                    type="text"
-                                    placeholder={`Option ${index + 1} (e.g., Action, Comedy...)`}
-                                    value={option}
-                                    onChange={(e) => updatePollOption(index, e.target.value)}
-                                    className="flex-1 p-2 bg-transparent border-0 text-white placeholder-gray-400 focus:outline-none focus:ring-0 text-sm font-medium"
-                                  />
-                                  {pollOptions.length > 2 && (
-                                    <motion.button
-                                      whileHover={{ scale: 1.2, rotate: 90 }}
-                                      whileTap={{ scale: 0.8 }}
-                                      onClick={() => removePollOption(index)}
-                                      className="w-7 h-7 bg-red-500/20 hover:bg-red-500/30 text-red-400 hover:text-red-300 rounded-lg flex items-center justify-center transition-all border border-red-500/30 opacity-0 group-hover:opacity-100"
-                                    >
-                                      <X className="w-3 h-3" />
-                                    </motion.button>
-                                  )}
-                                </div>
-                              </motion.div>
-                            ))}
-                          </AnimatePresence>
-                        </div>
-
-                        {/* Add Option Button & Templates */}
-                        {pollOptions.length < 6 && (
-                          <motion.div 
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            className="space-y-3"
-                          >
-                            <motion.button
-                              whileHover={{ scale: 1.02, y: -1 }}
-                              whileTap={{ scale: 0.98 }}
-                              onClick={addPollOption}
-                              className="flex items-center justify-center space-x-2 w-full p-3 text-blue-400 hover:text-blue-300 bg-blue-500/10 hover:bg-blue-500/20 border-2 border-dashed border-blue-400/40 hover:border-blue-400/60 rounded-xl transition-all font-medium text-sm backdrop-blur-sm"
+                      <div>
+                        <input
+                          type="text"
+                          placeholder="What's your question?"
+                          value={pollQuestion}
+                          onChange={(e) => setPollQuestion(e.target.value)}
+                          className="w-full p-2 bg-gray-700/50 border border-gray-600/50 rounded-lg text-white placeholder-gray-400 focus:border-blue-400/50 text-sm"
+                        />
+                        <div className="flex gap-1 mt-1">
+                          {["Favorite genre?", "Rate this scene", "What's next?"].map((t, i) => (
+                            <button
+                              key={i}
+                              onClick={() => setPollQuestion(t)}
+                              className="text-xs bg-blue-500/20 text-blue-400 px-2 py-1 rounded hover:bg-blue-500/30"
                             >
-                              <motion.div
-                                whileHover={{ rotate: 90 }}
-                                transition={{ duration: 0.2 }}
+                              {t}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        {pollOptions.map((option, index) => (
+                          <div key={index} className="flex items-center space-x-2 mb-2">
+                            <div className="w-5 h-5 bg-gradient-to-r from-blue-500 to-purple-500 rounded text-xs text-white font-bold flex items-center justify-center">
+                              {String.fromCharCode(65 + index)}
+                            </div>
+                            <input
+                              type="text"
+                              placeholder={`Option ${index + 1}`}
+                              value={option}
+                              onChange={(e) => updatePollOption(index, e.target.value)}
+                              className="flex-1 p-1.5 bg-gray-700/50 border border-gray-600/50 rounded text-white placeholder-gray-400 text-sm"
+                            />
+                            {pollOptions.length > 2 && (
+                              <button
+                                onClick={() => removePollOption(index)}
+                                className="text-red-400 hover:text-red-300 p-1"
                               >
-                                <Plus className="w-4 h-4" />
-                              </motion.div>
-                              <span>Add Another Option</span>
-                            </motion.button>
-                            
-                            {/* Enhanced Option Templates */}
-                            {pollOptions.every(opt => !opt.trim()) && (
-                              <motion.div 
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.3 }}
-                                className="space-y-2"
-                              >
-                                <span className="text-xs text-gray-400 font-medium">Quick Option Sets:</span>
-                                <div className="grid grid-cols-1 gap-2">
-                                  {[
-                                    { 
-                                      name: "Movie Genres", 
-                                      options: ["Action", "Comedy", "Drama", "Horror"], 
-                                      icon: "🎬", 
-                                      color: "from-green-500 to-emerald-500" 
-                                    },
-                                    { 
-                                      name: "Star Rating", 
-                                      options: ["⭐⭐⭐⭐⭐", "⭐⭐⭐⭐", "⭐⭐⭐", "⭐⭐", "⭐"], 
-                                      icon: "⭐", 
-                                      color: "from-yellow-500 to-orange-500" 
-                                    },
-                                    { 
-                                      name: "Yes/No/Maybe", 
-                                      options: ["Yes", "No", "Maybe"], 
-                                      icon: "🤷", 
-                                      color: "from-purple-500 to-pink-500" 
-                                    }
-                                  ].map((template, idx) => (
-                                    <motion.button
-                                      key={idx}
-                                      whileHover={{ scale: 1.02, x: 5 }}
-                                      whileTap={{ scale: 0.98 }}
-                                      onClick={() => setPollOptions(template.options)}
-                                      className={`flex items-center justify-between p-3 bg-gradient-to-r ${template.color} bg-opacity-10 hover:bg-opacity-20 border border-white/10 hover:border-white/20 rounded-lg transition-all text-white text-sm font-medium backdrop-blur-sm`}
-                                    >
-                                      <div className="flex items-center space-x-3">
-                                        <span className="text-lg">{template.icon}</span>
-                                        <div className="text-left">
-                                          <div className="font-semibold">{template.name}</div>
-                                          <div className="text-xs text-gray-400">
-                                            {template.options.join(", ")}
-                                          </div>
-                                        </div>
-                                      </div>
-                                      <ChevronRight className="w-4 h-4 text-gray-400" />
-                                    </motion.button>
-                                  ))}
-                                </div>
-                              </motion.div>
+                                <X className="w-3 h-3" />
+                              </button>
                             )}
-                          </motion.div>
-                        )}
-                      </motion.div>
-
-                      {/* Poll Settings - Enhanced */}
-                      <motion.div 
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.4 }}
-                        className="space-y-3"
-                      >
-                        <div className="flex items-center space-x-2 pb-2 border-b border-gray-600/30">
-                          <div className="w-6 h-6 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
-                            <Settings className="w-3 h-3 text-white" />
                           </div>
-                          <span className="text-sm font-semibold text-white">Poll Settings</span>
-                        </div>
+                        ))}
                         
-                        <div className="grid gap-3">
-                          {/* Multiple Choice Setting */}
-                          <motion.div 
-                            whileHover={{ scale: 1.01 }}
-                            className="flex items-center justify-between p-3 bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-xl border border-green-500/20 hover:border-green-500/40 transition-all backdrop-blur-sm"
+                        {pollOptions.length < 6 && (
+                          <button
+                            onClick={addPollOption}
+                            className="flex items-center space-x-1 text-blue-400 hover:text-blue-300 text-sm py-1 px-2 hover:bg-blue-400/10 rounded border border-dashed border-blue-400/30"
                           >
-                            <div className="flex items-center space-x-3">
-                              <div className="w-8 h-8 bg-green-500/20 rounded-lg flex items-center justify-center border border-green-500/30">
-                                <Check className="w-4 h-4 text-green-400" />
-                              </div>
-                              <div>
-                                <span className="text-sm font-semibold text-white">Multiple Answers</span>
-                                <p className="text-xs text-gray-400">Allow selecting multiple options</p>
-                              </div>
-                            </div>
-                            <motion.button
-                              whileTap={{ scale: 0.95 }}
-                              onClick={() => setAllowMultipleSelection(!allowMultipleSelection)}
-                              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-all duration-300 ${
-                                allowMultipleSelection ? "bg-green-600 shadow-lg shadow-green-500/25" : "bg-gray-600"
-                              }`}
-                            >
-                              <motion.span
-                                layout
-                                className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-lg transition-transform duration-300 ${
-                                  allowMultipleSelection ? "translate-x-6" : "translate-x-1"
-                                }`}
-                              />
-                            </motion.button>
-                          </motion.div>
+                            <Plus className="w-3 h-3" />
+                            <span>Add Option</span>
+                          </button>
+                        )}
+                      </div>
 
-                          {/* Show Who Voted Setting */}
-                          <motion.div 
-                            whileHover={{ scale: 1.01 }}
-                            className="flex items-center justify-between p-3 bg-gradient-to-r from-blue-500/10 to-indigo-500/10 rounded-xl border border-blue-500/20 hover:border-blue-500/40 transition-all backdrop-blur-sm"
-                          >
-                            <div className="flex items-center space-x-3">
-                              <div className="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center border border-blue-500/30">
-                                <Eye className="w-4 h-4 text-blue-400" />
-                              </div>
-                              <div>
-                                <span className="text-sm font-semibold text-white">Show Voters</span>
-                                <p className="text-xs text-gray-400">Display who voted for each option</p>
-                              </div>
-                            </div>
-                            <motion.button
-                              whileTap={{ scale: 0.95 }}
-                              onClick={() => setShowWhoVoted(!showWhoVoted)}
-                              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-all duration-300 ${
-                                showWhoVoted ? "bg-blue-600 shadow-lg shadow-blue-500/25" : "bg-gray-600"
-                              }`}
-                            >
-                              <motion.span
-                                layout
-                                className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-lg transition-transform duration-300 ${
-                                  showWhoVoted ? "translate-x-6" : "translate-x-1"
-                                }`}
-                              />
-                            </motion.button>
-                          </motion.div>
+                      <div className="flex space-x-4 text-sm">
+                        <label className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            checked={allowMultipleSelection}
+                            onChange={(e) => setAllowMultipleSelection(e.target.checked)}
+                            className="rounded bg-gray-700 border-gray-600"
+                          />
+                          <span className="text-gray-300">Multiple choice</span>
+                        </label>
+                        <label className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            checked={showWhoVoted}
+                            onChange={(e) => setShowWhoVoted(e.target.checked)}
+                            className="rounded bg-gray-700 border-gray-600"
+                          />
+                          <span className="text-gray-300">Show voters</span>
+                        </label>
+                      </div>
 
-                          {/* Allow Manual Close Setting */}
-                          <motion.div 
-                            whileHover={{ scale: 1.01 }}
-                            className="flex items-center justify-between p-3 bg-gradient-to-r from-orange-500/10 to-yellow-500/10 rounded-xl border border-orange-500/20 hover:border-orange-500/40 transition-all backdrop-blur-sm"
-                          >
-                            <div className="flex items-center space-x-3">
-                              <div className="w-8 h-8 bg-orange-500/20 rounded-lg flex items-center justify-center border border-orange-500/30">
-                                <Clock className="w-4 h-4 text-orange-400" />
-                              </div>
-                              <div>
-                                <span className="text-sm font-semibold text-white">Manual Close</span>
-                                <p className="text-xs text-gray-400">Allow creator to close poll manually</p>
-                              </div>
-                            </div>
-                            <motion.button
-                              whileTap={{ scale: 0.95 }}
-                              onClick={() => setAllowPollClose(!allowPollClose)}
-                              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-all duration-300 ${
-                                allowPollClose ? "bg-orange-600 shadow-lg shadow-orange-500/25" : "bg-gray-600"
-                              }`}
-                            >
-                              <motion.span
-                                layout
-                                className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-lg transition-transform duration-300 ${
-                                  allowPollClose ? "translate-x-6" : "translate-x-1"
-                                }`}
-                              />
-                            </motion.button>
-                          </motion.div>
-                        </div>
-                      </motion.div>
-
-                      {/* Action Buttons - Enhanced */}
-                      <motion.div 
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.5 }}
-                        className="flex space-x-3 pt-4"
-                      >
-                        <motion.button
-                          whileHover={{ scale: 1.02, y: -1 }}
-                          whileTap={{ scale: 0.98 }}
+                      <div className="flex space-x-2">
+                        <button
                           onClick={createPoll}
                           disabled={!pollQuestion.trim() || pollOptions.filter(opt => opt.trim()).length < 2 || isCreatingPoll}
-                          className="flex-1 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 hover:from-blue-700 hover:via-purple-700 hover:to-indigo-700 disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed text-white py-3 px-4 rounded-xl transition-all font-semibold text-sm flex items-center justify-center space-x-2 shadow-lg hover:shadow-blue-500/25 disabled:shadow-none backdrop-blur-sm"
+                          className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-600 disabled:to-gray-600 text-white py-2 px-3 rounded-lg font-medium text-sm flex items-center justify-center space-x-2"
                         >
                           {isCreatingPoll ? (
                             <>
-                              <motion.div 
-                                animate={{ rotate: 360 }}
-                                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                                className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
-                              />
-                              <span>Creating Poll...</span>
+                              <div className="w-3 h-3 border border-white/30 border-t-white rounded-full animate-spin" />
+                              <span>Creating...</span>
                             </>
                           ) : (
                             <>
-                              <motion.div
-                                whileHover={{ scale: 1.1, rotate: 15 }}
-                                transition={{ duration: 0.2 }}
-                              >
-                                <BarChart3 className="w-4 h-4" />
-                              </motion.div>
-                              <span>Create Poll</span>
+                              <BarChart3 className="w-3 h-3" />
+                              <span>Create</span>
                             </>
                           )}
-                        </motion.button>
-                        
-                        <motion.button
-                          whileHover={{ scale: 1.02, y: -1 }}
-                          whileTap={{ scale: 0.98 }}
-                          onClick={() => {
-                            setShowCreatePoll(false)
-                            setShowPollOptions(false)
-                            setPollQuestion("")
-                            setPollOptions(["", ""])
-                            setAllowMultipleSelection(false)
-                            setShowWhoVoted(false)
-                            setAllowPollClose(true)
-                          }}
-                          className="px-6 py-3 bg-gray-700/80 hover:bg-gray-600/80 text-white rounded-xl transition-all font-semibold text-sm backdrop-blur-sm border border-gray-600/50 hover:border-gray-500/70"
-                        >
-                          Cancel
-                        </motion.button>
-                      </motion.div>
+                        </button>
+                      </div>
                     </div>
                   </motion.div>
                 )}
