@@ -39,6 +39,9 @@ export function VideoPlayer({
   onTogglePiP,
   onSendReaction,
   showReactions,
+  showChat,
+  showRoomMembers,
+  wsRef,
   // Firebase video sync props
   onPlay,
   onPause,
@@ -441,7 +444,9 @@ export function VideoPlayer({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className={`fixed inset-0 bg-black z-40 flex ${isFullscreen ? "z-50" : ""}`}
+      className={`fixed bg-black z-40 flex transition-all duration-300 ${
+        isFullscreen ? "inset-0 z-50" : `inset-0 ${showChat || showRoomMembers ? "right-80" : ""}`
+      }`}
     >
       <div className="relative w-full h-full bg-black">
         <video
@@ -480,8 +485,9 @@ export function VideoPlayer({
 
         <ReactionsPanel show={showReactions} onReactionSelect={onSendReaction} />
 
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-4">
-          <div className="mb-4">
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent">
+          {/* Progress Bar */}
+          <div className="px-4 pt-3 pb-2">
             <input
               type="range"
               min="0"
@@ -489,62 +495,51 @@ export function VideoPlayer({
               value={currentTime}
               onChange={handleVideoSeek}
               disabled={roomStatus !== "none" && !canControlVideo}
-              className={`w-full h-1 rounded-lg appearance-none ${
-                roomStatus !== "none" && !canControlVideo ? "cursor-not-allowed opacity-50" : "cursor-pointer"
+              className={`w-full h-1 rounded-lg appearance-none transition-all ${
+                roomStatus !== "none" && !canControlVideo ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:h-1.5"
               }`}
               style={{
                 background: `linear-gradient(to right, #f97316 0%, #f97316 ${
                   videoDuration ? (currentTime / videoDuration) * 100 : 0
-                }%, #4b5563 ${videoDuration ? (currentTime / videoDuration) * 100 : 0}%, #4b5563 100%)`,
+                }%, #374151 ${videoDuration ? (currentTime / videoDuration) * 100 : 0}%, #374151 100%)`,
               }}
             />
-            <div className="flex justify-between text-xs text-gray-300 mt-1">
-              <span>{formatTime(currentTime)}</span>
-              <span>{formatTime(videoDuration)}</span>
-            </div>
           </div>
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Button
+          {/* Controls Bar */}
+          <div className="flex items-center justify-between px-4 pb-3">
+            {/* Left Controls */}
+            <div className="flex items-center space-x-3">
+              {/* Play/Pause Button */}
+              <motion.button
                 onClick={togglePlayPause}
-                size="sm"
                 disabled={roomStatus !== "none" && !canControlVideo}
-                className={`border-none backdrop-blur-sm ${
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className={`p-2 rounded-full transition-all ${
                   roomStatus !== "none" && !canControlVideo 
-                    ? "bg-gray-500/30 text-gray-400 cursor-not-allowed" 
-                    : "bg-white/20 hover:bg-white/30 text-black"
+                    ? "bg-gray-600/50 text-gray-400 cursor-not-allowed" 
+                    : "bg-white/20 hover:bg-white/30 text-white backdrop-blur-sm"
                 }`}
                 title={roomStatus !== "none" && !canControlVideo ? "No video control permission" : ""}
               >
-                {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
-              </Button>
+                {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+              </motion.button>
 
-              {/* Permission status indicator */}
-              {roomStatus !== "none" && (
-                <div className="text-xs text-gray-300">
-                  {isHost ? (
-                    <span className="text-yellow-400">👑 Host</span>
-                  ) : hasVideoPermission ? (
-                    <span className="text-green-400">🎮 Video Control</span>
-                  ) : (
-                    <span className="text-gray-500">👀 Viewer</span>
-                  )}
-                </div>
-              )}
-
+              {/* Volume Control */}
               <div
-                className="relative flex items-center space-x-2"
+                className="relative flex items-center"
                 onMouseEnter={handleVolumeMouseEnter}
                 onMouseLeave={handleVolumeMouseLeave}
               >
-                <Button
+                <motion.button
                   onClick={toggleMute}
-                  size="sm"
-                  className="bg-white/20 hover:bg-white/30 text-black border-none backdrop-blur-sm"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="p-2 rounded-full bg-white/20 hover:bg-white/30 text-white border-none backdrop-blur-sm transition-all"
                 >
-                  {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
-                </Button>
+                  {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                </motion.button>
 
                 <AnimatePresence>
                   {showVolumeSlider && (
@@ -561,7 +556,7 @@ export function VideoPlayer({
                         step="0.1"
                         value={isMuted ? 0 : volume}
                         onChange={handleVolumeChange}
-                        className="w-20 h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer"
+                        className="w-16 h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer"
                         style={{
                           background: `linear-gradient(to right, #f97316 0%, #f97316 ${
                             (isMuted ? 0 : volume) * 100
@@ -573,57 +568,99 @@ export function VideoPlayer({
                 </AnimatePresence>
               </div>
 
-              <div className="text-white text-sm font-medium">{movie.title}</div>
+              {/* Time Display */}
+              <div className="flex items-center space-x-1 text-xs text-gray-300 font-mono">
+                <span>{formatTime(currentTime)}</span>
+                <span>/</span>
+                <span>{formatTime(videoDuration)}</span>
+              </div>
+
+              {/* Permission Status */}
+              {roomStatus !== "none" && (
+                <div className="flex items-center space-x-1 text-xs">
+                  {isHost ? (
+                    <span className="bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded-full border border-yellow-500/30">
+                      👑 Host
+                    </span>
+                  ) : hasVideoPermission ? (
+                    <span className="bg-green-500/20 text-green-400 px-2 py-1 rounded-full border border-green-500/30">
+                      🎮 Control
+                    </span>
+                  ) : (
+                    <span className="bg-gray-500/20 text-gray-400 px-2 py-1 rounded-full border border-gray-500/30">
+                      👀 Viewer
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
 
+            {/* Center - Movie Title */}
+            <div className="flex-1 text-center">
+              <h2 className="text-white text-sm font-medium truncate max-w-xs mx-auto">
+                {movie.title}
+              </h2>
+            </div>
+
+            {/* Right Controls */}
             <div className="flex items-center space-x-2">
               {roomStatus !== "none" && (
                 <>
-                  <Button
+                  <motion.button
                     onClick={onToggleReactions}
-                    size="sm"
-                    className="bg-white/20 hover:bg-white/30 text-black border-none backdrop-blur-sm"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="p-2 rounded-full bg-white/20 hover:bg-white/30 text-white border-none backdrop-blur-sm transition-all"
                   >
-                    <Smile className="w-5 h-5" />
-                  </Button>
-                  <Button
+                    <Smile className="w-4 h-4" />
+                  </motion.button>
+                  <motion.button
                     onClick={onToggleRoomMembers}
-                    size="sm"
-                    className="bg-white/20 hover:bg-white/30 text-black border-none backdrop-blur-sm"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="p-2 rounded-full bg-white/20 hover:bg-white/30 text-white border-none backdrop-blur-sm transition-all relative"
                   >
-                    <UserCheck className="w-5 h-5" />
-                    {roomMembers.length > 0 && <span className="ml-1 text-xs">{roomMembers.length}</span>}
-                  </Button>
+                    <UserCheck className="w-4 h-4" />
+                    {roomMembers.length > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                        {roomMembers.length}
+                      </span>
+                    )}
+                  </motion.button>
                 </>
               )}
-              <Button
+              <motion.button
                 onClick={onToggleChat}
-                size="sm"
-                className="bg-white/20 hover:bg-white/30 text-black border-none backdrop-blur-sm"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="p-2 rounded-full bg-white/20 hover:bg-white/30 text-white border-none backdrop-blur-sm transition-all"
               >
-                <MessageCircle className="w-5 h-5" />
-              </Button>
-              <Button
+                <MessageCircle className="w-4 h-4" />
+              </motion.button>
+              <motion.button
                 onClick={onTogglePiP}
-                size="sm"
-                className="bg-white/20 hover:bg-white/30 text-black border-none backdrop-blur-sm"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="p-2 rounded-full bg-white/20 hover:bg-white/30 text-white border-none backdrop-blur-sm transition-all"
               >
-                <PictureInPicture2 className="w-5 h-5" />
-              </Button>
-              <Button
+                <PictureInPicture2 className="w-4 h-4" />
+              </motion.button>
+              <motion.button
                 onClick={onToggleFullscreen}
-                size="sm"
-                className="bg-white/20 hover:bg-white/30 text-black border-none backdrop-blur-sm"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="p-2 rounded-full bg-white/20 hover:bg-white/30 text-white border-none backdrop-blur-sm transition-all"
               >
-                <Maximize className="w-5 h-5" />
-              </Button>
-              <Button
+                <Maximize className="w-4 h-4" />
+              </motion.button>
+              <motion.button
                 onClick={onExitVideo}
-                size="sm"
-                className="bg-white/20 hover:bg-white/30 text-black border-none backdrop-blur-sm"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="p-2 rounded-full bg-red-500/20 hover:bg-red-500/30 text-red-400 border-none backdrop-blur-sm transition-all"
               >
-                <X className="w-5 h-5" />
-              </Button>
+                <X className="w-4 h-4" />
+              </motion.button>
             </div>
           </div>
         </div>

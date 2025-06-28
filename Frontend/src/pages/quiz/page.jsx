@@ -431,7 +431,7 @@ export default function QuizPage() {
                           />
                         )}
                       </div>
-                      <span className="text-black text-lg font-medium transition-colors duration-200">
+                      <span className="text-white text-lg font-medium transition-colors duration-200">
                         {option}
                       </span>
                     </div>

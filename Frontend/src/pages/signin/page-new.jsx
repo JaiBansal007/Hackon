@@ -6,7 +6,7 @@ import { Link, useNavigate } from "react-router-dom"
 import { Button } from "../../components/ui/button"
 import { Input } from "../../components/ui/input"
 import { Label } from "../../components/ui/label"
-import { Eye, EyeOff, Play, CheckCircle, XCircle, Info, ArrowLeft, Sparkles, Users, FileText, Trophy } from "lucide-react"
+import { Eye, EyeOff, Play, CheckCircle, XCircle, Info, ArrowLeft, Sparkles, Users, FileText, Trophy, MessageCircle, BarChart3 } from "lucide-react"
 import authService from "../../firebase/auth"
 
 export default function SignInPage() {
@@ -15,6 +15,7 @@ export default function SignInPage() {
   const [password, setPassword] = useState("")
   const [displayName, setDisplayName] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [authLoading, setAuthLoading] = useState(true) // Add initial auth check loading
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
   const [isSignUp, setIsSignUp] = useState(false)
@@ -25,9 +26,18 @@ export default function SignInPage() {
 
   // Check if user is already authenticated
   useEffect(() => {
+    // Check for stored user data first to prevent redirect
+    const storedUser = authService.getCurrentUser();
+    if (storedUser) {
+      navigate("/home");
+      return;
+    }
+
     const unsubscribe = authService.onAuthStateChange((user) => {
       if (user) {
         navigate("/home")
+      } else {
+        setAuthLoading(false)
       }
     })
 
@@ -151,7 +161,20 @@ export default function SignInPage() {
   }
 
   return (
-    <div className="min-h-screen w-full relative overflow-hidden bg-black">
+    <>
+      {/* Initial auth loading screen */}
+      {authLoading && (
+        <div className="min-h-screen w-full flex items-center justify-center bg-black">
+          <div className="text-center">
+            <div className="w-16 h-16 border-4 border-red-500/30 border-t-red-500 rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-white/70 text-lg">Checking authentication...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Main sign-in page */}
+      {!authLoading && (
+        <div className="min-h-screen w-full relative overflow-hidden bg-black">
       {/* Netflix-style Background with Multiple Video Previews */}
       <div className="absolute inset-0">
         {/* Multiple floating video preview cards with actual video elements */}
@@ -284,6 +307,13 @@ export default function SignInPage() {
             <div className="absolute inset-0 bg-black/40 rounded-lg flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
               <Play className="w-8 h-8 text-white" />
             </div>
+            {/* Feature hint overlay */}
+            <div className="absolute bottom-2 left-2 right-2">
+              <div className="bg-black/80 backdrop-blur-sm rounded-md px-2 py-1 flex items-center space-x-1">
+                <Users className="w-3 h-3 text-blue-400" />
+                <span className="text-xs text-white font-medium">Watch Together</span>
+              </div>
+            </div>
           </div>
 
           <div className="absolute top-3/4 right-1/4 w-52 h-30 rounded-lg shadow-xl opacity-40 overflow-hidden">
@@ -301,6 +331,42 @@ export default function SignInPage() {
             </video>
             <div className="absolute inset-0 bg-black/40 rounded-lg flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
               <Play className="w-8 h-8 text-white" />
+            </div>
+            {/* Feature hint overlay */}
+            <div className="absolute bottom-2 left-2 right-2">
+              <div className="bg-black/80 backdrop-blur-sm rounded-md px-2 py-1 flex items-center space-x-1">
+                <MessageCircle className="w-3 h-3 text-green-400" />
+                <span className="text-xs text-white font-medium">Live Chat</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Interactive polls preview */}
+          <div className="absolute bottom-1/4 left-1/3 w-44 h-24 rounded-lg shadow-xl opacity-35 overflow-hidden bg-gradient-to-br from-purple-900/80 to-blue-900/80 backdrop-blur-sm border border-purple-500/30">
+            <div className="p-3 h-full flex flex-col justify-center">
+              <div className="flex items-center space-x-2 mb-2">
+                <BarChart3 className="w-4 h-4 text-purple-400" />
+                <span className="text-xs text-white font-bold">Live Polls</span>
+              </div>
+              <div className="space-y-1">
+                <div className="bg-purple-500/30 rounded-full h-2 w-full relative overflow-hidden">
+                  <div className="absolute left-0 top-0 h-2 bg-purple-400 rounded-full w-3/4 animate-pulse" />
+                </div>
+                <div className="bg-blue-500/30 rounded-full h-2 w-full relative overflow-hidden">
+                  <div className="absolute left-0 top-0 h-2 bg-blue-400 rounded-full w-1/2 animate-pulse" style={{animationDelay: '0.5s'}} />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* AI assistant preview */}
+          <div className="absolute top-1/3 right-1/3 w-40 h-20 rounded-lg shadow-xl opacity-40 overflow-hidden bg-gradient-to-br from-emerald-900/80 to-teal-900/80 backdrop-blur-sm border border-emerald-500/30">
+            <div className="p-3 h-full flex flex-col justify-center">
+              <div className="flex items-center space-x-2 mb-1">
+                <Sparkles className="w-4 h-4 text-emerald-400" />
+                <span className="text-xs text-white font-bold">Tree.io AI</span>
+              </div>
+              <p className="text-xs text-emerald-200 leading-tight">Smart movie recommendations</p>
             </div>
           </div>
         </div>
@@ -347,9 +413,31 @@ export default function SignInPage() {
               <h1 className="text-5xl font-black text-white mb-4 tracking-tight">
                 {isSignUp ? "Join FireStream" : "Sign In"}
               </h1>
-              <p className="text-white/70 text-lg font-light">
+              <p className="text-white/70 text-lg font-light mb-6">
                 {isSignUp ? "Your cinematic journey begins now" : "Welcome back to the experience"}
               </p>
+              
+              {/* Feature Preview Pills */}
+              {isSignUp && (
+                <div className="flex flex-wrap justify-center gap-3 mb-6">
+                  <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-xl px-4 py-2 rounded-full border border-white/20">
+                    <Users className="w-4 h-4 text-blue-400" />
+                    <span className="text-sm text-white/90 font-medium">Watch Together</span>
+                  </div>
+                  <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-xl px-4 py-2 rounded-full border border-white/20">
+                    <MessageCircle className="w-4 h-4 text-green-400" />
+                    <span className="text-sm text-white/90 font-medium">Live Chat</span>
+                  </div>
+                  <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-xl px-4 py-2 rounded-full border border-white/20">
+                    <BarChart3 className="w-4 h-4 text-purple-400" />
+                    <span className="text-sm text-white/90 font-medium">Interactive Polls</span>
+                  </div>
+                  <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-xl px-4 py-2 rounded-full border border-white/20">
+                    <Sparkles className="w-4 h-4 text-emerald-400" />
+                    <span className="text-sm text-white/90 font-medium">AI Assistant</span>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Status Messages */}
@@ -631,5 +719,7 @@ export default function SignInPage() {
         </div>
       </div>
     </div>
+        )}
+      </>
   )
 }

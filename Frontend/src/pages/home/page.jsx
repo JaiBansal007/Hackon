@@ -36,6 +36,9 @@ const HomePage = ({ startPictureInPicture }) => {
   const [videoAnalyzed, setVideoAnalyzed] = useState(false)
   const [quizLocked, setQuizLocked] = useState(false)
 
+  const [polls, setPolls] = useState({})
+  const [pollsEnabled, setPollsEnabled] = useState(true)
+
   // Room functionality state
   const [roomStatus, setRoomStatus] = useState("none")
   const [roomId, setRoomId] = useState("")
@@ -60,6 +63,7 @@ const HomePage = ({ startPictureInPicture }) => {
   const videoUnsubscribeRef = useRef(null)
   const permissionsUnsubscribeRef = useRef(null)
   const typingTimeoutRef = useRef(null)
+  const wsRef = useRef(null) // Add missing wsRef
 
   // Initialize ViewingHistoryManager
   const viewingHistoryManager = ViewingHistoryManager.getInstance()
@@ -809,6 +813,10 @@ const HomePage = ({ startPictureInPicture }) => {
             onSendReaction={sendReaction}
             onTimeUpdate={updateVideoTime}
             showReactions={showReactions}
+            showChat={showChat}
+            showRoomMembers={showRoomMembers}
+            wsRef={wsRef}
+            // Video sync props
             // Firebase video sync props
             onPlay={handlePlay}
             onPause={handlePause}
@@ -835,6 +843,9 @@ const HomePage = ({ startPictureInPicture }) => {
           roomStatus={roomStatus}
           roomMembers={roomMembers}
           user={user}
+          polls={polls}
+          roomId={roomId}
+          onReactionSend={sendReaction}
         />
 
         {/* Enhanced Room Members Sidebar */}

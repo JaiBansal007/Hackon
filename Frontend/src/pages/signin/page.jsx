@@ -84,20 +84,15 @@ export default function SignInPage() {
     setSuccess("")
 
     try {
-      // Format phone number
-      let formattedPhone = phoneNumber.trim()
-      if (!formattedPhone.startsWith('+')) {
-        // Assume US number if no country code
-        formattedPhone = `+1${formattedPhone.replace(/\D/g, '')}`
-      }
-
-      const result = await authService.sendPhoneVerification(formattedPhone)
+      // Hardcoded phone number login - simulate success for demo
+      const hardcodedNumbers = ["+1234567890", "+11234567890", "1234567890", "(123) 456-7890"]
+      let formattedPhone = phoneNumber.trim().replace(/\D/g, '')
       
-      if (result.success) {
+      if (hardcodedNumbers.some(num => num.replace(/\D/g, '') === formattedPhone || formattedPhone === "1234567890")) {
         setSuccess("Verification code sent to your phone!")
         setPhoneStep("verify")
       } else {
-        setError(result.error || "Failed to send verification code")
+        setError("Please use the demo number: (123) 456-7890")
       }
     } catch (error) {
       console.error("❌ Phone sign-in error:", error)
@@ -114,14 +109,13 @@ export default function SignInPage() {
     setSuccess("")
 
     try {
-      const result = await authService.verifyPhoneCode(verificationCode)
-      
-      if (result.success) {
-        console.log("✅ Phone verification successful")
+      // Hardcoded verification - simulate success for demo
+      if (verificationCode === "123456" || verificationCode === "000000") {
+        console.log("✅ Phone verification successful (demo)")
         setSuccess("Phone verification successful! Redirecting...")
         setTimeout(() => navigate("/home"), 1000)
       } else {
-        setError(result.error || "Invalid verification code")
+        setError("Invalid verification code. Use 123456 for demo.")
       }
     } catch (error) {
       console.error("❌ Phone verification error:", error)
@@ -148,6 +142,16 @@ export default function SignInPage() {
         <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/10 via-orange-500/10 to-blue-500/10" />
         <div className="absolute top-20 left-20 w-72 h-72 bg-gradient-to-r from-orange-400/20 to-yellow-400/20 rounded-full blur-3xl animate-pulse" />
         <div className="absolute bottom-20 right-20 w-96 h-96 bg-gradient-to-r from-blue-400/20 to-purple-500/20 rounded-full blur-3xl animate-pulse delay-1000" />
+        
+        {/* Additional cinematic animations */}
+        <div className="absolute top-1/3 right-1/4 w-32 h-32 bg-gradient-to-r from-purple-400/15 to-pink-400/15 rounded-full blur-2xl animate-bounce delay-500" />
+        <div className="absolute bottom-1/3 left-1/3 w-48 h-48 bg-gradient-to-r from-green-400/10 to-blue-400/10 rounded-full blur-3xl animate-pulse delay-2000" />
+        <div className="absolute top-1/2 left-1/2 w-20 h-20 bg-gradient-to-r from-yellow-300/20 to-orange-300/20 rounded-full blur-xl animate-ping delay-3000" />
+        
+        {/* Floating particles */}
+        <div className="absolute top-16 right-1/3 w-2 h-2 bg-orange-400/40 rounded-full animate-bounce delay-100" />
+        <div className="absolute bottom-32 left-1/4 w-1 h-1 bg-blue-400/60 rounded-full animate-pulse delay-700" />
+        <div className="absolute top-2/3 right-16 w-3 h-3 bg-purple-400/30 rounded-full animate-ping delay-1500" />
 
         <div className="relative z-10">
           <Link
@@ -297,7 +301,7 @@ export default function SignInPage() {
                   type="button"
                   onClick={handleGoogleSignIn}
                   disabled={isLoading}
-                  className="w-full h-12 bg-white hover:bg-gray-50 text-gray-900 border border-gray-300 hover:border-gray-400 font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300 flex items-center justify-center space-x-3"
+                  className="w-full h-10 bg-white hover:bg-gray-50 text-gray-900 border border-gray-300 hover:border-gray-400 font-medium rounded-lg shadow-md hover:shadow-lg transform hover:scale-[1.01] transition-all duration-300 flex items-center justify-center space-x-2 text-sm"
                 >
                   {isLoading ? (
                     <div className="w-5 h-5 border-2 border-gray-300 border-t-gray-900 rounded-full animate-spin"></div>
@@ -330,10 +334,13 @@ export default function SignInPage() {
                         type="tel"
                         value={phoneNumber}
                         onChange={(e) => setPhoneNumber(e.target.value)}
-                        placeholder="+1 (555) 123-4567"
-                        className="h-12 border-gray-200 focus:border-orange-500 focus:ring-orange-500/20 focus:ring-4 rounded-xl bg-white/50 backdrop-blur-sm transition-all duration-300"
+                        placeholder="(123) 456-7890"
+                        className="h-10 border-gray-200 focus:border-orange-500 focus:ring-orange-500/20 focus:ring-4 rounded-lg bg-white/50 backdrop-blur-sm transition-all duration-300"
                         required
                       />
+                      <p className="text-sm text-blue-600 mt-1">
+                        💡 Demo: Use (123) 456-7890 for testing
+                      </p>
                     </div>
                     
                     {/* reCAPTCHA container */}
@@ -342,7 +349,7 @@ export default function SignInPage() {
                     <Button
                       type="submit"
                       disabled={isLoading || !phoneNumber.trim()}
-                      className="w-full h-12 bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300"
+                      className="w-full h-10 bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 font-medium rounded-lg shadow-md hover:shadow-lg transform hover:scale-[1.01] transition-all duration-300 text-sm"
                     >
                       {isLoading ? (
                         <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -363,12 +370,15 @@ export default function SignInPage() {
                         value={verificationCode}
                         onChange={(e) => setVerificationCode(e.target.value)}
                         placeholder="123456"
-                        className="h-12 border-gray-200 focus:border-orange-500 focus:ring-orange-500/20 focus:ring-4 rounded-xl bg-white/50 backdrop-blur-sm transition-all duration-300"
+                        className="h-10 border-gray-200 focus:border-orange-500 focus:ring-orange-500/20 focus:ring-4 rounded-lg bg-white/50 backdrop-blur-sm transition-all duration-300"
                         maxLength="6"
                         required
                       />
                       <p className="text-sm text-gray-500">
                         Enter the 6-digit code sent to {phoneNumber}
+                      </p>
+                      <p className="text-sm text-blue-600 mt-1">
+                        💡 Demo: Use 123456 for testing
                       </p>
                     </div>
                     
@@ -377,14 +387,14 @@ export default function SignInPage() {
                         type="button"
                         onClick={resetPhoneAuth}
                         variant="outline"
-                        className="flex-1 h-12 border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl transition-all duration-300"
+                        className="flex-1 h-10 border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg transition-all duration-300 text-sm"
                       >
                         Back
                       </Button>
                       <Button
                         type="submit"
                         disabled={isLoading || !verificationCode.trim()}
-                        className="flex-1 h-12 bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700 font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300"
+                        className="flex-1 h-10 bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700 font-medium rounded-lg shadow-md hover:shadow-lg transform hover:scale-[1.01] transition-all duration-300 text-sm"
                       >
                         {isLoading ? (
                           <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -411,7 +421,7 @@ export default function SignInPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="your@email.com"
-                    className="h-12 border-gray-200 focus:border-orange-500 focus:ring-orange-500/20 focus:ring-4 rounded-xl bg-white/50 backdrop-blur-sm transition-all duration-300"
+                    className="h-10 border-gray-200 focus:border-orange-500 focus:ring-orange-500/20 focus:ring-4 rounded-lg bg-white/50 backdrop-blur-sm transition-all duration-300"
                   />
                 </div>
 
@@ -426,7 +436,7 @@ export default function SignInPage() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Your password"
-                      className="h-12 border-gray-200 focus:border-orange-500 focus:ring-orange-500/20 focus:ring-4 rounded-xl bg-white/50 backdrop-blur-sm pr-12 transition-all duration-300"
+                      className="h-10 border-gray-200 focus:border-orange-500 focus:ring-orange-500/20 focus:ring-4 rounded-lg bg-white/50 backdrop-blur-sm pr-10 transition-all duration-300"
                     />
                     <button
                       type="button"
@@ -458,7 +468,7 @@ export default function SignInPage() {
 
                 <Button
                   type="submit"
-                  className="w-full h-12 bg-gradient-to-r from-yellow-400 to-orange-500 text-black hover:from-yellow-500 hover:to-orange-600 font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300"
+                  className="w-full h-10 bg-gradient-to-r from-yellow-400 to-orange-500 text-black hover:from-yellow-500 hover:to-orange-600 font-medium rounded-lg shadow-md hover:shadow-lg transform hover:scale-[1.01] transition-all duration-300 text-sm"
                 >
                   Sign In to FireStream
                 </Button>

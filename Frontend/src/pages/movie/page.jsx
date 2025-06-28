@@ -13,6 +13,9 @@ import { Input } from "@/components/ui/input"
 import { MessageSquareIcon } from "lucide-react"
 import { AnimatePresence, motion } from "framer-motion"
 import { movieCategories } from "@/components/home/content/movie-data"
+import authService from "../../firebase/auth"
+import { db } from "@/firebase/db"
+import { doc, getDoc } from "firebase/firestore"
 
 const MoviePage = ({ startPictureInPicture }) => {
   const { movieId } = useParams()
@@ -51,6 +54,9 @@ const MoviePage = ({ startPictureInPicture }) => {
   const [showJoinDialog, setShowJoinDialog] = useState(false)
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [roomMembers, setRoomMembers] = useState([])
+
+  const [polls, setPolls] = useState({})
+  const [pollsEnabled, setPollsEnabled] = useState(true)
 
   const wsRef = useRef(null)
   const videoPlayerRef = useRef(null)
@@ -106,25 +112,50 @@ const MoviePage = ({ startPictureInPicture }) => {
     }
   }, [movieId, currentMovie, navigate])
 
-  // Initialize user and WebSocket
+  // Initialize user authentication
   useEffect(() => {
-    const userData = localStorage.getItem("user")
-    if (!userData) {
-      navigate("/signin")
-      return
+    // Check for stored user data first
+    const storedUser = authService.getCurrentUser();
+    if (storedUser) {
+      const userData = {
+        uid: storedUser.uid,
+        name: storedUser.displayName,
+        email: storedUser.email,
+        photoURL: storedUser.photoURL
+      }
+      setUser(userData);
     }
-    const parsedUser = JSON.parse(userData)
-    setUser(parsedUser)
+
+    const unsubscribe = authService.onAuthStateChange((firebaseUser) => {
+      if (firebaseUser) {
+        const userData = {
+          uid: firebaseUser.uid,
+          name: firebaseUser.displayName,
+          email: firebaseUser.email,
+          photoURL: firebaseUser.photoURL
+        }
+        setUser(userData)
+      } else {
+        navigate("/signin")
+      }
+    })
+
+    return unsubscribe
+  }, [navigate])
+
+  // Initialize WebSocket when user is available
+  useEffect(() => {
+    if (!user) return
 
     // Only create the manager once
     if (!wsRef.current) {
-      wsRef.current = new WebSocketManager(parsedUser.email, parsedUser.name)
+      wsRef.current = new WebSocketManager(user.email, user.name)
     }
 
     return () => {
       if (wsRef.current) wsRef.current.disconnect()
     }
-  }, [navigate])
+  }, [user])
 
   // Register listeners when roomId changes and connect
   useEffect(() => {
@@ -137,8 +168,6 @@ const MoviePage = ({ startPictureInPicture }) => {
 
     // Fetch current video state on join
     const fetchVideoState = async () => {
-      const { db } = await import("@/firebase/db")
-      const { doc, getDoc } = await import("firebase/firestore")
       const videoStateRef = doc(db, "rooms", roomId, "sync", "videoState")
       const snap = await getDoc(videoStateRef)
       if (snap.exists()) {
@@ -203,6 +232,54 @@ const MoviePage = ({ startPictureInPicture }) => {
       }, 4000)
     })
 
+    wsRef.current.on("poll", (data) => {
+      const pollMessage = `POLL:${JSON.stringify(data.pollData)}`
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          id: data.id,
+          user: data.userName,
+          text: pollMessage,
+          timestamp: new Date(data.timestamp).toLocaleTimeString(),
+        },
+      ])
+
+      // Store poll data
+      setPolls((prev) => ({
+        ...prev,
+        [data.pollData.id]: data.pollData,
+      }))
+    })
+
+    wsRef.current.on("poll_vote", (data) => {
+      // Update poll data with new vote
+      setPolls((prev) => {
+        const updatedPolls = { ...prev }
+        const poll = updatedPolls[data.pollId]
+        if (poll) {
+          poll.options.forEach((option) => {
+            if (option.id === data.optionId) {
+              if (!option.votes.includes(data.userName)) {
+                option.votes.push(data.userName)
+                option.count = option.votes.length
+              }
+            } else if (!poll.allowMultiple) {
+              // Remove vote from other options if single selection
+              option.votes = option.votes.filter((voter) => voter !== data.userName)
+              option.count = option.votes.length
+            }
+          })
+        }
+        return updatedPolls
+      })
+    })
+
+    wsRef.current.on("poll_settings", (data) => {
+      if (data.settings.pollsEnabled !== undefined) {
+        setPollsEnabled(data.settings.pollsEnabled)
+      }
+    })
+
     return () => {
       // Optionally remove listeners here if you add an off() method
     }
@@ -230,12 +307,12 @@ const MoviePage = ({ startPictureInPicture }) => {
     return () => document.removeEventListener("fullscreenchange", handleFullscreenChange)
   }, [])
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     if (wsRef.current) {
       wsRef.current.disconnect()
     }
-    localStorage.removeItem("user")
-    navigate("/")
+    await authService.signOut()
+    navigate("/signin")
   }
 
   const createRoom = () => {
@@ -302,6 +379,46 @@ const MoviePage = ({ startPictureInPicture }) => {
   const sendMessage = async (message) => {
     console.log("📤 Sending message:", message)
 
+    // Handle poll messages
+    if (message.startsWith("POLL:")) {
+      try {
+        const pollData = JSON.parse(message.substring(5))
+        if (wsRef.current && roomStatus !== "none") {
+          wsRef.current.sendPoll(pollData)
+        }
+        return
+      } catch (e) {
+        console.error("Error parsing poll data:", e)
+      }
+    }
+
+    // Handle poll vote messages
+    if (message.startsWith("POLL_VOTE:")) {
+      try {
+        const voteData = JSON.parse(message.substring(10))
+        if (wsRef.current && roomStatus !== "none") {
+          wsRef.current.sendPollVote(voteData.pollId, voteData.optionId)
+        }
+        return
+      } catch (e) {
+        console.error("Error parsing poll vote data:", e)
+      }
+    }
+
+    // Handle poll settings messages
+    if (message.startsWith("POLL_SETTINGS:")) {
+      try {
+        const settingsData = JSON.parse(message.substring(14))
+        if (wsRef.current && roomStatus !== "none") {
+          wsRef.current.sendPollSettings(settingsData)
+        }
+        return
+      } catch (e) {
+        console.error("Error parsing poll settings data:", e)
+      }
+    }
+
+    // Rest of the existing sendMessage logic...
     if (wsRef.current && roomStatus !== "none") {
       wsRef.current.sendChatMessage(message)
     }
@@ -513,6 +630,13 @@ const MoviePage = ({ startPictureInPicture }) => {
             onTimeUpdate={updateVideoTime}
             onPlayingStateChange={updateVideoPlayingState}
             showReactions={showReactions}
+            showChat={showChat}
+            showRoomMembers={showRoomMembers}
+            wsRef={wsRef}
+            // Permission props
+            isHost={roomStatus === "host"}
+            hasVideoPermission={true} // For now, allow video control in movie page
+            canControlVideo={roomStatus === "none" || roomStatus === "host"} // Allow control if no room or is host
             // Video sync props
             onPlay={handlePlay}
             onPause={handlePause}
@@ -531,9 +655,13 @@ const MoviePage = ({ startPictureInPicture }) => {
           onClose={() => setShowChat(false)}
           messages={chatMessages}
           onSendMessage={sendMessage}
+          onTyping={() => {}} // Add empty function for now
+          typingUsers={[]} // Add empty array for now
           roomStatus={roomStatus}
           roomMembers={roomMembers}
           user={user}
+          polls={polls}
+          roomId={roomId}
         />
 
         {/* Room Members Sidebar */}
