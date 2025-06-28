@@ -868,7 +868,7 @@ const HomePage = ({ startPictureInPicture }) => {
               >
                 <Button
                   onClick={() => setShowChat(!showChat)}
-                  className="rounded-full p-3 bg-amber-400 hover:bg-amber-600 text-white shadow-lg transition-all duration-300 hover:scale-110"
+                  className="rounded-full p-3 bg-red-500 hover:bg-amber-600 text-white shadow-lg transition-all duration-300 hover:scale-110"
                 >
                   <MessageSquareIcon className="w-5 h-5" />
                 </Button>
@@ -1057,44 +1057,37 @@ const HomePage = ({ startPictureInPicture }) => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+              className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
             >
               <motion.div
-                initial={{ scale: 0.8, opacity: 0, y: 50 }}
+                initial={{ scale: 0.96, opacity: 0, y: 30 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
-                exit={{ scale: 0.8, opacity: 0, y: 50 }}
+                exit={{ scale: 0.96, opacity: 0, y: 30 }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-black to-gray-900 border border-amber-500/30 rounded-3xl max-w-md w-full shadow-2xl"
+                className="relative bg-[#181818] border border-neutral-700 rounded-2xl max-w-sm w-full shadow-lg p-0"
               >
-                {/* Animated background */}
-                <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 via-orange-500/5 to-amber-500/5" />
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-400 via-orange-500 to-amber-400" />
-
-                <div className="relative p-8">
+                <div className="px-7 py-8">
                   <div className="flex items-center space-x-3 mb-6">
-                    <div className="p-3 rounded-full bg-gradient-to-r from-amber-500/20 to-orange-500/20">
-                      <Crown className="w-6 h-6 text-amber-400" />
+                    <div className="p-2 rounded-full bg-gradient-to-br from-red-500/20 to-orange-500/20">
+                      <Crown className="w-6 h-6 text-orange-400" />
                     </div>
-                    <h3 className="text-2xl font-bold text-white">Create Room</h3>
+                    <h3 className="text-xl font-bold text-white">Create Room</h3>
                   </div>
-
-                  <p className="text-gray-300 mb-8 leading-relaxed">
-                    Create a premium watch party room to enjoy movies with friends. You'll receive a unique room ID to
-                    share.
+                  <p className="text-neutral-300 mb-8 text-sm">
+                    Create a private watch party room and get a unique Room ID to share.
                   </p>
-
-                  <div className="flex space-x-4">
+                  <div className="flex space-x-3">
                     <Button
                       onClick={createRoom}
-                      className="flex-1 h-12 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black font-semibold rounded-xl transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-amber-500/25"
+                      className="flex-1 h-11 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white font-semibold rounded-lg transition-all duration-200"
                     >
                       <Crown className="w-5 h-5 mr-2" />
-                      Create Room
+                      Create
                     </Button>
                     <Button
                       onClick={() => setShowCreateDialog(false)}
                       variant="outline"
-                      className="flex-1 h-12 border-2 border-gray-600 hover:border-amber-500/50 text-black hover:bg-amber-500/10 rounded-xl transition-all duration-300"
+                      className="flex-1 h-11 border border-neutral-700 text-black rounded-lg hover:bg-neutral-800 transition-all duration-200"
                     >
                       Cancel
                     </Button>
@@ -1112,48 +1105,38 @@ const HomePage = ({ startPictureInPicture }) => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+              className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
             >
               <motion.div
-                initial={{ scale: 0.8, opacity: 0, y: 50 }}
+                initial={{ scale: 0.96, opacity: 0, y: 30 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
-                exit={{ scale: 0.8, opacity: 0, y: 50 }}
+                exit={{ scale: 0.96, opacity: 0, y: 30 }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-black to-gray-900 border border-amber-500/30 rounded-3xl max-w-md w-full shadow-2xl"
+                className="relative bg-[#181818] border border-neutral-700 rounded-2xl max-w-sm w-full shadow-lg p-0"
               >
-                {/* Animated background */}
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-blue-500/5" />
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 via-purple-500 to-blue-400" />
-
-                <div className="relative p-8">
+                <div className="px-7 py-8">
                   <div className="flex items-center space-x-3 mb-6">
-                    <div className="p-3 rounded-full bg-gradient-to-r from-blue-500/20 to-purple-500/20">
+                    <div className="p-2 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20">
                       <Users className="w-6 h-6 text-blue-400" />
                     </div>
-                    <h3 className="text-2xl font-bold text-white">Join Room</h3>
+                    <h3 className="text-xl font-bold text-white">Join Room</h3>
                   </div>
-
-                  <p className="text-gray-300 mb-6 leading-relaxed">
-                    Enter the room ID shared by your friend to join their watch party:
+                  <p className="text-neutral-300 mb-6 text-sm">
+                    Enter the Room ID shared by your friend to join their watch party.
                   </p>
-
-                  <div className="relative mb-8">
-                    <Input
-                      value={joinRoomId}
-                      onChange={(e) => setJoinRoomId(e.target.value.toUpperCase())}
-                      placeholder="Enter Room ID"
-                      className="h-12 bg-gray-800/50 border-2 border-gray-600 focus:border-blue-500 text-white text-center text-lg font-mono tracking-wider rounded-xl transition-all duration-300"
-                    />
-                    <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-500/10 to-purple-500/10 pointer-events-none" />
-                  </div>
-
-                  <div className="flex space-x-4">
+                  <Input
+                    value={joinRoomId}
+                    onChange={(e) => setJoinRoomId(e.target.value.toUpperCase())}
+                    placeholder="Enter Room ID"
+                    className="h-11 bg-neutral-800 border border-neutral-700 text-white text-center text-base font-mono tracking-wider rounded-lg mb-6"
+                  />
+                  <div className="flex space-x-3">
                     <Button
                       onClick={joinRoom}
-                      className="flex-1 h-12 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-400 hover:to-purple-500 text-white font-semibold rounded-xl transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-blue-500/25"
+                      className="flex-1 h-11 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold rounded-lg transition-all duration-200"
                     >
                       <Users className="w-5 h-5 mr-2" />
-                      Join Room
+                      Join
                     </Button>
                     <Button
                       onClick={() => {
@@ -1161,7 +1144,7 @@ const HomePage = ({ startPictureInPicture }) => {
                         setJoinRoomId("")
                       }}
                       variant="outline"
-                      className="flex-1 h-12 border-2 border-gray-600 hover:border-blue-500/50 text-black hover:bg-blue-500/10 rounded-xl transition-all duration-300"
+                      className="flex-1 h-11 border border-neutral-700 text-black rounded-lg hover:bg-neutral-800 transition-all duration-200"
                     >
                       Cancel
                     </Button>
