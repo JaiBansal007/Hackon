@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "../../ui/button"
 import { Input } from "../../ui/input"
 import { Avatar, AvatarFallback } from "../../ui/avatar"
-import { Search, Users, LogOut, User, Gift, Crown } from "lucide-react"
+import { Search, Users, LogOut, User, Gift, Crown, PartyPopper } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -184,6 +184,13 @@ export function Navbar({ user, roomStatus, roomId, roomMembers, isFullscreen, on
               >
                 <Gift className="mr-2 h-3 w-3" />
                 Redeem
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => navigate("/party")}
+                className="text-gray-300 hover:bg-gray-800 hover:text-white text-sm"
+              >
+                <PartyPopper className="mr-2 h-3 w-3" />
+                Watch Parties
               </DropdownMenuItem>
               <DropdownMenuSeparator className="bg-gray-700" />
               <DropdownMenuItem 

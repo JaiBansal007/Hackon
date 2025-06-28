@@ -112,9 +112,8 @@ const MoviePage = ({ startPictureInPicture }) => {
     }
   }, [movieId, currentMovie, navigate])
 
-  // Initialize user authentication
+  // Initialize user authentication - simplified since ProtectedRoute handles auth
   useEffect(() => {
-    // Check for stored user data first
     const storedUser = authService.getCurrentUser();
     if (storedUser) {
       const userData = {
@@ -135,13 +134,11 @@ const MoviePage = ({ startPictureInPicture }) => {
           photoURL: firebaseUser.photoURL
         }
         setUser(userData)
-      } else {
-        navigate("/signin")
       }
     })
 
     return unsubscribe
-  }, [navigate])
+  }, [])
 
   // Initialize WebSocket when user is available
   useEffect(() => {
@@ -678,6 +675,14 @@ const MoviePage = ({ startPictureInPicture }) => {
           user={user}
           polls={polls}
           roomId={roomId}
+          onReactionSend={() => {}} // Add empty function for now
+          onJoinRoom={(newRoomId) => {
+            // Handle joining a new room from party
+            setRoomId(newRoomId);
+            setRoomStatus("member");
+            // Initialize room connection if needed
+          }}
+          currentMovie={movie}
         />
 
         {/* Room Members Sidebar */}

@@ -12,6 +12,8 @@ import QuizPage from "./pages/quiz/page"
 import RedeemPage from "./pages/redeem/page"
 import ProfilePage from "./pages/profile/page"
 import MovieInfoPage from "./pages/info/page"
+import PartyPage from "./pages/party/page"
+import ProtectedRoute from "./components/auth/ProtectedRoute"
 import { PictureInPicturePlayer } from "./components/home/video/picture-in-picture-player"
 import { BeautifulLoader } from "./components/ui/beautiful-loader"
 import authService from "./firebase/auth"
@@ -19,9 +21,6 @@ import { ref, set, onValue, off } from "firebase/database"
 import { realtimeDb } from "./firebase/config"
 
 function App() {
-  const [user, setUser] = useState(null)
-  const [isAuthLoading, setIsAuthLoading] = useState(true)
-
   // Global Picture-in-Picture state
   const [showPiP, setShowPiP] = useState(false)
   const [pipMovie, setPipMovie] = useState(null)
@@ -30,29 +29,6 @@ function App() {
   const [pipRoomStatus, setPipRoomStatus] = useState("none")
   const [pipRoomId, setPipRoomId] = useState("")
   const [pipRoomMembers, setPipRoomMembers] = useState([])
-
-  // Listen to authentication state with persistence
-  useEffect(() => {
-    // Check for cached user data immediately
-    const cachedUser = localStorage.getItem("user");
-    if (cachedUser) {
-      try {
-        const userData = JSON.parse(cachedUser);
-        setUser(userData);
-        console.log("🔄 Restored user from cache:", userData.name);
-      } catch (error) {
-        console.error("Error parsing cached user data:", error);
-        localStorage.removeItem("user");
-      }
-    }
-
-    const unsubscribe = authService.onAuthStateChange((firebaseUser) => {
-      setUser(firebaseUser)
-      setIsAuthLoading(false)
-    })
-
-    return unsubscribe
-  }, [])
 
   // Check for PiP state on app mount
   useEffect(() => {
@@ -199,18 +175,6 @@ function App() {
     sessionStorage.setItem("pipState", JSON.stringify(pipData))
   }
 
-  // Show loading spinner while checking auth
-  if (isAuthLoading) {
-    return (
-      <BeautifulLoader 
-        title="FireStream"
-        subtitle="Loading your experience..."
-        showFeatures={false}
-        size="medium"
-      />
-    )
-  }
-
   return (
     <Router>
       <Routes>
@@ -219,27 +183,59 @@ function App() {
         <Route path="/signup" element={<SignUpPage />} />
         <Route
           path="/home"
-          element={user ? <HomePage startPictureInPicture={startPictureInPicture} /> : <Navigate to="/signin" />}
+          element={
+            <ProtectedRoute>
+              <HomePage startPictureInPicture={startPictureInPicture} />
+            </ProtectedRoute>
+          }
         />
         <Route 
           path="/movie/:movieId" 
-          element={user ? <MoviePage startPictureInPicture={startPictureInPicture} /> : <Navigate to="/signin" />} 
+          element={
+            <ProtectedRoute>
+              <MoviePage startPictureInPicture={startPictureInPicture} />
+            </ProtectedRoute>
+          }
         />
         <Route 
           path="/quiz/:movieId" 
-          element={user ? <QuizPage /> : <Navigate to="/signin" />} 
+          element={
+            <ProtectedRoute>
+              <QuizPage />
+            </ProtectedRoute>
+          }
         />
         <Route 
           path="/redeem" 
-          element={user ? <RedeemPage /> : <Navigate to="/signin" />} 
+          element={
+            <ProtectedRoute>
+              <RedeemPage />
+            </ProtectedRoute>
+          }
         />
         <Route 
           path="/profile" 
-          element={user ? <ProfilePage /> : <Navigate to="/signin" />} 
+          element={
+            <ProtectedRoute>
+              <ProfilePage />
+            </ProtectedRoute>
+          }
         />
         <Route 
           path="/info/:movieId" 
-          element={user ? <MovieInfoPage /> : <Navigate to="/signin" />} 
+          element={
+            <ProtectedRoute>
+              <MovieInfoPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route 
+          path="/party" 
+          element={
+            <ProtectedRoute>
+              <PartyPage />
+            </ProtectedRoute>
+          }
         />
       </Routes>
 

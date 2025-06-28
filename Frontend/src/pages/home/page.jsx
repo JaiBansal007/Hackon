@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useLocation } from "react-router-dom"
 import { Navbar } from "@/components/home/layout/navbar"
 import { Sidebar } from "@/components/home/layout/sidebar"
 import { FeaturedSection } from "@/components/home/content/featured-section"
@@ -23,7 +23,6 @@ import videoSyncService from "../../firebase/videoSync"
 
 const HomePage = ({ startPictureInPicture }) => {
   const [user, setUser] = useState(null)
-  const [authLoading, setAuthLoading] = useState(true) // Add loading state
   const [isWatching, setIsWatching] = useState(false)
   const [currentWatchingMovie, setCurrentWatchingMovie] = useState(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -64,6 +63,7 @@ const HomePage = ({ startPictureInPicture }) => {
   const [showPermissionManager, setShowPermissionManager] = useState(false)
 
   const navigate = useNavigate()
+  const location = useLocation()
   const chatUnsubscribeRef = useRef(null)
   const membersUnsubscribeRef = useRef(null)
   const videoUnsubscribeRef = useRef(null)
@@ -76,13 +76,11 @@ const HomePage = ({ startPictureInPicture }) => {
 
   const currentFeatured = featuredMovies[Math.floor(Math.random() * featuredMovies.length)]
 
-  // Initialize user with Firebase auth
+  // Initialize user with Firebase auth - simplified since ProtectedRoute handles auth
   useEffect(() => {
-    // Check for stored user data first to prevent redirect
     const storedUser = authService.getCurrentUser();
     if (storedUser) {
       setUser(storedUser);
-      setAuthLoading(false);
     }
 
     const unsubscribe = authService.onAuthStateChange((firebaseUser) => {
@@ -94,22 +92,11 @@ const HomePage = ({ startPictureInPicture }) => {
           photoURL: firebaseUser.photoURL
         }
         setUser(userData)
-        setAuthLoading(false)
-      } else {
-        // Only redirect if we're not loading and actually signed out
-        setUser(null)
-        setAuthLoading(false)
-        // Add a small delay to prevent immediate redirect on refresh
-        setTimeout(() => {
-          if (!firebaseUser) {
-            navigate("/signin")
-          }
-        }, 500) // Increased delay to give Firebase more time
       }
     })
 
     return unsubscribe
-  }, [navigate])
+  }, [])
 
   // Persist and restore room state only (not video state)
   useEffect(() => {
@@ -367,17 +354,20 @@ const HomePage = ({ startPictureInPicture }) => {
     }
   }
 
-  const joinRoom = async () => {
-    if (!user || !joinRoomId.trim()) return
+  // Modified joinRoom function to accept roomId parameter
+  const joinRoom = async (targetRoomId = null) => {
+    const roomIdToJoin = targetRoomId || joinRoomId.trim();
+    if (!user || !roomIdToJoin) return
     
     try {
-      const result = await chatService.joinRoom(joinRoomId, user)
+      const result = await chatService.joinRoom(roomIdToJoin, user)
       if (result.success) {
-        setRoomId(joinRoomId)
+        setRoomId(roomIdToJoin)
         setRoomStatus("member")
         setIsHost(false)
         setShowJoinDialog(false)
         setJoinRoomId("")
+        console.log("✅ Successfully joined room:", roomIdToJoin)
       } else {
         console.error("Failed to join room:", result.error)
       }
@@ -385,6 +375,20 @@ const HomePage = ({ startPictureInPicture }) => {
       console.error("Error joining room:", error)
     }
   }
+
+  // Handle joining room from party page
+  useEffect(() => {
+    if (location.state?.joinRoomId && user) {
+      const roomIdFromParty = location.state.joinRoomId;
+      console.log("🎉 Joining room from party:", roomIdFromParty);
+      
+      // Auto-join the room
+      joinRoom(roomIdFromParty);
+      
+      // Clear the state so it doesn't trigger again
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state, user]);
 
   const leaveRoom = async () => {
     if (!user || !roomId) return
@@ -805,17 +809,6 @@ const HomePage = ({ startPictureInPicture }) => {
     setRoomSyncNotification({ show: false, movie: null, currentTime: 0, isPlaying: false });
   };
 
-  if (authLoading) {
-    return (
-      <div className="fixed inset-0 bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto mb-4"></div>
-          <p className="text-white text-lg">Loading...</p>
-        </div>
-      </div>
-    )
-  }
-
   if (!user) return null
 
   return (
@@ -1034,6 +1027,13 @@ const HomePage = ({ startPictureInPicture }) => {
           polls={polls}
           roomId={roomId}
           onReactionSend={sendReaction}
+          onJoinRoom={(newRoomId) => {
+            // Handle joining a new room from party
+            setRoomId(newRoomId);
+            setRoomStatus("member");
+            initializeRoom(newRoomId);
+          }}
+          currentMovie={currentWatchingMovie || currentFeatured}
         />
 
         {/* Enhanced Room Members Sidebar */}
