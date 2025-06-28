@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom"
+import { Play } from "lucide-react"
 import LandingPage from "./pages/page"
 import SignInPage from "./pages/signin/page"
 import SignUpPage from "./pages/signup/page"
@@ -12,6 +13,7 @@ import RedeemPage from "./pages/redeem/page"
 import ProfilePage from "./pages/profile/page"
 import MovieInfoPage from "./pages/info/page"
 import { PictureInPicturePlayer } from "./components/home/video/picture-in-picture-player"
+import { BeautifulLoader } from "./components/ui/beautiful-loader"
 import authService from "./firebase/auth"
 import { ref, set, onValue, off } from "firebase/database"
 import { realtimeDb } from "./firebase/config"
@@ -200,12 +202,12 @@ function App() {
   // Show loading spinner while checking auth
   if (isAuthLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-950 via-black to-gray-900">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-white text-lg">Loading FireStream...</p>
-        </div>
-      </div>
+      <BeautifulLoader 
+        title="FireStream"
+        subtitle="Loading your experience..."
+        showFeatures={false}
+        size="medium"
+      />
     )
   }
 

@@ -7,7 +7,7 @@ import { movieCategories } from "./movie-data"
 import { ContinueWatching } from "./continue-watching"
 import "./scrollbar-hide.css"
 
-export function MovieCategories({ onStartWatching, user }) {
+export function MovieCategories({ onStartWatching, onStartSoloWatching, user, roomStatus }) {
   const navigate = useNavigate()
 
   const handleMovieClick = (movie) => {
@@ -69,22 +69,31 @@ export function MovieCategories({ onStartWatching, user }) {
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300" />
                       
-                      {/* Hover overlay */}
+                      {/* Hover overlay with room-aware options */}
                       <div className="absolute inset-0 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
-                        <button
-                          className="bg-white/90 hover:bg-white text-black rounded-full p-2 mb-2 shadow-lg"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            const movieSlug = movie.title
-                              .toLowerCase()
-                              .replace(/\s+/g, "-")
-                              .replace(/[^\w-]/g, "")
-                            navigate(`/movie/${movieSlug}`)
-                            if (onStartWatching) onStartWatching(movie)
-                          }}
-                        >
-                          <Play className="w-3 h-3 fill-current" />
-                        </button>
+                        {roomStatus === "none" ? (
+                          // Solo watching option when not in room
+                          <button
+                            className="bg-white/90 hover:bg-white text-black rounded-full p-2 mb-2 shadow-lg"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              if (onStartSoloWatching) onStartSoloWatching(movie)
+                            }}
+                          >
+                            <Play className="w-3 h-3 fill-current" />
+                          </button>
+                        ) : (
+                          // Room watching option when in room
+                          <button
+                            className="bg-blue-500/90 hover:bg-blue-600 text-white rounded-full p-2 mb-2 shadow-lg"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              if (onStartWatching) onStartWatching(movie)
+                            }}
+                          >
+                            <Play className="w-3 h-3 fill-current" />
+                          </button>
+                        )}
                         <button
                           className="bg-black/70 hover:bg-black/90 text-white rounded-full p-1.5"
                           onClick={(e) => {

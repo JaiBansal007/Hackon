@@ -746,7 +746,7 @@ export function ChatSidebar({
                                 >
                                   {message.user === "Tree.io" || message.text.startsWith("Tree.io:")
                                     ? "AI"
-                                    : message.user.charAt(0).toUpperCase()}
+                                    : message?.user?.charAt(0).toUpperCase()}
                                 </motion.div>
                                 <span
                                   className={`font-semibold text-xs ${
@@ -1010,11 +1010,11 @@ export function ChatSidebar({
                         </div>
                       </div>
                       
-                      {/* Create Poll Button */}
+                      {/* Create Poll Button - Minimalistic Design */}
                       <div className="p-3">
                         <motion.button
-                          whileHover={{ scale: 1.02, y: -1 }}
-                          whileTap={{ scale: 0.98 }}
+                          whileHover={{ scale: 1.01 }}
+                          whileTap={{ scale: 0.99 }}
                           onClick={() => {
                             if (roomStatus === "host" || pollsEnabled) {
                               setShowCreatePoll(true)
@@ -1022,42 +1022,15 @@ export function ChatSidebar({
                             }
                           }}
                           disabled={roomStatus !== "host" && !pollsEnabled}
-                          className={`w-full p-4 rounded-xl transition-all ${
+                          className={`w-full p-3 rounded-lg transition-all text-sm font-medium ${
                             roomStatus === "host" || pollsEnabled
-                              ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30 text-white border-2 border-blue-400/30 hover:border-blue-400/50 shadow-lg hover:shadow-blue-500/20"
-                              : "bg-gray-700/30 text-gray-500 cursor-not-allowed border-2 border-gray-600/20"
-                          } backdrop-blur-sm`}
+                              ? "bg-white/10 hover:bg-white/15 text-white border border-white/20 hover:border-white/30"
+                              : "bg-gray-700/30 text-gray-500 cursor-not-allowed border border-gray-600/20"
+                          }`}
                         >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-3">
-                              <motion.div 
-                                whileHover={roomStatus === "host" || pollsEnabled ? { scale: 1.1, rotate: 5 } : {}}
-                                className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                                  roomStatus === "host" || pollsEnabled
-                                    ? "bg-gradient-to-r from-blue-500 to-purple-500 shadow-lg"
-                                    : "bg-gray-600"
-                                }`}
-                              >
-                                <BarChart3 className="w-6 h-6 text-white" />
-                              </motion.div>
-                              <div className="text-left">
-                                <div className="font-semibold text-base">Create New Poll</div>
-                                <p className="text-sm opacity-80 mt-0.5">
-                                  {roomStatus === "host" || pollsEnabled 
-                                    ? "Ask your audience an interactive question"
-                                    : "Polls are currently disabled by the host"
-                                  }
-                                </p>
-                              </div>
-                            </div>
-                            {(roomStatus === "host" || pollsEnabled) && (
-                              <motion.div
-                                whileHover={{ x: 3 }}
-                                transition={{ duration: 0.2 }}
-                              >
-                                <ChevronRight className="w-5 h-5 text-blue-400" />
-                              </motion.div>
-                            )}
+                          <div className="flex items-center justify-center space-x-2">
+                            <BarChart3 className="w-4 h-4" />
+                            <span>Create Poll</span>
                           </div>
                         </motion.button>
                       </div>

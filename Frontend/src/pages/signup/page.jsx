@@ -7,6 +7,7 @@ import { Button } from "../../components/ui/button"
 import { Input } from "../../components/ui/input"
 import { Label } from "../../components/ui/label"
 import { Eye, EyeOff, Play, ArrowLeft, CheckCircle, Zap, User, Phone } from "lucide-react"
+import { BeautifulLoader } from "../../components/ui/beautiful-loader"
 
 export default function SignUpPage() {
   const [showPassword, setShowPassword] = useState(false)
@@ -19,6 +20,7 @@ export default function SignUpPage() {
     confirmPassword: "",
   })
   const [authMethod, setAuthMethod] = useState("email") // "email", "phone"
+  const [isLoading, setIsLoading] = useState(false)
   const navigate = useNavigate()
 
   const handleSignUp = (e) => {
@@ -27,22 +29,28 @@ export default function SignUpPage() {
       alert("Passwords do not match")
       return
     }
-    if (authMethod === "phone") {
-      // For phone signup, we'll just use name and phone
-      localStorage.setItem("user", JSON.stringify({ 
-        phone: formData.phone, 
-        name: formData.name,
-        authMethod: "phone"
-      }))
-    } else {
-      // Store user session (simplified)
-      localStorage.setItem("user", JSON.stringify({ 
-        email: formData.email, 
-        name: formData.name,
-        authMethod: "email"
-      }))
-    }
-    navigate("/home")
+    
+    setIsLoading(true)
+    
+    // Simulate loading time for better UX
+    setTimeout(() => {
+      if (authMethod === "phone") {
+        // For phone signup, we'll just use name and phone
+        localStorage.setItem("user", JSON.stringify({ 
+          phone: formData.phone, 
+          name: formData.name,
+          authMethod: "phone"
+        }))
+      } else {
+        // Store user session (simplified)
+        localStorage.setItem("user", JSON.stringify({ 
+          email: formData.email, 
+          name: formData.name,
+          authMethod: "email"
+        }))
+      }
+      navigate("/home")
+    }, 2000)
   }
 
   const handleInputChange = (e) => {
@@ -53,7 +61,20 @@ export default function SignUpPage() {
   }
 
   return (
-    <div className="min-h-screen w-full flex bg-gradient-to-br from-gray-950 via-black to-gray-900">
+    <>
+      {/* Beautiful themed loading screen */}
+      {isLoading && (
+        <BeautifulLoader 
+          title="FireStream"
+          subtitle="Creating your account..."
+          showFeatures={true}
+          size="large"
+        />
+      )}
+
+      {/* Main signup page */}
+      {!isLoading && (
+        <div className="min-h-screen w-full flex bg-gradient-to-br from-gray-950 via-black to-gray-900">
       {/* Left Side - Image and Features */}
       <div className="hidden lg:flex lg:w-2/3 px-10 py-7 flex-col justify-center relative overflow-hidden">
         {/* Animated background elements */}
@@ -314,9 +335,17 @@ export default function SignUpPage() {
 
               <Button
                 type="submit"
-                className="w-full h-10 bg-gradient-to-r from-yellow-400 to-orange-500 text-black hover:from-yellow-500 hover:to-orange-600 font-medium rounded-lg shadow-md hover:shadow-lg transform hover:scale-[1.01] transition-all duration-300 text-sm"
+                disabled={isLoading}
+                className="w-full h-10 bg-gradient-to-r from-yellow-400 to-orange-500 text-black hover:from-yellow-500 hover:to-orange-600 font-medium rounded-lg shadow-md hover:shadow-lg transform hover:scale-[1.01] transition-all duration-300 text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               >
-                {authMethod === "phone" ? "Create Account with Phone" : "Create FireStream Account"}
+                {isLoading ? (
+                  <div className="flex items-center space-x-2">
+                    <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin"></div>
+                    <span>Creating Account...</span>
+                  </div>
+                ) : (
+                  authMethod === "phone" ? "Create Account with Phone" : "Create FireStream Account"
+                )}
               </Button>
             </form>
 
@@ -334,6 +363,8 @@ export default function SignUpPage() {
           </div>
         </div>
       </div>
-    </div>
+        </div>
+      )}
+    </>
   )
 }

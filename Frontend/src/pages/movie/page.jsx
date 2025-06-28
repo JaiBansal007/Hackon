@@ -560,6 +560,21 @@ const MoviePage = ({ startPictureInPicture }) => {
     }
   }
 
+  // Poll vote handler
+  const handlePollVote = async (pollId, optionId) => {
+    if (!wsRef.current || roomStatus === "none") {
+      console.log("Cannot vote: not in a room")
+      return
+    }
+
+    try {
+      console.log("Voting on poll:", pollId, "option:", optionId)
+      await wsRef.current.sendPollVote(pollId, optionId)
+    } catch (error) {
+      console.error("Error voting on poll:", error)
+    }
+  }
+
   if (!user || !currentWatchingMovie) return null
 
   return (
@@ -655,6 +670,7 @@ const MoviePage = ({ startPictureInPicture }) => {
           onClose={() => setShowChat(false)}
           messages={chatMessages}
           onSendMessage={sendMessage}
+          onVote={handlePollVote}
           onTyping={() => {}} // Add empty function for now
           typingUsers={[]} // Add empty array for now
           roomStatus={roomStatus}

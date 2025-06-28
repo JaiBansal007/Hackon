@@ -7,7 +7,7 @@ import { Play, ChevronLeft, ChevronRight, Info, Plus, Volume2, VolumeX } from "l
 import { useNavigate } from "react-router-dom"
 import { featuredMovies } from "./featured-movies"
 
-export function FeaturedSection({ movie, onStartWatching, onStartQuiz, quizLocked }) {
+export function FeaturedSection({ movie, onStartWatching, onStartSoloWatching, onStartQuiz, quizLocked, roomStatus }) {
   const navigate = useNavigate()
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isAutoPlaying, setIsAutoPlaying] = useState(true)
@@ -269,11 +269,21 @@ export function FeaturedSection({ movie, onStartWatching, onStartQuiz, quizLocke
                   transition={{ delay: 0.4, duration: 0.6 }}
                 >
                   <Button
-                    onClick={() => onStartWatching(currentMovie)}
-                    className="bg-white hover:bg-gray-200 text-black font-bold px-8 py-3 rounded-md flex items-center space-x-2"
+                    onClick={() => {
+                      if (roomStatus === "none") {
+                        onStartSoloWatching(currentMovie)
+                      } else {
+                        onStartWatching(currentMovie)
+                      }
+                    }}
+                    className={`${
+                      roomStatus === "none" 
+                        ? "bg-white hover:bg-gray-200 text-black" 
+                        : "bg-blue-600 hover:bg-blue-700 text-white"
+                    } font-bold px-8 py-3 rounded-md flex items-center space-x-2 transition-all duration-200`}
                   >
                     <Play className="w-5 h-5 fill-current" />
-                    <span>Watch Now</span>
+                    <span>{roomStatus === "none" ? "Watch Solo" : "Watch with Room"}</span>
                   </Button>
                   
                   {/* <Button

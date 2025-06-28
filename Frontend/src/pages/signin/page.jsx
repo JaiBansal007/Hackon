@@ -8,6 +8,7 @@ import { Input } from "../../components/ui/input"
 import { Label } from "../../components/ui/label"
 import { Eye, EyeOff, Play, CheckCircle, XCircle, Info, ArrowLeft, Sparkles, Users, FileText, Trophy, MessageCircle, BarChart3 } from "lucide-react"
 import authService from "../../firebase/auth"
+import { BeautifulLoader } from "../../components/ui/beautiful-loader"
 
 export default function SignInPage() {
   const [showPassword, setShowPassword] = useState(false)
@@ -29,13 +30,19 @@ export default function SignInPage() {
     // Check for stored user data first to prevent redirect
     const storedUser = authService.getCurrentUser();
     if (storedUser) {
-      navigate("/home");
+      // Show loading and navigate after a brief moment
+      setIsLoading(true);
+      setSuccess("Welcome back! Loading your experience...");
+      setTimeout(() => navigate("/home"), 1500);
       return;
     }
 
     const unsubscribe = authService.onAuthStateChange((user) => {
       if (user) {
-        navigate("/home")
+        // Show loading and navigate after a brief moment
+        setIsLoading(true);
+        setSuccess("Welcome! Loading your experience...");
+        setTimeout(() => navigate("/home"), 1500);
       } else {
         setAuthLoading(false)
       }
@@ -106,23 +113,21 @@ export default function SignInPage() {
     }
 
     try {
-      // Sign in or create account based on mode
-      // reCAPTCHA is already set up via useEffect, so we don't need to set it up again
       const result = isSignUp 
         ? await authService.createAccountWithEmail(email, password, displayName.trim())
         : await authService.signInWithEmail(email, password)
       
       if (result.success) {
         console.log(`✅ Email ${isSignUp ? 'sign-up' : 'sign-in'} successful`)
-        setSuccess(`${isSignUp ? 'Welcome to FireStream!' : 'Welcome back!'} Redirecting...`)
-        setTimeout(() => navigate("/home"), 1500)
+        setSuccess(`${isSignUp ? 'Welcome to FireStream!' : 'Welcome back!'} Loading your experience...`)
+        // Keep loading state active and let the auth state change handle navigation
       } else {
         setError(result.error || `Failed to ${isSignUp ? 'create account' : 'sign in'}`)
+        setIsLoading(false)
       }
     } catch (error) {
       console.error(`❌ Email ${isSignUp ? 'sign-up' : 'sign-in'} error:`, error)
       setError(error.message || `Failed to ${isSignUp ? 'create account' : 'sign in'}`)
-    } finally {
       setIsLoading(false)
     }
   }
@@ -137,15 +142,15 @@ export default function SignInPage() {
       
       if (result.success) {
         console.log("✅ Google authentication successful")
-        setSuccess("Welcome! Redirecting...")
-        setTimeout(() => navigate("/home"), 1000)
+        setSuccess("Welcome! Loading your experience...")
+        // Keep loading state active and let the auth state change handle navigation
       } else {
         setError(result.error || "Failed to sign in with Google")
+        setIsLoading(false)
       }
     } catch (error) {
       console.error("❌ Google authentication error:", error)
       setError("An unexpected error occurred")
-    } finally {
       setIsLoading(false)
     }
   }
@@ -162,14 +167,14 @@ export default function SignInPage() {
 
   return (
     <>
-      {/* Initial auth loading screen */}
-      {authLoading && (
-        <div className="min-h-screen w-full flex items-center justify-center bg-black">
-          <div className="text-center">
-            <div className="w-16 h-16 border-4 border-red-500/30 border-t-red-500 rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-white/70 text-lg">Checking authentication...</p>
-          </div>
-        </div>
+      {/* Beautiful themed loading screen */}
+      {(authLoading || (isLoading && success)) && (
+        <BeautifulLoader 
+          title="FireStream"
+          subtitle={authLoading ? "Checking authentication..." : success}
+          showFeatures={true}
+          size="large"
+        />
       )}
 
       {/* Main sign-in page */}

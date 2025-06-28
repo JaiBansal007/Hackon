@@ -117,7 +117,7 @@ export function Navbar({ user, roomStatus, roomId, roomMembers, isFullscreen, on
                 onClick={onJoinRoom}
                 size="sm"
                 variant="outline"
-                className="border-gray-600 text-gray-900 hover:bg-gray-500 rounded-full px-3 py-1 text-xs h-8"
+                className="border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white rounded-full px-3 py-1 text-xs h-8"
               >
                 <Users className="w-3 h-3 mr-1" />
                 Join Room
@@ -125,19 +125,29 @@ export function Navbar({ user, roomStatus, roomId, roomMembers, isFullscreen, on
             </div>
           ) : (
             <div className="flex items-center space-x-3">
-              <div className="flex items-center space-x-2 text-xs">
+              <div className="flex items-center space-x-2 text-xs bg-gray-800/50 backdrop-blur-sm border border-gray-600/30 rounded-full px-3 py-2">
                 <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-                <span className="text-blue-400 font-mono pr-2 text-lg">{roomId}</span>
-                <span className="text-gray-400 text-lg">•</span>
-                <span className="text-gray-300 pr-2 text-lg">
-                  {roomStatus === "host" ? `Host (${roomMembers?.length || 1} members)` : `Guest (${roomMembers?.length || 1} members)`}
+                <span className="text-blue-400 font-mono text-sm font-bold">{roomId}</span>
+                <span className="text-gray-400">•</span>
+                <span className="text-gray-300">
+                  {roomStatus === "host" ? (
+                    <span className="flex items-center space-x-1">
+                      <Crown className="w-3 h-3 text-yellow-400" />
+                      <span>Host ({roomMembers?.length || 1})</span>
+                    </span>
+                  ) : (
+                    <span className="flex items-center space-x-1">
+                      <Users className="w-3 h-3 text-blue-400" />
+                      <span>Guest ({roomMembers?.length || 1})</span>
+                    </span>
+                  )}
                 </span>
               </div>
               <Button
                 onClick={onLeaveRoom}
                 size="sm"
                 variant="outline"
-                className="border-gray-600 text-gray-900 hover:bg-gray-500 rounded-full px-3 py-1 text-xs h-8"
+                className="border-red-500/50 text-red-400 hover:bg-red-500/10 hover:text-red-300 hover:border-red-400 rounded-full px-3 py-1 text-xs h-8 transition-all duration-200"
               >
                 Leave Room
               </Button>

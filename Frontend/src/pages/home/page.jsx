@@ -46,6 +46,12 @@ const HomePage = ({ startPictureInPicture }) => {
   const [showJoinDialog, setShowJoinDialog] = useState(false)
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [roomMembers, setRoomMembers] = useState([])
+  const [roomSyncNotification, setRoomSyncNotification] = useState({
+    show: false,
+    movie: null,
+    currentTime: 0,
+    isPlaying: false
+  })
 
   // Firebase-related state
   const [isHost, setIsHost] = useState(false)
@@ -105,31 +111,11 @@ const HomePage = ({ startPictureInPicture }) => {
     return unsubscribe
   }, [navigate])
 
-  // Persist and restore watching state
+  // Persist and restore room state only (not video state)
   useEffect(() => {
-    // Restore watching state from localStorage on mount
-    const savedWatchingState = localStorage.getItem('watchingState');
-    const savedMovie = localStorage.getItem('currentWatchingMovie');
+    // Only restore room state from localStorage on mount
     const savedRoomState = localStorage.getItem('roomState');
     
-    if (savedWatchingState && savedMovie) {
-      try {
-        const watchingState = JSON.parse(savedWatchingState);
-        const movie = JSON.parse(savedMovie);
-        
-        if (watchingState.isWatching && movie) {
-          setIsWatching(true);
-          setCurrentWatchingMovie(movie);
-          setCurrentVideoTime(watchingState.videoTime || 0);
-          console.log("🔄 Restored watching state:", movie.title);
-        }
-      } catch (error) {
-        console.warn("Failed to restore watching state:", error);
-        localStorage.removeItem('watchingState');
-        localStorage.removeItem('currentWatchingMovie');
-      }
-    }
-
     if (savedRoomState) {
       try {
         const roomState = JSON.parse(savedRoomState);
@@ -138,29 +124,40 @@ const HomePage = ({ startPictureInPicture }) => {
           setRoomStatus(roomState.roomStatus);
           setIsHost(roomState.isHost || false);
           console.log("🔄 Restored room state:", roomState.roomId);
+          
+          // Re-join the room but don't auto-start video
+          rejoinRoom(roomState.roomId, roomState.isHost);
         }
       } catch (error) {
         console.warn("Failed to restore room state:", error);
         localStorage.removeItem('roomState');
       }
     }
-  }, []);
+  }, [user]);
 
-  // Save watching state to localStorage when it changes
-  useEffect(() => {
-    if (isWatching && currentWatchingMovie) {
-      localStorage.setItem('watchingState', JSON.stringify({
-        isWatching: true,
-        videoTime: currentVideoTime
-      }));
-      localStorage.setItem('currentWatchingMovie', JSON.stringify(currentWatchingMovie));
-    } else {
-      localStorage.removeItem('watchingState');
-      localStorage.removeItem('currentWatchingMovie');
+  // Helper function to rejoin room without auto-starting video
+  const rejoinRoom = async (roomId, wasHost) => {
+    if (!user) return;
+    
+    try {
+      if (wasHost) {
+        // For hosts, recreate room connection
+        await chatService.createRoom(roomId, user);
+      } else {
+        // For guests, rejoin room
+        await chatService.joinRoom(roomId, user);
+      }
+      console.log("🔄 Rejoined room:", roomId);
+    } catch (error) {
+      console.warn("Failed to rejoin room:", error);
+      // Clear invalid room state
+      setRoomStatus("none");
+      setRoomId("");
+      localStorage.removeItem('roomState');
     }
-  }, [isWatching, currentWatchingMovie, currentVideoTime]);
+  };
 
-  // Save room state to localStorage when it changes
+  // Save room state to localStorage when it changes (but not video state)
   useEffect(() => {
     if (roomId && roomStatus !== "none") {
       localStorage.setItem('roomState', JSON.stringify({
@@ -179,13 +176,75 @@ const HomePage = ({ startPictureInPicture }) => {
 
     // Listen to chat messages
     const unsubscribeChat = chatService.listenToMessages(roomId, (messages) => {
-      setChatMessages(messages.map(msg => ({
-        id: msg.id,
-        user: msg.userName,
-        text: msg.text,
-        timestamp: new Date(msg.timestamp).toLocaleTimeString(),
-        isSystem: false
-      })))
+      // Process messages and handle special message types
+      const processedMessages = []
+      
+      messages.forEach(msg => {
+        // Handle poll vote messages
+        if (msg.text.startsWith("POLL_VOTE:")) {
+          try {
+            const voteData = JSON.parse(msg.text.substring(10))
+            
+            // Update polls state with vote
+            setPolls((prev) => {
+              const updatedPolls = { ...prev }
+              const poll = updatedPolls[voteData.pollId]
+              if (poll) {
+                poll.options.forEach((option) => {
+                  if (option.id === voteData.optionId) {
+                    if (!option.votes) option.votes = []
+                    if (!option.votes.includes(msg.userName)) {
+                      option.votes.push(msg.userName)
+                      option.count = option.votes.length
+                    }
+                  } else if (!poll.allowMultiple) {
+                    // Remove vote from other options if single selection
+                    if (option.votes) {
+                      option.votes = option.votes.filter((voter) => voter !== msg.userName)
+                      option.count = option.votes.length
+                    }
+                  }
+                })
+              }
+              return updatedPolls
+            })
+            
+            // Don't add poll vote messages to the chat display
+            return
+          } catch (e) {
+            console.error("Error parsing poll vote data:", e)
+          }
+        }
+        
+        // Handle poll creation messages
+        if (msg.text.startsWith("POLL:")) {
+          try {
+            const pollData = JSON.parse(msg.text.substring(5))
+            
+            // Store poll data
+            setPolls((prev) => ({
+              ...prev,
+              [pollData.id]: pollData,
+            }))
+            
+            // Don't add poll creation messages to the chat display
+            return
+          } catch (e) {
+            console.error("Error parsing poll data:", e)
+          }
+        }
+        
+        // Add regular messages to chat
+        processedMessages.push({
+          id: msg.id,
+          user: msg.userName,
+          text: msg.text,
+          timestamp: new Date(msg.timestamp).toLocaleTimeString(),
+          isSystem: false
+        })
+      })
+      
+      setChatMessages(processedMessages)
     })
 
     // Listen to room members
@@ -193,17 +252,26 @@ const HomePage = ({ startPictureInPicture }) => {
       setRoomMembers(members)
     })
 
-    // Listen to video state
+    // Listen to video state - but don't auto-start videos
     const unsubscribeVideo = videoSyncService.listenToVideoState(roomId, (videoState) => {
       if (videoState) {
         setSyncedVideoState(videoState)
-        setCurrentVideoTime(videoState.currentTime || 0)
-        if (videoState.videoUrl) {
+        
+        // If there's a synced video and user is not currently watching anything
+        if (videoState.videoUrl && !isWatching) {
           const foundMovie = featuredMovies.find(m => m.videoUrl === videoState.videoUrl)
           if (foundMovie) {
-            setCurrentWatchingMovie(foundMovie)
-            setIsWatching(true)
+            // Show notification to join synced video instead of auto-starting
+            setRoomSyncNotification({
+              show: true,
+              movie: foundMovie,
+              currentTime: videoState.currentTime || 0,
+              isPlaying: videoState.isPlaying || false
+            });
           }
+        } else if (isWatching && currentWatchingMovie?.videoUrl === videoState.videoUrl) {
+          // If user is already watching the same movie, sync the time
+          setCurrentVideoTime(videoState.currentTime || 0)
         }
       }
     })
@@ -380,6 +448,14 @@ const HomePage = ({ startPictureInPicture }) => {
   }
 
   const startWatching = (movie) => {
+    // Check if user is in a room
+    if (roomStatus === "none") {
+      // If not in a room, suggest joining/creating a room for sync features
+      setShowCreateDialog(true);
+      console.log("📱 User needs to join a room for synced watching");
+      return;
+    }
+
     // Ensure movie has movieId for tracking
     const movieWithId = {
       ...movie,
@@ -395,6 +471,32 @@ const HomePage = ({ startPictureInPicture }) => {
     setIsWatching(true)
     setVideoAnalyzed(false)
     setCurrentVideoTime(0)
+
+    // If in a room, sync the video start with room members
+    if (roomStatus !== "none" && roomId && user) {
+      console.log("🎬 Starting movie in room:", movie.title);
+      // Sync movie selection with room
+      videoSyncService.syncMovieChange(roomId, movieWithId, user);
+    }
+  }
+
+  // New function for solo watching (without room)
+  const startSoloWatching = (movie) => {
+    const movieWithId = {
+      ...movie,
+      movieId:
+        movie.movieId ||
+        movie.title
+          .toLowerCase()
+          .replace(/\s+/g, "-")
+          .replace(/[^\w-]/g, ""),
+    }
+
+    setCurrentWatchingMovie(movieWithId)
+    setIsWatching(true)
+    setVideoAnalyzed(false)
+    setCurrentVideoTime(0)
+    console.log("🎬 Starting solo movie watching:", movie.title);
   }
 
   const startQuiz = (movieSlug) => {
@@ -404,6 +506,24 @@ const HomePage = ({ startPictureInPicture }) => {
 
   const updateVideoTime = (time) => {
     setCurrentVideoTime(time)
+  }
+
+  // Poll vote handler
+  const handlePollVote = async (pollId, optionId) => {
+    if (!roomId || roomStatus === "none") {
+      console.log("Cannot vote: not in a room")
+      return
+    }
+
+    try {
+      console.log("Voting on poll:", pollId, "option:", optionId)
+      // For now, we'll use the same Firebase message approach
+      // In the future, this could be enhanced to use a dedicated poll voting service
+      const voteMessage = `POLL_VOTE:${JSON.stringify({ pollId, optionId })}`
+      await chatService.sendMessage(roomId, voteMessage, user)
+    } catch (error) {
+      console.error("Error voting on poll:", error)
+    }
   }
 
   const sendMessage = async (message) => {
@@ -670,6 +790,21 @@ const HomePage = ({ startPictureInPicture }) => {
     syncOnJoin();
   }, [user, roomId, roomStatus, featuredMovies]);
 
+  // Handle room sync notification actions
+  const joinSyncedVideo = () => {
+    if (roomSyncNotification.movie) {
+      setCurrentWatchingMovie(roomSyncNotification.movie);
+      setIsWatching(true);
+      setCurrentVideoTime(roomSyncNotification.currentTime);
+      setRoomSyncNotification({ show: false, movie: null, currentTime: 0, isPlaying: false });
+      console.log("🎬 Joined synced video:", roomSyncNotification.movie.title);
+    }
+  };
+
+  const dismissSyncNotification = () => {
+    setRoomSyncNotification({ show: false, movie: null, currentTime: 0, isPlaying: false });
+  };
+
   if (authLoading) {
     return (
       <div className="fixed inset-0 bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center">
@@ -746,18 +881,104 @@ const HomePage = ({ startPictureInPicture }) => {
                 <FeaturedSection
                   movie={currentFeatured}
                   onStartWatching={startWatching}
+                  onStartSoloWatching={startSoloWatching}
                   onStartQuiz={startQuiz}
                   quizLocked={quizLocked}
+                  roomStatus={roomStatus}
                 />
                 
                 {/* Movie Categories - positioned after the fixed height featured section */}
                 <div className="relative z-20 bg-black">
-                  <MovieCategories onStartWatching={startWatching} onStartQuiz={startQuiz} quizLocked={quizLocked} user={user} />
+                  <MovieCategories 
+                    onStartWatching={startWatching} 
+                    onStartSoloWatching={startSoloWatching}
+                    onStartQuiz={startQuiz} 
+                    quizLocked={quizLocked} 
+                    user={user} 
+                    roomStatus={roomStatus}
+                  />
                 </div>
               </div>
             )}
           </div>
         </div>
+
+        {/* Room Status Indicator */}
+        {!isWatching && !isFullscreen && (
+          <motion.div
+            initial={{ opacity: 0, x: 100 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="fixed bottom-20 right-6 z-40"
+          >
+            <div className={`px-4 py-2 rounded-full backdrop-blur-xl border text-sm font-medium ${
+              roomStatus === "none" 
+                ? "bg-gray-800/90 border-gray-600 text-gray-300" 
+                : "bg-blue-600/90 border-blue-400 text-white"
+            }`}>
+              {roomStatus === "none" ? (
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-gray-400 rounded-full" />
+                  <span>Solo Mode</span>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+                  <span>Room: {roomId}</span>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Room Sync Notification */}
+        <AnimatePresence>
+          {roomSyncNotification.show && (
+            <motion.div
+              initial={{ opacity: 0, y: -50 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -50 }}
+              className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 max-w-md w-full mx-4"
+            >
+              <div className="bg-gradient-to-r from-blue-600/95 to-purple-600/95 backdrop-blur-xl border border-blue-400/30 rounded-2xl p-6 shadow-2xl">
+                <div className="flex items-start space-x-4">
+                  <div className="w-16 h-24 rounded-lg overflow-hidden flex-shrink-0">
+                    <img
+                      src={roomSyncNotification.movie?.image}
+                      alt={roomSyncNotification.movie?.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-white font-bold text-lg mb-1">
+                      Room is watching
+                    </h3>
+                    <p className="text-blue-100 font-medium mb-2">
+                      {roomSyncNotification.movie?.title}
+                    </p>
+                    <p className="text-blue-200 text-sm mb-4">
+                      Join the synced viewing session?
+                    </p>
+                    <div className="flex space-x-3">
+                      <Button
+                        onClick={joinSyncedVideo}
+                        className="bg-white/20 hover:bg-white/30 text-white border border-white/30 hover:border-white/50 rounded-lg px-4 py-2 text-sm font-medium transition-all"
+                      >
+                        Join Now
+                      </Button>
+                      <Button
+                        onClick={dismissSyncNotification}
+                        variant="ghost"
+                        className="text-white/70 hover:text-white hover:bg-white/10 rounded-lg px-4 py-2 text-sm font-medium transition-all"
+                      >
+                        Maybe Later
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Video Player */}
         {isWatching && (
@@ -804,6 +1025,7 @@ const HomePage = ({ startPictureInPicture }) => {
           onClose={() => setShowChat(false)}
           messages={chatMessages}
           onSendMessage={sendMessage}
+          onVote={handlePollVote}
           onTyping={handleTyping}
           typingUsers={typingUsers}
           roomStatus={roomStatus}
