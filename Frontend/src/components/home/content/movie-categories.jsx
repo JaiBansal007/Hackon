@@ -19,14 +19,6 @@ export function MovieCategories({ onStartWatching }) {
 
   return (
     <>
-      <style jsx>{`
-        .movie-scroll {
-          scrollbar-width: none;
-        }
-        .movie-scroll::-webkit-scrollbar {
-          display: none;
-        }
-      `}</style>
       {/* Netflix-like background */}
       <div className="fixed inset-0 -z-10">
         <div className="absolute inset-0 bg-gradient-to-b from-black via-gray-900/90 to-gray-950/95" />

@@ -21,8 +21,10 @@ import { ViewingHistoryManager } from "../../../lib/viewing-history"
 
 export function VideoPlayer({
   movie,
+  user,
   currentVideoTime,
   playing,
+  syncedVideoState,
   isWatching,
   isFullscreen,
   roomStatus,
@@ -37,11 +39,15 @@ export function VideoPlayer({
   onTogglePiP,
   onSendReaction,
   showReactions,
-  wsRef,
+  // Firebase video sync props
   onPlay,
   onPause,
   onSeek,
   onTimeUpdate,
+  // Permission props
+  isHost,
+  hasVideoPermission,
+  canControlVideo,
   onPlayingStateChange,
   initialPlaying = false,
   initialCurrentTime = 0,
@@ -57,6 +63,7 @@ export function VideoPlayer({
   const [isMuted, setIsMuted] = useState(false)
   const [showVolumeSlider, setShowVolumeSlider] = useState(false)
   const [hasResumed, setHasResumed] = useState(false)
+  const [syncStatus, setSyncStatus] = useState({ syncing: false, message: "" })
 
   const viewingHistoryManager = ViewingHistoryManager.getInstance()
 
@@ -183,57 +190,8 @@ export function VideoPlayer({
     }
   }, [movie?.movieId])
 
-  useEffect(() => {
-    if (wsRef.current && roomStatus !== "none") {
-      const handleVideoSync = (data) => {
-        if (videoRef.current) {
-          const timeDiff = Math.abs(data.currentTime - videoRef.current.currentTime)
-          if (timeDiff > 1) videoRef.current.currentTime = data.currentTime
-          if (data.playing && videoRef.current.paused) {
-            videoRef.current.play()
-          } else if (!data.playing && !videoRef.current.paused) {
-            videoRef.current.pause()
-          }
-        }
-      }
-
-      const handleVideoPlay = (data) => {
-        if (videoRef.current && data.userId !== wsRef.current?.userId) {
-          videoRef.current.currentTime = data.currentTime
-          videoRef.current.play()
-          setIsPlaying(true)
-        }
-      }
-
-      const handleVideoPause = (data) => {
-        if (videoRef.current && data.userId !== wsRef.current?.userId) {
-          videoRef.current.currentTime = data.currentTime
-          videoRef.current.pause()
-          setIsPlaying(false)
-        }
-      }
-
-      const handleVideoSeek = (data) => {
-        if (videoRef.current && data.userId !== wsRef.current?.userId) {
-          videoRef.current.currentTime = data.currentTime
-        }
-      }
-
-      wsRef.current.on("video_sync", handleVideoSync)
-      wsRef.current.on("video_play", handleVideoPlay)
-      wsRef.current.on("video_pause", handleVideoPause)
-      wsRef.current.on("video_seek", handleVideoSeek)
-
-      return () => {
-        if (wsRef.current) {
-          wsRef.current.off("video_sync", handleVideoSync)
-          wsRef.current.off("video_play", handleVideoPlay)
-          wsRef.current.off("video_pause", handleVideoPause)
-          wsRef.current.off("video_seek", handleVideoSeek)
-        }
-      }
-    }
-  }, [roomStatus, wsRef])
+  // Video sync is now handled via Firebase Real-time Database
+  // Legacy WebSocket code removed
 
   useEffect(() => {
     const video = videoRef.current
@@ -259,29 +217,63 @@ export function VideoPlayer({
   }, [currentVideoTime, playing, movie?.videoUrl])
 
   const togglePlayPause = () => {
+    // Check permissions
+    if (roomStatus !== "none" && !canControlVideo) {
+      console.warn("🚫 No permission to control video", {
+        roomStatus,
+        canControlVideo,
+        isHost,
+        hasVideoPermission
+      });
+      return;
+    }
+
+    console.log("🎮 Video control action:", {
+      action: isPlaying ? "pause" : "play",
+      canControlVideo,
+      isHost,
+      hasVideoPermission,
+      roomStatus
+    });
+
     if (videoRef.current) {
       const currentVideoTime = videoRef.current.currentTime
       if (isPlaying) {
         videoRef.current.pause()
         setIsPlaying(false)
         if (onPlayingStateChange) onPlayingStateChange(false)
-        if (wsRef.current && roomStatus !== "none") wsRef.current.pause(currentVideoTime)
+        // Use Firebase video sync
+        if (onPause && roomStatus !== "none") {
+          onPause(currentVideoTime, movie?.videoUrl)
+        }
       } else {
         videoRef.current.play()
         setIsPlaying(true)
         if (onPlayingStateChange) onPlayingStateChange(true)
-        if (wsRef.current && roomStatus !== "none") wsRef.current.play(currentVideoTime)
+        // Use Firebase video sync
+        if (onPlay && roomStatus !== "none") {
+          onPlay(currentVideoTime, movie?.videoUrl)
+        }
       }
     }
   }
 
   const handleVideoSeek = (e) => {
+    // Check permissions
+    if (roomStatus !== "none" && !canControlVideo) {
+      console.warn("🚫 No permission to seek video");
+      return;
+    }
+
     const newTime = Number.parseFloat(e.target.value)
     if (videoRef.current) {
       videoRef.current.currentTime = newTime
       setCurrentTime(newTime)
       if (onTimeUpdate) onTimeUpdate(newTime)
-      if (wsRef.current && roomStatus !== "none") wsRef.current.seek(newTime)
+      // Use Firebase video sync
+      if (onSeek && roomStatus !== "none") {
+        onSeek(newTime, movie?.videoUrl)
+      }
       // Save progress immediately when user seeks
       setTimeout(saveProgress, 100)
     }
@@ -342,6 +334,106 @@ export function VideoPlayer({
     }
   }
 
+  // Enhanced synced video state handler with better accuracy and status feedback
+  useEffect(() => {
+    if (!syncedVideoState || !videoRef.current) return;
+
+    const video = videoRef.current;
+    const { 
+      isPlaying, 
+      currentTime: syncTime, 
+      action, 
+      lastUpdatedBy,
+      networkDelay = 0,
+      syncId,
+      lastUpdatedByName 
+    } = syncedVideoState;
+
+    // Prevent sync loops - don't process our own updates
+    if (lastUpdatedBy === user?.uid) {
+      return;
+    }
+
+    // Show sync status
+    setSyncStatus({ 
+      syncing: true, 
+      message: `Syncing with ${lastUpdatedByName || 'host'}...` 
+    });
+
+    console.log("🎬 Processing video sync:", {
+      action,
+      isPlaying,
+      syncTime,
+      networkDelay: networkDelay + "ms",
+      from: lastUpdatedByName
+    });
+
+    // Calculate time difference with network compensation
+    const timeDiff = Math.abs(video.currentTime - syncTime);
+    const syncThreshold = 0.5; // More aggressive sync threshold
+
+    // Handle different sync actions
+    switch (action) {
+      case 'play':
+        if (video.paused && isPlaying) {
+          // Seek first if there's a significant time difference
+          if (timeDiff > syncThreshold) {
+            video.currentTime = syncTime;
+          }
+          video.play().then(() => {
+            setIsPlaying(true);
+            setCurrentTime(syncTime);
+            setSyncStatus({ syncing: false, message: "" });
+          }).catch(err => {
+            console.warn("Play failed:", err);
+            setSyncStatus({ syncing: false, message: "" });
+          });
+        } else {
+          setSyncStatus({ syncing: false, message: "" });
+        }
+        break;
+
+      case 'pause':
+        if (!video.paused && !isPlaying) {
+          video.currentTime = syncTime;
+          video.pause();
+          setIsPlaying(false);
+          setCurrentTime(syncTime);
+        }
+        setSyncStatus({ syncing: false, message: "" });
+        break;
+
+      case 'seek':
+        video.currentTime = syncTime;
+        setCurrentTime(syncTime);
+        setSyncStatus({ syncing: false, message: "" });
+        break;
+
+      default:
+        // General sync - only sync if time difference is significant
+        if (timeDiff > syncThreshold) {
+          video.currentTime = syncTime;
+          setCurrentTime(syncTime);
+        }
+
+        // Sync play/pause state
+        if (video.paused !== !isPlaying) {
+          if (isPlaying) {
+            video.play().catch(err => console.warn("Play failed:", err));
+            setIsPlaying(true);
+          } else {
+            video.pause();
+            setIsPlaying(false);
+          }
+        }
+        setSyncStatus({ syncing: false, message: "" });
+        break;
+    }
+
+    // Clear sync status after a timeout
+    setTimeout(() => setSyncStatus({ syncing: false, message: "" }), 1000);
+  }, [syncedVideoState, user?.uid]);
+
   if (!isWatching) return null
 
   return (
@@ -370,6 +462,22 @@ export function VideoPlayer({
         </video>
 
         <FloatingReactions reactions={recentReactions} />
+
+        {/* Sync Status Indicator */}
+        <AnimatePresence>
+          {syncStatus.syncing && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-black/80 text-white px-4 py-2 rounded-lg flex items-center space-x-2 z-50"
+            >
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              <span className="text-sm">{syncStatus.message}</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <ReactionsPanel show={showReactions} onReactionSelect={onSendReaction} />
 
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-4">
@@ -380,7 +488,10 @@ export function VideoPlayer({
               max={videoDuration}
               value={currentTime}
               onChange={handleVideoSeek}
-              className="w-full h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer"
+              disabled={roomStatus !== "none" && !canControlVideo}
+              className={`w-full h-1 rounded-lg appearance-none ${
+                roomStatus !== "none" && !canControlVideo ? "cursor-not-allowed opacity-50" : "cursor-pointer"
+              }`}
               style={{
                 background: `linear-gradient(to right, #f97316 0%, #f97316 ${
                   videoDuration ? (currentTime / videoDuration) * 100 : 0
@@ -398,10 +509,29 @@ export function VideoPlayer({
               <Button
                 onClick={togglePlayPause}
                 size="sm"
-                className="bg-white/20 hover:bg-white/30 text-black border-none backdrop-blur-sm"
+                disabled={roomStatus !== "none" && !canControlVideo}
+                className={`border-none backdrop-blur-sm ${
+                  roomStatus !== "none" && !canControlVideo 
+                    ? "bg-gray-500/30 text-gray-400 cursor-not-allowed" 
+                    : "bg-white/20 hover:bg-white/30 text-black"
+                }`}
+                title={roomStatus !== "none" && !canControlVideo ? "No video control permission" : ""}
               >
                 {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
               </Button>
+
+              {/* Permission status indicator */}
+              {roomStatus !== "none" && (
+                <div className="text-xs text-gray-300">
+                  {isHost ? (
+                    <span className="text-yellow-400">👑 Host</span>
+                  ) : hasVideoPermission ? (
+                    <span className="text-green-400">🎮 Video Control</span>
+                  ) : (
+                    <span className="text-gray-500">👀 Viewer</span>
+                  )}
+                </div>
+              )}
 
               <div
                 className="relative flex items-center space-x-2"

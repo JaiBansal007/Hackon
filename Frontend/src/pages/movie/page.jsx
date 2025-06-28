@@ -497,6 +497,7 @@ const MoviePage = ({ startPictureInPicture }) => {
             ref={videoPlayerRef}
             key={currentWatchingMovie?.videoUrl || "video-player"}
             movie={currentWatchingMovie}
+            user={user}
             isWatching={isWatching}
             isFullscreen={isFullscreen}
             roomStatus={roomStatus}
@@ -512,7 +513,6 @@ const MoviePage = ({ startPictureInPicture }) => {
             onTimeUpdate={updateVideoTime}
             onPlayingStateChange={updateVideoPlayingState}
             showReactions={showReactions}
-            wsRef={wsRef}
             // Video sync props
             onPlay={handlePlay}
             onPause={handlePause}

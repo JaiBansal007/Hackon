@@ -1,9 +1,7 @@
 @import "tailwindcss";
 
-@tailwind base;
 
 @custom-variant dark (&:is(.dark *));
-@tailwind components;
 @tailwind utilities;
 
 @theme inline {
@@ -203,6 +201,16 @@
   [class*="overflow-"]:hover {
     scrollbar-width: thin;
     scrollbar-color: #e5e7eb transparent;
+  }
+
+  /* Custom scrollbar for movie categories */
+  .movie-scroll {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* Internet Explorer 10+ */
+  }
+
+  .movie-scroll::-webkit-scrollbar {
+    display: none; /* Safari and Chrome */
   }
 }
 

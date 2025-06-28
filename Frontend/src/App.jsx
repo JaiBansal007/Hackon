@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom"
 import LandingPage from "./pages/page"
-import SignInPage from "./pages/signin/page"
+import SignInPage from "./pages/signin/page-new"
 import SignUpPage from "./pages/signup/page"
 import HomePage from "./pages/home/page"
 import MoviePage from "./pages/movie/page"
@@ -12,10 +12,13 @@ import RedeemPage from "./pages/redeem/page"
 import ProfilePage from "./pages/profile/page"
 import MovieInfoPage from "./pages/info/page"
 import { PictureInPicturePlayer } from "./components/home/video/picture-in-picture-player"
-import { WebSocketManager } from "./lib/websocket"
+import authService from "./firebase/auth"
+import { ref, set, onValue, off } from "firebase/database"
+import { realtimeDb } from "./firebase/config"
 
 function App() {
-  const [user, setUser] = useState(true)
+  const [user, setUser] = useState(null)
+  const [isAuthLoading, setIsAuthLoading] = useState(true)
 
   // Global Picture-in-Picture state
   const [showPiP, setShowPiP] = useState(false)
@@ -26,13 +29,27 @@ function App() {
   const [pipRoomId, setPipRoomId] = useState("")
   const [pipRoomMembers, setPipRoomMembers] = useState([])
 
-  const wsRef = useRef(null)
-
+  // Listen to authentication state with persistence
   useEffect(() => {
-    const userData = localStorage.getItem("user")
-    if (userData) {
-      setUser(JSON.parse(userData))
+    // Check for cached user data immediately
+    const cachedUser = localStorage.getItem("user");
+    if (cachedUser) {
+      try {
+        const userData = JSON.parse(cachedUser);
+        setUser(userData);
+        console.log("🔄 Restored user from cache:", userData.name);
+      } catch (error) {
+        console.error("Error parsing cached user data:", error);
+        localStorage.removeItem("user");
+      }
     }
+
+    const unsubscribe = authService.onAuthStateChange((firebaseUser) => {
+      setUser(firebaseUser)
+      setIsAuthLoading(false)
+    })
+
+    return unsubscribe
   }, [])
 
   // Check for PiP state on app mount
@@ -60,25 +77,6 @@ function App() {
       }
     }
   }, [])
-
-  // Initialize WebSocket for PiP if needed
-  useEffect(() => {
-    if (showPiP && pipRoomStatus !== "none" && user && !wsRef.current) {
-      const userData = typeof user === "object" ? user : JSON.parse(localStorage.getItem("user") || "{}")
-      wsRef.current = new WebSocketManager(userData.email, userData.name)
-
-      if (pipRoomId) {
-        wsRef.current.connect(pipRoomId)
-      }
-    }
-
-    return () => {
-      if (wsRef.current && !showPiP) {
-        wsRef.current.disconnect()
-        wsRef.current = null
-      }
-    }
-  }, [showPiP, pipRoomStatus, pipRoomId, user])
 
   // Global PiP handlers
   const handlePipTimeUpdate = (time) => {
@@ -111,25 +109,20 @@ function App() {
     }
   }
 
+  // Note: Firebase video sync will be handled in the PiP component
   const handlePipPlay = (currentTime, videoUrl) => {
     setPipPlaying(true)
-    if (wsRef.current && pipRoomStatus !== "none") {
-      wsRef.current.playVideo(currentTime, videoUrl)
-    }
+    // Firebase sync will be handled in the component
   }
 
   const handlePipPause = (currentTime, videoUrl) => {
     setPipPlaying(false)
-    if (wsRef.current && pipRoomStatus !== "none") {
-      wsRef.current.pauseVideo(currentTime, videoUrl)
-    }
+    // Firebase sync will be handled in the component
   }
 
   const handlePipSeek = (currentTime, videoUrl) => {
     setPipCurrentTime(currentTime)
-    if (wsRef.current && pipRoomStatus !== "none") {
-      wsRef.current.seekVideo(currentTime, videoUrl)
-    }
+    // Firebase sync will be handled in the component
   }
 
   const closePictureInPicture = () => {
@@ -140,12 +133,6 @@ function App() {
     setPipRoomStatus("none")
     setPipRoomId("")
     setPipRoomMembers([])
-
-    // Disconnect WebSocket
-    if (wsRef.current) {
-      wsRef.current.disconnect()
-      wsRef.current = null
-    }
 
     // Clear PiP state from sessionStorage
     sessionStorage.removeItem("pipState")
@@ -210,6 +197,18 @@ function App() {
     sessionStorage.setItem("pipState", JSON.stringify(pipData))
   }
 
+  // Show loading spinner while checking auth
+  if (isAuthLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-950 via-black to-gray-900">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-white text-lg">Loading FireStream...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <Router>
       <Routes>
@@ -218,13 +217,28 @@ function App() {
         <Route path="/signup" element={<SignUpPage />} />
         <Route
           path="/home"
-          element={true ? <HomePage startPictureInPicture={startPictureInPicture} /> : <Navigate to="/signin" />}
+          element={user ? <HomePage startPictureInPicture={startPictureInPicture} /> : <Navigate to="/signin" />}
         />
-        <Route path="/movie/:movieId" element={<MoviePage startPictureInPicture={startPictureInPicture} />} />
-        <Route path="/quiz/:movieId" element={<QuizPage />} />
-        <Route path="/redeem" element={<RedeemPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/info/:movieId" element={<MovieInfoPage />} />
+        <Route 
+          path="/movie/:movieId" 
+          element={user ? <MoviePage startPictureInPicture={startPictureInPicture} /> : <Navigate to="/signin" />} 
+        />
+        <Route 
+          path="/quiz/:movieId" 
+          element={user ? <QuizPage /> : <Navigate to="/signin" />} 
+        />
+        <Route 
+          path="/redeem" 
+          element={user ? <RedeemPage /> : <Navigate to="/signin" />} 
+        />
+        <Route 
+          path="/profile" 
+          element={user ? <ProfilePage /> : <Navigate to="/signin" />} 
+        />
+        <Route 
+          path="/info/:movieId" 
+          element={user ? <MovieInfoPage /> : <Navigate to="/signin" />} 
+        />
       </Routes>
 
       {/* Global Picture-in-Picture Player */}
@@ -234,7 +248,6 @@ function App() {
           onClose={closePictureInPicture}
           onExpand={expandFromPiP}
           roomStatus={pipRoomStatus}
-          wsRef={wsRef}
           currentVideoTime={pipCurrentTime}
           playing={pipPlaying}
           onPlay={handlePipPlay}

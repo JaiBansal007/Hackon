@@ -2,13 +2,13 @@
 
 import { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
-import { WebSocketManager } from "@/lib/websocket"
 import { Navbar } from "@/components/home/layout/navbar"
 import { Sidebar } from "@/components/home/layout/sidebar"
 import { FeaturedSection } from "@/components/home/content/featured-section"
 import { MovieCategories } from "@/components/home/content/movie-categories"
 import { VideoPlayer } from "@/components/home/video/video-player"
 import { ChatSidebar } from "@/components/home/chat/chat-sidebar"
+import { PermissionManager } from "@/components/home/room/permission-manager"
 import { RoomMembersSidebar } from "@/components/home/room/room-members-sidebar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -17,9 +17,13 @@ import { AnimatePresence, motion } from "framer-motion"
 import { GamificationManager } from "@/lib/gamification"
 import { ViewingHistoryManager } from "@/lib/viewing-history"
 import { featuredMovies } from "../../components/home/content/featured-movies"
+import authService from "../../firebase/auth"
+import chatService from "../../firebase/chat"
+import videoSyncService from "../../firebase/videoSync"
 
 const HomePage = ({ startPictureInPicture }) => {
   const [user, setUser] = useState(null)
+  const [authLoading, setAuthLoading] = useState(true) // Add loading state
   const [isWatching, setIsWatching] = useState(false)
   const [currentWatchingMovie, setCurrentWatchingMovie] = useState(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -40,143 +44,205 @@ const HomePage = ({ startPictureInPicture }) => {
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [roomMembers, setRoomMembers] = useState([])
 
-  const wsRef = useRef(null)
+  // Firebase-related state
+  const [isHost, setIsHost] = useState(false)
+  const [roomPermissions, setRoomPermissions] = useState(null)
+  const [videoControlPermission, setVideoControlPermission] = useState(false)
+  const [typingUsers, setTypingUsers] = useState([])
+  const [syncedVideoState, setSyncedVideoState] = useState(null)
+  
+  // Permission management state
+  const [showPermissionManager, setShowPermissionManager] = useState(false)
+
   const navigate = useNavigate()
+  const chatUnsubscribeRef = useRef(null)
+  const membersUnsubscribeRef = useRef(null)
+  const videoUnsubscribeRef = useRef(null)
+  const permissionsUnsubscribeRef = useRef(null)
+  const typingTimeoutRef = useRef(null)
 
   // Initialize ViewingHistoryManager
   const viewingHistoryManager = ViewingHistoryManager.getInstance()
 
   const currentFeatured = featuredMovies[Math.floor(Math.random() * featuredMovies.length)]
 
-  // Initialize user and WebSocket
+  // Initialize user with Firebase auth
   useEffect(() => {
-    const userData = localStorage.getItem("user")
-    if (!userData) {
-      navigate("/signin")
-      return
-    }
-    const parsedUser = JSON.parse(userData)
-    setUser(parsedUser)
-
-    // Only create the manager once
-    if (!wsRef.current) {
-      wsRef.current = new WebSocketManager(parsedUser.email, parsedUser.name)
+    // Check for stored user data first to prevent redirect
+    const storedUser = authService.getCurrentUser();
+    if (storedUser) {
+      setUser(storedUser);
+      setAuthLoading(false);
     }
 
-    return () => {
-      if (wsRef.current) wsRef.current.disconnect()
-    }
+    const unsubscribe = authService.onAuthStateChange((firebaseUser) => {
+      if (firebaseUser) {
+        const userData = {
+          uid: firebaseUser.uid,
+          name: firebaseUser.displayName,
+          email: firebaseUser.email,
+          photoURL: firebaseUser.photoURL
+        }
+        setUser(userData)
+        setAuthLoading(false)
+      } else {
+        // Only redirect if we're not loading and actually signed out
+        setUser(null)
+        setAuthLoading(false)
+        // Add a small delay to prevent immediate redirect on refresh
+        setTimeout(() => {
+          if (!firebaseUser) {
+            navigate("/signin")
+          }
+        }, 500) // Increased delay to give Firebase more time
+      }
+    })
+
+    return unsubscribe
   }, [navigate])
 
-  // Register listeners when roomId changes and connect
+  // Persist and restore watching state
   useEffect(() => {
-    if (!user || !roomId || !wsRef.current) return
-
-    // Prevent multiple connects to the same room
-    if (wsRef.current.roomId !== roomId || !wsRef.current.isConnected) {
-      wsRef.current.connect(roomId)
+    // Restore watching state from localStorage on mount
+    const savedWatchingState = localStorage.getItem('watchingState');
+    const savedMovie = localStorage.getItem('currentWatchingMovie');
+    const savedRoomState = localStorage.getItem('roomState');
+    
+    if (savedWatchingState && savedMovie) {
+      try {
+        const watchingState = JSON.parse(savedWatchingState);
+        const movie = JSON.parse(savedMovie);
+        
+        if (watchingState.isWatching && movie) {
+          setIsWatching(true);
+          setCurrentWatchingMovie(movie);
+          setCurrentVideoTime(watchingState.videoTime || 0);
+          console.log("🔄 Restored watching state:", movie.title);
+        }
+      } catch (error) {
+        console.warn("Failed to restore watching state:", error);
+        localStorage.removeItem('watchingState');
+        localStorage.removeItem('currentWatchingMovie');
+      }
     }
 
-    // Fetch current video state on join
-    const fetchVideoState = async () => {
-      const { db } = await import("@/firebase/db")
-      const { doc, getDoc } = await import("firebase/firestore")
-      const videoStateRef = doc(db, "rooms", roomId, "sync", "videoState")
-      const snap = await getDoc(videoStateRef)
-      if (snap.exists()) {
-        const data = snap.data()
-        setCurrentVideoTime(data.currentTime)
-        setIsWatching(true)
-        setCurrentWatchingMovie((prev) => {
-          if (!prev || prev.videoUrl !== data.videoUrl) {
-            const found = featuredMovies.find((m) => m.videoUrl === data.videoUrl)
-            return found || prev
+    if (savedRoomState) {
+      try {
+        const roomState = JSON.parse(savedRoomState);
+        if (roomState.roomId && roomState.roomStatus !== "none") {
+          setRoomId(roomState.roomId);
+          setRoomStatus(roomState.roomStatus);
+          setIsHost(roomState.isHost || false);
+          console.log("🔄 Restored room state:", roomState.roomId);
+        }
+      } catch (error) {
+        console.warn("Failed to restore room state:", error);
+        localStorage.removeItem('roomState');
+      }
+    }
+  }, []);
+
+  // Save watching state to localStorage when it changes
+  useEffect(() => {
+    if (isWatching && currentWatchingMovie) {
+      localStorage.setItem('watchingState', JSON.stringify({
+        isWatching: true,
+        videoTime: currentVideoTime
+      }));
+      localStorage.setItem('currentWatchingMovie', JSON.stringify(currentWatchingMovie));
+    } else {
+      localStorage.removeItem('watchingState');
+      localStorage.removeItem('currentWatchingMovie');
+    }
+  }, [isWatching, currentWatchingMovie, currentVideoTime]);
+
+  // Save room state to localStorage when it changes
+  useEffect(() => {
+    if (roomId && roomStatus !== "none") {
+      localStorage.setItem('roomState', JSON.stringify({
+        roomId,
+        roomStatus,
+        isHost
+      }));
+    } else {
+      localStorage.removeItem('roomState');
+    }
+  }, [roomId, roomStatus, isHost]);
+
+  // Firebase chat and video sync listeners
+  useEffect(() => {
+    if (!user || !roomId) return
+
+    // Listen to chat messages
+    const unsubscribeChat = chatService.listenToMessages(roomId, (messages) => {
+      setChatMessages(messages.map(msg => ({
+        id: msg.id,
+        user: msg.userName,
+        text: msg.text,
+        timestamp: new Date(msg.timestamp).toLocaleTimeString(),
+        isSystem: false
+      })))
+    })
+
+    // Listen to room members
+    const unsubscribeMembers = chatService.listenToMembers(roomId, (members) => {
+      setRoomMembers(members)
+    })
+
+    // Listen to video state
+    const unsubscribeVideo = videoSyncService.listenToVideoState(roomId, (videoState) => {
+      if (videoState) {
+        setSyncedVideoState(videoState)
+        setCurrentVideoTime(videoState.currentTime || 0)
+        if (videoState.videoUrl) {
+          const foundMovie = featuredMovies.find(m => m.videoUrl === videoState.videoUrl)
+          if (foundMovie) {
+            setCurrentWatchingMovie(foundMovie)
+            setIsWatching(true)
           }
-          return prev
-        })
+        }
       }
-    }
-    fetchVideoState()
-
-    wsRef.current.on("user_joined", (data) => {
-      setChatMessages((prev) => [
-        ...prev,
-        {
-          id: `system-joined-${data.userId}-${Date.now()}`,
-          user: "System",
-          text: `${data.userName} joined the room`,
-          timestamp: new Date().toLocaleTimeString(),
-          isSystem: true,
-        },
-      ])
     })
 
-    wsRef.current.on("user_left", (data) => {
-      setChatMessages((prev) => [
-        ...prev,
-        {
-          id: `system-left-${data.userId}-${Date.now()}`,
-          user: "System",
-          text: `${data.userName} left the room`,
-          timestamp: new Date().toLocaleTimeString(),
-          isSystem: true,
-        },
-      ])
+    // Listen to permissions
+    const unsubscribePermissions = videoSyncService.listenToPermissions(roomId, (permissions) => {
+      setRoomPermissions(permissions)
+      
+      // Check if user has video control permission
+      const hasPermission = permissions?.allowedUsers?.[user.uid]?.canControl || 
+                           permissions?.settings?.anyoneCanControl || 
+                           false;
+      
+      setVideoControlPermission(hasPermission)
+      
+      console.log("🔑 Permissions updated:", {
+        userId: user.uid,
+        hasPermission,
+        isHost,
+        canControlVideo: isHost || hasPermission,
+        permissions: permissions?.allowedUsers?.[user.uid]
+      });
     })
 
-    wsRef.current.on("room_members_update", (data) => {
-      setRoomMembers(data.members || [])
+    // Listen to typing users
+    const unsubscribeTyping = chatService.listenToTypingUsers(roomId, (typingUsersList) => {
+      setTypingUsers(typingUsersList.filter(u => u !== user.uid))
     })
 
-    wsRef.current.on("chat_message", (data) => {
-      setChatMessages((prev) => [
-        ...prev,
-        {
-          id: data.id || `${data.userName}-${data.timestamp}`, // Use Firestore doc id if available
-          user: data.userName,
-          text: data.message,
-          timestamp: new Date(data.timestamp).toLocaleTimeString(),
-        },
-      ])
-    })
-
-    wsRef.current.on("reaction", (data) => {
-      const newReaction = {
-        id: `${data.userName}-${data.timestamp}`,
-        emoji: data.emoji,
-        user: data.userName,
-        timestamp: data.timestamp,
-      }
-      setRecentReactions((prev) => [...prev, newReaction])
-      setTimeout(() => {
-        setRecentReactions((prev) => prev.filter((r) => r.id !== newReaction.id))
-      }, 4000)
-    })
+    // Store unsubscribe functions
+    chatUnsubscribeRef.current = unsubscribeChat
+    membersUnsubscribeRef.current = unsubscribeMembers
+    videoUnsubscribeRef.current = unsubscribeVideo
+    permissionsUnsubscribeRef.current = unsubscribePermissions
 
     return () => {
-      // Optionally remove listeners here if you add an off() method
+      if (chatUnsubscribeRef.current) chatUnsubscribeRef.current()
+      if (membersUnsubscribeRef.current) membersUnsubscribeRef.current()
+      if (videoUnsubscribeRef.current) videoUnsubscribeRef.current()
+      if (permissionsUnsubscribeRef.current) permissionsUnsubscribeRef.current()
+      if (unsubscribeTyping) unsubscribeTyping()
     }
   }, [user, roomId, featuredMovies])
-
-  // Add: state for video sync
-  const [syncedVideoState, setSyncedVideoState] = useState(null)
-
-  // Listen for video state updates from Firestore and sync local player
-  useEffect(() => {
-    if (!wsRef.current) return
-
-    wsRef.current.on("video_state_update", (data) => {
-      setSyncedVideoState(data)
-      setIsWatching(true)
-      setCurrentWatchingMovie((prev) => {
-        if (!prev || prev.videoUrl !== data.videoUrl) {
-          const found = featuredMovies.find((m) => m.videoUrl === data.videoUrl)
-          return found || prev
-        }
-        return prev
-      })
-    })
-  }, [wsRef, featuredMovies])
 
   // Handle fullscreen changes
   useEffect(() => {
@@ -187,48 +253,98 @@ const HomePage = ({ startPictureInPicture }) => {
     return () => document.removeEventListener("fullscreenchange", handleFullscreenChange)
   }, [])
 
-  const handleLogout = () => {
-    if (wsRef.current) {
-      wsRef.current.disconnect()
+  const handleLogout = async () => {
+    try {
+      await authService.signOut()
+      navigate("/")
+    } catch (error) {
+      console.error("Logout error:", error)
+      navigate("/")
     }
-    localStorage.removeItem("user")
-    sessionStorage.removeItem("pipState")
-    navigate("/")
   }
 
-  const createRoom = () => {
+  const createRoom = async () => {
+    if (!user) return
+    
     const newRoomId = Math.random().toString(36).substring(2, 8).toUpperCase()
-    setRoomId(newRoomId)
-    setRoomStatus("host")
-    setShowCreateDialog(false)
-    if (wsRef.current) {
-      wsRef.current.connect(newRoomId)
-    }
-  }
-
-  const joinRoom = () => {
-    if (joinRoomId.trim()) {
-      setRoomId(joinRoomId)
-      setRoomStatus("member")
-      setShowJoinDialog(false)
-      setJoinRoomId("")
-      if (wsRef.current) {
-        wsRef.current.connect(joinRoomId)
+    
+    try {
+      // Create room in Firebase
+      const result = await chatService.createRoom(newRoomId, user)
+      if (result.success) {
+        setRoomId(newRoomId)
+        setRoomStatus("host")
+        setIsHost(true)
+        setShowCreateDialog(false)
+        
+        // Initialize room permissions
+        await videoSyncService.setRoomPermissions(newRoomId, user.uid, {
+          anyoneCanControl: false,
+          requirePermission: true
+        })
+        
+        // Join as member
+        await chatService.joinRoom(newRoomId, user)
+        
+        console.log("🏠 Room created and permissions initialized:", newRoomId)
+      } else {
+        console.error("Failed to create room:", result.error)
       }
+    } catch (error) {
+      console.error("Error creating room:", error)
     }
   }
 
-  const leaveRoom = () => {
-    if (wsRef.current) {
-      wsRef.current.disconnect()
+  const joinRoom = async () => {
+    if (!user || !joinRoomId.trim()) return
+    
+    try {
+      const result = await chatService.joinRoom(joinRoomId, user)
+      if (result.success) {
+        setRoomId(joinRoomId)
+        setRoomStatus("member")
+        setIsHost(false)
+        setShowJoinDialog(false)
+        setJoinRoomId("")
+      } else {
+        console.error("Failed to join room:", result.error)
+      }
+    } catch (error) {
+      console.error("Error joining room:", error)
     }
-    setRoomStatus("none")
-    setRoomId("")
-    setRoomMembers([])
-    setIsWatching(false)
-    setShowChat(false)
-    setShowReactions(false)
-    setShowRoomMembers(false)
+  }
+
+  const leaveRoom = async () => {
+    if (!user || !roomId) return
+    
+    try {
+      await chatService.leaveRoom(roomId, user)
+      
+      // Cleanup listeners
+      if (chatUnsubscribeRef.current) chatUnsubscribeRef.current()
+      if (membersUnsubscribeRef.current) membersUnsubscribeRef.current()
+      if (videoUnsubscribeRef.current) videoUnsubscribeRef.current()
+      if (permissionsUnsubscribeRef.current) permissionsUnsubscribeRef.current()
+      
+      setRoomStatus("none")
+      setRoomId("")
+      setRoomMembers([])
+      setIsWatching(false)
+      setShowChat(false)
+      setShowReactions(false)
+      setShowRoomMembers(false)
+      setIsHost(false)
+      setVideoControlPermission(false)
+      setRoomPermissions(null)
+      setSyncedVideoState(null)
+      
+      // Clear all persisted state
+      localStorage.removeItem('roomState');
+      localStorage.removeItem('watchingState');
+      localStorage.removeItem('currentWatchingMovie');
+    } catch (error) {
+      console.error("Error leaving room:", error)
+    }
   }
 
   const toggleFullscreen = () => {
@@ -253,6 +369,10 @@ const HomePage = ({ startPictureInPicture }) => {
     setShowRoomMembers(false)
     setVideoAnalyzed(false)
     setCurrentVideoTime(0)
+    
+    // Clear watching state from localStorage
+    localStorage.removeItem('watchingState');
+    localStorage.removeItem('currentWatchingMovie');
   }
 
   const startWatching = (movie) => {
@@ -283,30 +403,25 @@ const HomePage = ({ startPictureInPicture }) => {
   }
 
   const sendMessage = async (message) => {
+    if (!user || !roomId || roomStatus === "none") return
+    
     console.log("📤 Sending message:", message)
 
-    // Do NOT optimistically update chatMessages here!
-    // Only send to Firestore, let the listener update the UI
-
-    if (wsRef.current && roomStatus !== "none") {
-      wsRef.current.sendChatMessage(message)
+    try {
+      // Send message via Firebase
+      const result = await chatService.sendMessage(roomId, message, user)
+      if (!result.success) {
+        console.error("Failed to send message:", result.error)
+      }
+    } catch (error) {
+      console.error("Error sending message:", error)
     }
 
+    // Handle Tree.io AI responses
     if (message.includes("@Tree.io")) {
       console.log("🤖 Tree.io mentioned, processing...")
       console.log("🕐 Current video time:", currentVideoTime)
       console.log("📊 Video analyzed:", videoAnalyzed)
-
-      const typingMessage = {
-        id: Date.now() + 1,
-        user: "Tree.io",
-        text: "Tree.io is thinking...",
-        timestamp: new Date().toLocaleTimeString(),
-        isTyping: true,
-      }
-
-      setChatMessages((prev) => [...prev, typingMessage])
-      console.log("💭 Typing indicator added")
 
       try {
         console.log("🌐 Calling Tree.io API with video context...")
@@ -327,96 +442,139 @@ const HomePage = ({ startPictureInPicture }) => {
 
         console.log("📡 API Response status:", response.status)
 
-        setChatMessages((prev) => prev.filter((msg) => !msg.isTyping))
-
         if (response.ok) {
           const data = await response.json()
           console.log("✅ API Response data:", data)
 
-          const treeIoMessage = {
-            id: Date.now() + 2,
-            user: "Tree.io",
-            text: data.response,
-            timestamp: new Date().toLocaleTimeString(),
-            isAI: true,
+          // Send Tree.io response via Firebase
+          const treeIoUser = {
+            uid: 'tree-io-ai',
+            name: 'Tree.io',
+            email: 'tree.io@ai.com'
           }
-
-          setChatMessages((prev) => [...prev, treeIoMessage])
-          console.log("🎉 Tree.io response added to chat")
-
-          // Send Tree.io response via WebSocket if in room
-          if (wsRef.current && roomStatus !== "none") {
-            wsRef.current.sendChatMessage(`Tree.io: ${data.response}`)
-          }
+          
+          await chatService.sendMessage(roomId, `Tree.io: ${data.response}`, treeIoUser)
+          console.log("🎉 Tree.io response sent to chat")
         } else {
-          console.error("❌ API Error - Status:", response.status)
-          const errorText = await response.text()
-          console.error("❌ API Error - Response:", errorText)
-
-          setChatMessages((prev) => [
-            ...prev,
-            {
-              id: Date.now() + 2,
-              user: "Tree.io",
-              text: "Sorry, I'm having trouble processing your request right now. Please try again later.",
-              timestamp: new Date().toLocaleTimeString(),
-              isAI: true,
-            },
-          ])
+          console.error("❌ Tree.io API error:", response.status)
+          const errorUser = {
+            uid: 'tree-io-ai',
+            name: 'Tree.io',
+            email: 'tree.io@ai.com'
+          }
+          await chatService.sendMessage(roomId, "Tree.io: Sorry, I'm having trouble processing your request right now.", errorUser)
         }
       } catch (error) {
-        console.error("💥 Network Error calling Tree.io API:", error)
-        setChatMessages((prev) => [
-          ...prev,
-          {
-            id: Date.now() + 2,
-            user: "Tree.io",
-            text: "Sorry, I'm currently unavailable. Please try again later.",
-            timestamp: new Date().toLocaleTimeString(),
-            isAI: true,
-          },
-        ])
+        console.error("❌ Tree.io API error:", error)
+        const errorUser = {
+          uid: 'tree-io-ai',
+          name: 'Tree.io',
+          email: 'tree.io@ai.com'
+        }
+        await chatService.sendMessage(roomId, "Tree.io: Sorry, I encountered an error while processing your request.", errorUser)
       }
     }
   }
 
+  // Enhanced permission management functions
+  const handleToggleAnyoneCanControl = async () => {
+    if (!isHost || !user || !roomId) return
+    
+    try {
+      const currentSetting = roomPermissions?.settings?.anyoneCanControl || false
+      await videoSyncService.setRoomPermissions(roomId, user.uid, {
+        anyoneCanControl: !currentSetting,
+        requirePermission: currentSetting // Flip the requirement
+      })
+      console.log(`🔄 Toggled global video control: ${!currentSetting ? 'enabled' : 'disabled'}`)
+    } catch (error) {
+      console.error("Failed to toggle global permission:", error)
+    }
+  }
+
+  // Enhanced reaction sending with throttling
   const sendReaction = (reaction) => {
-    const newReaction = {
-      id: Date.now(),
+    if (!user || !roomId || roomStatus === "none") return
+    
+    const reactionData = {
+      id: Date.now() + Math.random(),
       emoji: reaction.emoji,
-      user: user?.name || "User",
-      timestamp: Date.now(),
+      user: user.name,
+      userId: user.uid,
+      timestamp: Date.now()
     }
-    setRecentReactions((prev) => [...prev, newReaction])
-    setTimeout(() => {
-      setRecentReactions((prev) => prev.filter((r) => r.id !== newReaction.id))
-    }, 4000)
-
-    setShowReactions(false)
-    if (wsRef.current && roomStatus !== "none") {
-      wsRef.current.sendReaction(reaction.emoji)
-    }
+    
+    // Add to local state immediately for responsive UI
+    setRecentReactions(prev => [...prev.slice(-14), reactionData]) // Keep last 15 reactions
+    
+    // Send to Firebase (this could be throttled on the service level)
+    chatService.sendMessage(roomId, `${reaction.emoji} reaction`, user)
   }
 
-  // Handler to sync play
-  const handlePlay = (currentTime, videoUrl) => {
-    if (wsRef.current && roomStatus !== "none") {
-      wsRef.current.playVideo(currentTime, videoUrl)
-    }
+  const revokeVideoControl = async (userId) => {
+    if (!isHost || !user || !roomId) return
+    
+    await videoSyncService.revokeVideoPermission(roomId, userId, user.uid, isHost)
   }
 
-  // Handler to sync pause
-  const handlePause = (currentTime, videoUrl) => {
-    if (wsRef.current && roomStatus !== "none") {
-      wsRef.current.pauseVideo(currentTime, videoUrl)
-    }
+  const grantVideoControl = async (userId) => {
+    if (!isHost || !user || !roomId) return
+    
+    await videoSyncService.grantVideoPermission(roomId, userId, user.uid, isHost)
   }
 
-  // Handler to sync seek
-  const handleSeek = (currentTime, videoUrl) => {
-    if (wsRef.current && roomStatus !== "none") {
-      wsRef.current.seekVideo(currentTime, videoUrl)
+  const handlePlay = async () => {
+    if (!user || !roomId || !currentWatchingMovie) return
+    
+    const hasPermission = isHost || videoControlPermission
+    if (!hasPermission) {
+      console.log("⚠️ No permission to control video")
+      return
     }
+    
+    await videoSyncService.playVideo(
+      roomId, 
+      currentVideoTime, 
+      currentWatchingMovie.videoUrl, 
+      user, 
+      isHost
+    )
+  }
+
+  const handlePause = async () => {
+    if (!user || !roomId || !currentWatchingMovie) return
+    
+    const hasPermission = isHost || videoControlPermission
+    if (!hasPermission) {
+      console.log("⚠️ No permission to control video")
+      return
+    }
+    
+    await videoSyncService.pauseVideo(
+      roomId, 
+      currentVideoTime, 
+      currentWatchingMovie.videoUrl, 
+      user, 
+      isHost
+    )
+  }
+
+  const handleSeek = async (newTime) => {
+    if (!user || !roomId || !currentWatchingMovie) return
+    
+    const hasPermission = isHost || videoControlPermission
+    if (!hasPermission) {
+      console.log("⚠️ No permission to control video")
+      return
+    }
+    
+    await videoSyncService.seekVideo(
+      roomId, 
+      newTime, 
+      currentWatchingMovie.videoUrl, 
+      user, 
+      isHost
+    )
   }
 
   const togglePictureInPicture = (movie) => {
@@ -441,6 +599,83 @@ const HomePage = ({ startPictureInPicture }) => {
     // Check quiz lock status on mount and when user changes
     setQuizLocked(!GamificationManager.getInstance().canAttemptQuiz())
   }, [user])
+
+  // Typing indicator function
+  const handleTyping = async () => {
+    if (!user || !roomId || roomStatus === "none") return
+    
+    await chatService.setTyping(roomId, user.uid, true)
+    
+    // Clear previous timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current)
+    }
+    
+    // Set typing to false after 3 seconds
+    typingTimeoutRef.current = setTimeout(async () => {
+      await chatService.setTyping(roomId, user.uid, false)
+    }, 3000)
+  }
+
+  // Enhanced periodic sync for hosts to keep everyone in sync
+  useEffect(() => {
+    if (!isHost || !isWatching || !user || !roomId || !currentWatchingMovie) return;
+
+    const syncInterval = setInterval(async () => {
+      const videoElement = document.querySelector('video');
+      if (videoElement && !videoElement.paused) {
+        // Broadcast current state every 5 seconds to keep everyone in sync
+        await videoSyncService.broadcastCurrentState(
+          roomId,
+          videoElement.currentTime,
+          !videoElement.paused,
+          currentWatchingMovie.videoUrl,
+          user,
+          isHost
+        );
+      }
+    }, 5000); // Every 5 seconds
+
+    return () => clearInterval(syncInterval);
+  }, [isHost, isWatching, user, roomId, currentWatchingMovie]);
+
+  // Initial sync when joining a room with ongoing video
+  useEffect(() => {
+    const syncOnJoin = async () => {
+      if (!user || !roomId || roomStatus === "none") return;
+      
+      // Get current video state when joining
+      const result = await videoSyncService.getCurrentVideoState(roomId);
+      if (result.success && result.state) {
+        const videoState = result.state;
+        console.log("🔄 Syncing to ongoing video on room join:", videoState);
+        
+        setSyncedVideoState(videoState);
+        setCurrentVideoTime(videoState.currentTime || 0);
+        
+        if (videoState.videoUrl) {
+          const foundMovie = featuredMovies.find(m => m.videoUrl === videoState.videoUrl);
+          if (foundMovie) {
+            setCurrentWatchingMovie(foundMovie);
+            setIsWatching(true);
+          }
+        }
+      }
+    };
+
+    syncOnJoin();
+  }, [user, roomId, roomStatus, featuredMovies]);
+
+  if (authLoading) {
+    return (
+      <div className="fixed inset-0 bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto mb-4"></div>
+          <p className="text-white text-lg">Loading...</p>
+        </div>
+      </div>
+    )
+  }
 
   if (!user) return null
 
@@ -559,6 +794,7 @@ const HomePage = ({ startPictureInPicture }) => {
           <VideoPlayer
             key={currentWatchingMovie?.videoUrl || "video-player"}
             movie={currentWatchingMovie}
+            user={user}
             isWatching={isWatching}
             isFullscreen={isFullscreen}
             roomStatus={roomStatus}
@@ -573,13 +809,17 @@ const HomePage = ({ startPictureInPicture }) => {
             onSendReaction={sendReaction}
             onTimeUpdate={updateVideoTime}
             showReactions={showReactions}
-            wsRef={wsRef}
-            // Video sync props
+            // Firebase video sync props
             onPlay={handlePlay}
             onPause={handlePause}
             onSeek={handleSeek}
+            syncedVideoState={syncedVideoState}
             currentVideoTime={syncedVideoState ? syncedVideoState.currentTime : currentVideoTime}
-            playing={syncedVideoState ? syncedVideoState.playing : undefined}
+            playing={syncedVideoState ? syncedVideoState.isPlaying : undefined}
+            // Permission props
+            isHost={isHost}
+            hasVideoPermission={videoControlPermission}
+            canControlVideo={isHost || videoControlPermission}
             onTogglePiP={() => togglePictureInPicture()}
           />
         )}
@@ -590,6 +830,8 @@ const HomePage = ({ startPictureInPicture }) => {
           onClose={() => setShowChat(false)}
           messages={chatMessages}
           onSendMessage={sendMessage}
+          onTyping={handleTyping}
+          typingUsers={typingUsers}
           roomStatus={roomStatus}
           roomMembers={roomMembers}
           user={user}
@@ -599,9 +841,14 @@ const HomePage = ({ startPictureInPicture }) => {
         <RoomMembersSidebar
           show={showRoomMembers && roomStatus !== "none"}
           onClose={() => setShowRoomMembers(false)}
-          roomMembers={roomMembers}
-          user={user}
+          members={roomMembers}
+          currentUser={user}
           roomStatus={roomStatus}
+          isHost={isHost}
+          roomPermissions={roomPermissions}
+          onGrantVideoControl={grantVideoControl}
+          onRevokeVideoControl={revokeVideoControl}
+          onOpenPermissionManager={() => setShowPermissionManager(true)}
         />
 
         {/* Enhanced Create Room Dialog */}
@@ -725,6 +972,19 @@ const HomePage = ({ startPictureInPicture }) => {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Permission Manager Modal */}
+        <PermissionManager
+          isOpen={showPermissionManager}
+          onClose={() => setShowPermissionManager(false)}
+          roomMembers={roomMembers}
+          roomPermissions={roomPermissions}
+          currentUser={user}
+          isHost={isHost}
+          onGrantPermission={grantVideoControl}
+          onRevokePermission={revokeVideoControl}
+          onToggleAnyoneCanControl={handleToggleAnyoneCanControl}
+        />
       </div>
     </>
   )

@@ -11,6 +11,8 @@ export function ChatSidebar({
   onClose,
   messages,
   onSendMessage,
+  onTyping,
+  typingUsers,
   roomStatus,
   roomMembers,
   user,
@@ -26,6 +28,11 @@ export function ChatSidebar({
     const position = e.target.selectionStart || 0;
     setNewMessage(value);
     setCursorPosition(position);
+
+    // Trigger typing indicator
+    if (onTyping && value.trim() !== newMessage.trim()) {
+      onTyping();
+    }
 
     const textBeforeCursor = value.substring(0, position);
     const lastAtIndex = textBeforeCursor.lastIndexOf("@");
@@ -82,49 +89,7 @@ export function ChatSidebar({
   const sendMessage = async () => {
     if (newMessage.trim()) {
       const messageText = newMessage.trim();
-
       onSendMessage(messageText);
-
-      if (messageText.includes("@Tree.io")) {
-        try {
-          setTimeout(() => {
-            onSendMessage("Tree.io is thinking...");
-          }, 500);
-
-          const response = await fetch("http://localhost:8000/api/chat/tree-io", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              message: messageText.replace("@Tree.io", "").trim(),
-              movie_title: "Current Movie",
-              movie_context: "Movie context if available",
-            }),
-          });
-
-          if (response.ok) {
-            const data = await response.json();
-
-            setTimeout(() => {
-              onSendMessage(`Tree.io: ${data.response}`);
-            }, 1500);
-          } else {
-            setTimeout(() => {
-              onSendMessage(
-                "Tree.io: Sorry, I'm having trouble processing your request right now. Please try again later."
-              );
-            }, 1500);
-          }
-        } catch (error) {
-          console.error("Error calling Tree.io API:", error);
-
-          setTimeout(() => {
-            onSendMessage("Tree.io: Sorry, I'm currently unavailable. Please try again later.");
-          }, 1500);
-        }
-      }
-
       setNewMessage("");
     }
   };
@@ -244,6 +209,15 @@ export function ChatSidebar({
                   </AnimatePresence>
                 )}
               </div>
+
+              {/* Typing Indicator */}
+              {typingUsers && typingUsers.length > 0 && (
+                <div className="px-4 py-2 text-sm text-gray-500 italic">
+                  {typingUsers.length === 1 
+                    ? `Someone is typing...`
+                    : `${typingUsers.length} people are typing...`}
+                </div>
+              )}
 
               <div className="p-4 border-t border-gray-700/50 bg-gradient-to-r from-gray-800/30 to-gray-900/30">
                 <div className="relative">

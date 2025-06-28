@@ -6,21 +6,17 @@ import { Link, useNavigate } from "react-router-dom"
 import { Button } from "../../components/ui/button"
 import { Input } from "../../components/ui/input"
 import { Label } from "../../components/ui/label"
-import { Eye, EyeOff, Play, ArrowLeft, Sparkles, Users, FileText, Trophy, Phone } from "lucide-react"
+import { Eye, EyeOff, Play, ArrowLeft, Sparkles, Users, FileText, Trophy } from "lucide-react"
 import authService from "../../firebase/auth"
 
 export default function SignInPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [phoneNumber, setPhoneNumber] = useState("")
-  const [verificationCode, setVerificationCode] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
-  const [authMethod, setAuthMethod] = useState("google") // "google", "phone", "email"
-  const [phoneStep, setPhoneStep] = useState("phone") // "phone", "verify"
-  const [recaptchaInitialized, setRecaptchaInitialized] = useState(false)
+  const [authMethod, setAuthMethod] = useState("google") // "google", "email"
   const navigate = useNavigate()
 
   // Check if user is already authenticated
@@ -33,19 +29,6 @@ export default function SignInPage() {
 
     return unsubscribe
   }, [navigate])
-
-  // Initialize reCAPTCHA when phone auth is selected
-  useEffect(() => {
-    if (authMethod === "phone" && !recaptchaInitialized) {
-      try {
-        authService.initializeRecaptcha("recaptcha-container")
-        setRecaptchaInitialized(true)
-      } catch (error) {
-        console.error("Failed to initialize reCAPTCHA:", error)
-        setError("Failed to initialize phone authentication")
-      }
-    }
-  }, [authMethod, recaptchaInitialized])
 
   const handleSignIn = (e) => {
     e.preventDefault()
@@ -75,69 +58,6 @@ export default function SignInPage() {
     } finally {
       setIsLoading(false)
     }
-  }
-
-  const handlePhoneSignIn = async (e) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError("")
-    setSuccess("")
-
-    try {
-      // Format phone number
-      let formattedPhone = phoneNumber.trim()
-      if (!formattedPhone.startsWith('+')) {
-        // Assume US number if no country code
-        formattedPhone = `+1${formattedPhone.replace(/\D/g, '')}`
-      }
-
-      const result = await authService.sendPhoneVerification(formattedPhone)
-      
-      if (result.success) {
-        setSuccess("Verification code sent to your phone!")
-        setPhoneStep("verify")
-      } else {
-        setError(result.error || "Failed to send verification code")
-      }
-    } catch (error) {
-      console.error("❌ Phone sign-in error:", error)
-      setError("An unexpected error occurred")
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleVerifyCode = async (e) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError("")
-    setSuccess("")
-
-    try {
-      const result = await authService.verifyPhoneCode(verificationCode)
-      
-      if (result.success) {
-        console.log("✅ Phone verification successful")
-        setSuccess("Phone verification successful! Redirecting...")
-        setTimeout(() => navigate("/home"), 1000)
-      } else {
-        setError(result.error || "Invalid verification code")
-      }
-    } catch (error) {
-      console.error("❌ Phone verification error:", error)
-      setError("An unexpected error occurred")
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const resetPhoneAuth = () => {
-    setPhoneStep("phone")
-    setVerificationCode("")
-    setError("")
-    setSuccess("")
-    authService.clearRecaptcha()
-    setRecaptchaInitialized(false)
   }
 
   return (
@@ -255,17 +175,6 @@ export default function SignInPage() {
               </button>
               <button
                 type="button"
-                onClick={() => setAuthMethod("phone")}
-                className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  authMethod === "phone"
-                    ? "bg-white text-gray-900 shadow-md"
-                    : "text-gray-600 hover:text-gray-800"
-                }`}
-              >
-                Phone
-              </button>
-              <button
-                type="button"
                 onClick={() => setAuthMethod("email")}
                 className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
                   authMethod === "email"
@@ -313,88 +222,6 @@ export default function SignInPage() {
                     </>
                   )}
                 </Button>
-              </div>
-            )}
-
-            {/* Phone Authentication */}
-            {authMethod === "phone" && (
-              <div className="space-y-4">
-                {phoneStep === "phone" ? (
-                  <form onSubmit={handlePhoneSignIn} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="phone" className="text-sm font-medium text-gray-700">
-                        Phone Number
-                      </Label>
-                      <Input
-                        id="phone"
-                        type="tel"
-                        value={phoneNumber}
-                        onChange={(e) => setPhoneNumber(e.target.value)}
-                        placeholder="+1 (555) 123-4567"
-                        className="h-12 border-gray-200 focus:border-orange-500 focus:ring-orange-500/20 focus:ring-4 rounded-xl bg-white/50 backdrop-blur-sm transition-all duration-300"
-                        required
-                      />
-                    </div>
-                    
-                    {/* reCAPTCHA container */}
-                    <div id="recaptcha-container" className="flex justify-center"></div>
-                    
-                    <Button
-                      type="submit"
-                      disabled={isLoading || !phoneNumber.trim()}
-                      className="w-full h-12 bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300"
-                    >
-                      {isLoading ? (
-                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      ) : (
-                        "Send Verification Code"
-                      )}
-                    </Button>
-                  </form>
-                ) : (
-                  <form onSubmit={handleVerifyCode} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="code" className="text-sm font-medium text-gray-700">
-                        Verification Code
-                      </Label>
-                      <Input
-                        id="code"
-                        type="text"
-                        value={verificationCode}
-                        onChange={(e) => setVerificationCode(e.target.value)}
-                        placeholder="123456"
-                        className="h-12 border-gray-200 focus:border-orange-500 focus:ring-orange-500/20 focus:ring-4 rounded-xl bg-white/50 backdrop-blur-sm transition-all duration-300"
-                        maxLength="6"
-                        required
-                      />
-                      <p className="text-sm text-gray-500">
-                        Enter the 6-digit code sent to {phoneNumber}
-                      </p>
-                    </div>
-                    
-                    <div className="flex space-x-3">
-                      <Button
-                        type="button"
-                        onClick={resetPhoneAuth}
-                        variant="outline"
-                        className="flex-1 h-12 border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl transition-all duration-300"
-                      >
-                        Back
-                      </Button>
-                      <Button
-                        type="submit"
-                        disabled={isLoading || !verificationCode.trim()}
-                        className="flex-1 h-12 bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700 font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300"
-                      >
-                        {isLoading ? (
-                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        ) : (
-                          "Verify Code"
-                        )}
-                      </Button>
-                    </div>
-                  </form>
-                )}
               </div>
             )}
 
