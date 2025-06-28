@@ -16,6 +16,7 @@ import PartyPage from "./pages/party/page"
 import ProtectedRoute from "./components/auth/ProtectedRoute"
 import { PictureInPicturePlayer } from "./components/home/video/picture-in-picture-player"
 import { BeautifulLoader } from "./components/ui/beautiful-loader"
+import { ToastProvider } from "./components/ui/toast"
 import authService from "./firebase/auth"
 import { ref, set, onValue, off } from "firebase/database"
 import { realtimeDb } from "./firebase/config"
@@ -176,8 +177,9 @@ function App() {
   }
 
   return (
-    <Router>
-      <Routes>
+    <ToastProvider>
+      <Router>
+        <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/signin" element={<SignInPage />} />
         <Route path="/signup" element={<SignUpPage />} />
@@ -257,7 +259,8 @@ function App() {
           initialCurrentTime={pipCurrentTime}
         />
       )}
-    </Router>
+      </Router>
+    </ToastProvider>
   )
 }
 

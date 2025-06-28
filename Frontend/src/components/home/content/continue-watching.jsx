@@ -45,7 +45,7 @@ export function ContinueWatching({ onStartWatching, user }) {
 
   return (
     <>
-      <style jsx>{`
+      <style>{`
         .fire-scroll {
           scrollbar-width: thin;
           scrollbar-color: rgba(255, 255, 255, 0.3) transparent;

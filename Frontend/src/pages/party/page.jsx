@@ -27,19 +27,24 @@ import { Navbar } from "../../components/home/layout/navbar"
 import partiesService from "../../firebase/parties"
 import authService from "../../firebase/auth"
 import { movieCategories } from "../../components/home/content/movie-data"
+import { useToast } from "../../components/ui/toast"
 
 // Create a flattened array of all movies from categories
 const featuredMovies = movieCategories.flatMap(category => category.movies)
 
 const PartyPage = ({ onJoinRoom }) => {
   const [user, setUser] = useState(null)
+  const [authLoading, setAuthLoading] = useState(true)
   const [activeTab, setActiveTab] = useState("browse") // browse, create, my-parties
   const [publicParties, setPublicParties] = useState([])
   const [userParties, setUserParties] = useState([])
   const [searchTerm, setSearchTerm] = useState("")
   const [isCreating, setIsCreating] = useState(false)
+  const [quickJoinCode, setQuickJoinCode] = useState("")
+  const [isJoining, setIsJoining] = useState(false)
 
   const navigate = useNavigate()
+  const { showToast } = useToast()
 
   // Create party form state
   const [partyForm, setPartyForm] = useState({
@@ -57,6 +62,7 @@ const PartyPage = ({ onJoinRoom }) => {
     const storedUser = authService.getCurrentUser();
     if (storedUser) {
       setUser(storedUser);
+      setAuthLoading(false);
     }
 
     const unsubscribe = authService.onAuthStateChange((firebaseUser) => {
@@ -68,7 +74,10 @@ const PartyPage = ({ onJoinRoom }) => {
           photoURL: firebaseUser.photoURL
         }
         setUser(userData)
+      } else {
+        setUser(null)
       }
+      setAuthLoading(false)
     })
 
     return unsubscribe
@@ -142,16 +151,72 @@ const PartyPage = ({ onJoinRoom }) => {
       const result = await partiesService.joinParty(party.firestoreId, user.uid, user.name)
       
       if (result.success) {
-        // If party is active, join the room immediately
-        if (party.status === 'active' && party.roomId) {
-          navigate("/", { state: { joinRoomId: party.roomId } })
+        if (result.message) {
+          showToast(result.message, "info")
         } else {
-          // Party is scheduled, show confirmation
-          alert(`You've joined the party! You'll be notified when "${party.title}" starts.`)
+          // If party is active, join the room immediately
+          if (party.status === 'active' && party.roomId) {
+            navigate("/home", { state: { joinRoomId: party.roomId } })
+            showToast(`Joining "${party.title}" watch party!`, "success")
+          } else {
+            // Party is scheduled, show confirmation
+            showToast(`You've joined "${party.title}"! You'll be notified when it starts.`, "success")
+          }
         }
+      } else {
+        showToast(result.error || "Failed to join party.", "error")
       }
     } catch (error) {
       console.error("Error joining party:", error)
+      showToast("Failed to join party. Please try again.", "error")
+    }
+  }
+
+  // Quick join function for party codes
+  const handleQuickJoin = async () => {
+    if (!quickJoinCode.trim() || !user) {
+      console.log("Quick join aborted: no code or user", { code: quickJoinCode.trim(), user: !!user })
+      return
+    }
+
+    console.log("🎉 Starting quick join process", { code: quickJoinCode.trim(), userId: user.uid })
+    setIsJoining(true)
+    try {
+      // First find the party by code
+      console.log("🔍 Finding party by code...")
+      const findResult = await partiesService.findPartyByCode(quickJoinCode.trim())
+      console.log("🔍 Find result:", findResult)
+      
+      if (!findResult.success) {
+        console.log("❌ Party not found")
+        showToast(findResult.error || "Party not found with this code.", "error")
+        return
+      }
+      
+      // Then try to join the party
+      console.log("🚀 Attempting to join party:", findResult.partyId)
+      const joinResult = await partiesService.joinParty(findResult.partyId, user.uid, user.name)
+      console.log("🚀 Join result:", joinResult)
+      
+      if (joinResult.success) {
+        setQuickJoinCode("")
+        showToast(joinResult.message || "Successfully joined the party!", "success")
+        
+        // If party is active, navigate to the room
+        if (findResult.party.status === 'active' && findResult.party.roomId) {
+          console.log("🎬 Navigating to active room:", findResult.party.roomId)
+          navigate("/home", { state: { joinRoomId: findResult.party.roomId } })
+        }
+        // Otherwise just stay on party page to see the joined party
+      } else {
+        console.log("❌ Failed to join party:", joinResult.error)
+        showToast(joinResult.error || "Failed to join party.", "error")
+      }
+    } catch (error) {
+      console.error("❌ Error in quick join:", error)
+      showToast("Failed to join party. Please try again.", "error")
+    } finally {
+      setIsJoining(false)
     }
   }
 
@@ -275,6 +340,49 @@ const PartyPage = ({ onJoinRoom }) => {
             </div>
           </motion.div>
 
+          {/* Quick Join Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="bg-gradient-to-r from-purple-900/30 to-blue-900/30 border border-purple-500/20 rounded-2xl p-6"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 rounded-full bg-purple-500/20">
+                  <UserPlus className="w-5 h-5 text-purple-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-white">Quick Join</h3>
+                  <p className="text-gray-400 text-sm">Enter a party code to join instantly</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-3">
+                <Input
+                  value={quickJoinCode}
+                  onChange={(e) => setQuickJoinCode(e.target.value.toUpperCase())}
+                  placeholder="8-char code..."
+                  className="w-40 bg-gray-800/50 border-gray-600 text-white text-center font-mono"
+                  maxLength={20}
+                />
+                <Button
+                  onClick={handleQuickJoin}
+                  disabled={!quickJoinCode.trim() || isJoining}
+                  className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium"
+                >
+                  {isJoining ? (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      <UserPlus className="w-4 h-4 mr-2" />
+                      Join
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </motion.div>
+
           {/* Content */}
           <AnimatePresence mode="wait">
             {activeTab === 'browse' && (
@@ -309,6 +417,27 @@ const PartyPage = ({ onJoinRoom }) => {
                         <div className="flex-1">
                           <h3 className="text-xl font-bold text-white mb-2">{party.title}</h3>
                           <p className="text-gray-300 text-sm mb-3 line-clamp-2">{party.description}</p>
+                          
+                          {/* Party Code */}
+                          <div className="flex items-center space-x-2 mb-2">
+                            <span className="text-xs text-gray-400">Join Code:</span>
+                            <code className="px-2 py-1 bg-gray-700/50 rounded text-xs font-mono text-purple-300 border border-gray-600">
+                              {party.firestoreId.slice(-8).toUpperCase()}
+                            </code>
+                            <button
+                              onClick={() => {
+                                const shortCode = party.firestoreId.slice(-8).toUpperCase()
+                                navigator.clipboard.writeText(shortCode)
+                                showToast(`Party code "${shortCode}" copied to clipboard!`, "success")
+                              }}
+                              className="text-gray-400 hover:text-white transition-colors"
+                              title="Copy party code"
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                              </svg>
+                            </button>
+                          </div>
                         </div>
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(party.status)}`}>
                           {party.status}
@@ -494,6 +623,27 @@ const PartyPage = ({ onJoinRoom }) => {
                         <div className="flex-1">
                           <h3 className="text-xl font-bold text-white mb-2">{party.title}</h3>
                           <p className="text-gray-300 text-sm mb-3">{party.description}</p>
+                          
+                          {/* Party Code - More prominent for host */}
+                          <div className="flex items-center space-x-2 mb-2">
+                            <span className="text-xs text-gray-400">Share Code:</span>
+                            <code className="px-3 py-1 bg-purple-600/20 rounded-lg text-sm font-mono text-purple-300 border border-purple-500/30">
+                              {party.firestoreId.slice(-8).toUpperCase()}
+                            </code>
+                            <button
+                              onClick={() => {
+                                const shortCode = party.firestoreId.slice(-8).toUpperCase()
+                                navigator.clipboard.writeText(shortCode)
+                                showToast(`Share code "${shortCode}" copied!`, "success")
+                              }}
+                              className="text-purple-400 hover:text-purple-300 transition-colors p-1 hover:bg-purple-500/10 rounded"
+                              title="Copy party code to share"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                              </svg>
+                            </button>
+                          </div>
                         </div>
                         <div className="flex flex-col items-end space-y-1">
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(party.status)}`}>

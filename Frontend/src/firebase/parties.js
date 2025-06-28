@@ -5,6 +5,7 @@ import {
   doc, 
   updateDoc, 
   deleteDoc, 
+  getDoc,
   onSnapshot, 
   query, 
   where, 
@@ -54,7 +55,29 @@ class PartiesService {
   // Join an existing party
   async joinParty(partyId, userId, userName) {
     try {
+      // First, check if the party exists
       const partyRef = doc(db, "parties", partyId)
+      const partyDoc = await getDoc(partyRef)
+      
+      if (!partyDoc.exists()) {
+        console.error("❌ Party not found:", partyId)
+        return { success: false, error: "Party not found. Please check the party code." }
+      }
+      
+      const partyData = partyDoc.data()
+      
+      // Check if user is already in the party
+      const isAlreadyJoined = partyData.attendees?.some(attendee => attendee.id === userId)
+      if (isAlreadyJoined) {
+        console.log("ℹ️ User already in party:", partyId)
+        return { success: true, message: "You're already in this party!" }
+      }
+      
+      // Check if party is full
+      if (partyData.attendees?.length >= partyData.maxAttendees) {
+        console.error("❌ Party is full:", partyId)
+        return { success: false, error: "This party is full. Cannot join." }
+      }
       
       await updateDoc(partyRef, {
         attendees: arrayUnion({
@@ -66,7 +89,7 @@ class PartiesService {
       })
 
       console.log("✅ Joined party:", partyId)
-      return { success: true }
+      return { success: true, party: { ...partyData, firestoreId: partyId } }
     } catch (error) {
       console.error("❌ Error joining party:", error)
       return { success: false, error: error.message }
@@ -161,12 +184,9 @@ class PartiesService {
 
   // Listen to user's parties (hosted or joined)
   listenToUserParties(userId, callback) {
+    // Simplified query - get all parties and filter client-side to avoid index requirements
     const q = query(
       collection(db, "parties"),
-      where("attendees", "array-contains-any", [
-        { id: userId },
-        // Note: This is a simplified approach. In production, you might need a more complex query
-      ]),
       orderBy("scheduledTime", "asc")
     )
 
@@ -174,9 +194,11 @@ class PartiesService {
       const parties = []
       snapshot.forEach((doc) => {
         const data = doc.data()
-        // Check if user is actually in attendees (more precise check)
+        // Check if user is the host or in attendees
+        const isHost = data.hostId === userId
         const isAttendee = data.attendees?.some(attendee => attendee.id === userId)
-        if (isAttendee) {
+        
+        if (isHost || isAttendee) {
           parties.push({
             firestoreId: doc.id,
             ...data,
@@ -252,6 +274,44 @@ class PartiesService {
     } catch (error) {
       console.error("❌ Error searching parties:", error)
       return { success: false, error: error.message, parties: [] }
+    }
+  }
+
+  // Find party by short code (last 8 characters)
+  async findPartyByCode(shortCode) {
+    try {
+      console.log("🔍 Searching for party with code:", shortCode)
+      
+      // First try as full ID
+      const fullIdRef = doc(db, "parties", shortCode)
+      const fullIdDoc = await getDoc(fullIdRef)
+      
+      if (fullIdDoc.exists()) {
+        console.log("✅ Found party by full ID:", shortCode)
+        return { success: true, partyId: shortCode, party: { ...fullIdDoc.data(), firestoreId: shortCode } }
+      }
+      
+      // If not found, search by short code
+      console.log("🔍 Searching parties by short code...")
+      const partiesRef = collection(db, "parties")
+      const snapshot = await getDocs(partiesRef)
+      
+      for (const docSnapshot of snapshot.docs) {
+        const docId = docSnapshot.id
+        const shortId = docId.slice(-8).toUpperCase()
+        console.log(`Checking party ${docId} with short code ${shortId} against ${shortCode.toUpperCase()}`)
+        
+        if (shortId === shortCode.toUpperCase()) {
+          console.log("✅ Found party by short code:", docId)
+          return { success: true, partyId: docId, party: { ...docSnapshot.data(), firestoreId: docId } }
+        }
+      }
+      
+      console.log("❌ No party found with code:", shortCode)
+      return { success: false, error: "Party not found with this code." }
+    } catch (error) {
+      console.error("❌ Error finding party by code:", error)
+      return { success: false, error: error.message }
     }
   }
 
