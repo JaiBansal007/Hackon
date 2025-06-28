@@ -23,6 +23,7 @@ import {
 } from "lucide-react"
 import { GamificationManager } from "../../lib/gamification"
 import { ViewingHistoryManager } from "../../lib/viewing-history"
+import { PieChart } from 'react-minimal-pie-chart'
 
 export default function ProfilePage() {
   const navigate = useNavigate()
@@ -31,6 +32,7 @@ export default function ProfilePage() {
   const [redemptionHistory, setRedemptionHistory] = useState([])
   const [viewingHistory, setViewingHistory] = useState([])
   const [activeTab, setActiveTab] = useState("activity")
+  const [streakMode, setStreakMode] = useState("watchtime") // "watchtime" or "mood"
 
   const viewingHistoryManager = ViewingHistoryManager.getInstance()
 
@@ -77,6 +79,116 @@ export default function ProfilePage() {
     return Math.min((watched / total) * 100, 100)
   }
 
+  // Generate streak heatmap data for the last year (fixed data)
+  const generateStreakData = () => {
+    const data = []
+    const today = new Date()
+    const startDate = new Date(today.getFullYear(), today.getMonth() - 11, 1) // Last 12 months
+    
+    // Fixed seed pattern for consistent data
+    const seedPattern = [0, 1, 0, 2, 3, 1, 0, 4, 2, 0, 1, 3, 0, 2, 1, 4, 0, 3, 2, 1, 0, 2, 4, 1, 3, 0, 1, 2, 0, 3]
+    let patternIndex = 0
+    
+    for (let d = new Date(startDate); d <= today; d.setDate(d.getDate() + 1)) {
+      const dateStr = d.toISOString().split('T')[0]
+      const dayIndex = Math.floor((d - startDate) / (1000 * 60 * 60 * 24))
+      
+      // Use fixed pattern with some variation based on day of week
+      const baseLevel = seedPattern[dayIndex % seedPattern.length]
+      const dayOfWeek = d.getDay()
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6
+      
+      // Weekend boost and weekday patterns
+      let hoursWatched = 0
+      if (baseLevel > 0) {
+        hoursWatched = baseLevel + (isWeekend ? 1 : 0)
+        if (hoursWatched > 4) hoursWatched = 4
+      }
+      
+      data.push({
+        date: dateStr,
+        hours: hoursWatched,
+        level: hoursWatched
+      })
+      patternIndex++
+    }
+    return data
+  }
+
+  // Generate mood-based streak data (fixed data)
+  const generateMoodData = () => {
+    const data = []
+    const today = new Date()
+    const startDate = new Date(today.getFullYear(), today.getMonth() - 11, 1)
+    const moods = ['angry', 'happy', 'sad', 'fear', 'surprise', 'disgust']
+    
+    // Fixed mood patterns for consistency
+    const moodPattern = [
+      'happy', null, 'happy', 'sad', 'surprise', 'happy', null, 'angry', 'happy', null,
+      'fear', 'happy', null, 'disgust', 'happy', 'surprise', null, 'sad', 'happy', 'angry',
+      null, 'happy', 'fear', 'happy', 'surprise', null, 'happy', 'sad', null, 'happy'
+    ]
+    
+    const intensityPattern = [2, 0, 3, 1, 2, 3, 0, 1, 2, 0, 1, 3, 0, 2, 3, 1, 0, 2, 3, 1, 0, 3, 1, 2, 3, 0, 2, 1, 0, 3]
+    
+    for (let d = new Date(startDate); d <= today; d.setDate(d.getDate() + 1)) {
+      const dateStr = d.toISOString().split('T')[0]
+      const dayIndex = Math.floor((d - startDate) / (1000 * 60 * 60 * 24))
+      
+      const mood = moodPattern[dayIndex % moodPattern.length]
+      const intensity = mood ? intensityPattern[dayIndex % intensityPattern.length] : 0
+      
+      data.push({
+        date: dateStr,
+        mood: mood,
+        intensity: intensity
+      })
+    }
+    return data
+  }
+
+  const streakData = generateStreakData()
+  const moodData = generateMoodData()
+
+  const getHeatmapColor = (level) => {
+    switch (level) {
+      case 0: return 'bg-gray-800'
+      case 1: return 'bg-green-900'
+      case 2: return 'bg-green-700'
+      case 3: return 'bg-green-500'
+      case 4: return 'bg-green-400'
+      default: return 'bg-gray-800'
+    }
+  }
+
+  const getMoodColor = (mood, intensity) => {
+    if (!mood || intensity === 0) return 'bg-gray-800'
+    // Map mood and intensity to valid Tailwind color classes
+    const colorMap = {
+      angry:   ['bg-red-900', 'bg-red-700', 'bg-red-600', 'bg-red-500'],
+      happy:   ['bg-yellow-900', 'bg-yellow-700', 'bg-yellow-500', 'bg-yellow-400'],
+      sad:     ['bg-blue-900', 'bg-blue-700', 'bg-blue-500', 'bg-blue-400'],
+      fear:    ['bg-purple-900', 'bg-purple-700', 'bg-purple-500', 'bg-purple-400'],
+      surprise:['bg-orange-900', 'bg-orange-700', 'bg-orange-500', 'bg-orange-400'],
+      disgust: ['bg-green-900', 'bg-green-700', 'bg-green-500', 'bg-green-400'],
+    }
+    // intensity: 1-3, use index 0-2, fallback to last for 3+
+    const idx = Math.max(0, Math.min(3, intensity - 1))
+    return colorMap[mood]?.[idx] || 'bg-gray-800'
+  }
+
+  const getMoodEmoji = (mood) => {
+    const emojiMap = {
+      angry: '😠',
+      happy: '😊',
+      sad: '😢',
+      fear: '😨',
+      surprise: '😲',
+      disgust: '🤢'
+    }
+    return emojiMap[mood] || '😐'
+  }
+
   const handleContinueWatching = (movie) => {
     // Navigate directly to the movie page - the video player will auto-resume
     navigate(`/movie/${movie.movieId}`)
@@ -117,472 +229,591 @@ export default function ProfilePage() {
     }
   }
 
+  // Mood distribution data for pie chart
+  const moodDistribution = [
+    { mood: 'angry', color: '#dc2626', label: 'Angry' },
+    { mood: 'happy', color: '#eab308', label: 'Happy' },
+    { mood: 'sad', color: '#2563eb', label: 'Sad' },
+    { mood: 'fear', color: '#a21caf', label: 'Fear' },
+    { mood: 'surprise', color: '#ea580c', label: 'Surprise' },
+    { mood: 'disgust', color: '#22c55e', label: 'Disgust' }
+  ]
+  const moodTotal = moodData.filter(d => d.mood).length
+  const pieData = moodDistribution.map(({ mood, color, label }) => ({
+    title: label,
+    value: moodData.filter(d => d.mood === mood).length,
+    color,
+    mood,
+  })).filter(d => d.value > 0)
+
+  const [hoveredMoodIdx, setHoveredMoodIdx] = useState(undefined)
+
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-[#18181b] via-[#23272f] to-[#18181b] text-white font-inter">
-      {/* Enhanced Glassmorphism Background */}
-      <div className="fixed inset-0 z-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-black/90 via-gray-900/80 to-black/80" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-amber-900/20 via-transparent to-transparent" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-blue-900/10 via-transparent to-transparent" />
+    <div className="min-h-screen bg-[#0a0a0a] text-white relative overflow-hidden">
+      {/* Netflix-style Background with Movie Images */}
+      <div className="absolute inset-0">
+        {/* Blurred Movie Posters */}
+        <div className="absolute top-20 left-20 w-72 h-40 opacity-8">
+          <img 
+            src="https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=600&fit=crop" 
+            alt="" 
+            className="w-full h-full object-cover rounded-xl blur-3xl"
+          />
+        </div>
+        
+        <div className="absolute top-1/3 right-20 w-80 h-48 opacity-6">
+          <img 
+            src="https://images.unsplash.com/photo-1478720568477-b0834d654936?w=400&h=600&fit=crop" 
+            alt="" 
+            className="w-full h-full object-cover rounded-xl blur-3xl"
+          />
+        </div>
+        
+        <div className="absolute bottom-1/4 left-1/4 w-96 h-56 opacity-10">
+          <img 
+            src="https://images.unsplash.com/photo-1489599314948-6a91eca13499?w=400&h=600&fit=crop" 
+            alt="" 
+            className="w-full h-full object-cover rounded-xl blur-3xl"
+          />
+        </div>
+
+        {/* Dark overlay for readability */}
+        <div className="absolute inset-0 bg-black/75" />
       </div>
 
-      <div className="relative z-10 container mx-auto px-4 md:px-8 py-10 max-w-7xl">
+      <div className="relative z-10 container mx-auto px-4 py-8 max-w-7xl">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -30 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col md:flex-row items-center justify-between mb-14 gap-6"
-        >
-          <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}>
-            <Link
-              to="/home"
-              className="flex items-center space-x-3 group bg-gray-800/60 backdrop-blur-md px-6 py-3 rounded-xl border border-amber-500/30 hover:border-amber-400/60 shadow-md hover:shadow-lg transition-all duration-300"
-            >
-              <ArrowLeft className="w-5 h-5 text-amber-400 group-hover:text-amber-300 transition-colors" />
-              <span className="text-amber-400 group-hover:text-amber-300 font-semibold transition-colors">
-                Back to Home
-              </span>
-            </Link>
-          </motion.div>
-
-          <div className="text-center flex-1">
-            <motion.h1
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-amber-400 via-orange-500 to-amber-400 bg-clip-text text-transparent mb-2 drop-shadow-lg"
-            >
+        <div className="flex items-center justify-between mb-12">
+          <Link
+            to="/home"
+            className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            <span className="text-sm font-medium">Back</span>
+          </Link>
+          
+          <div>
+            <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">
               Your Profile
-            </motion.h1>
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className="text-gray-300 text-lg font-medium"
-            >
+            </h1>
+            <p className="text-gray-400 text-center">
               Track your progress and achievements
-            </motion.p>
+            </p>
           </div>
 
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.3 }}
-            className="flex items-center space-x-3 bg-gradient-to-r from-amber-500/30 to-orange-500/30 backdrop-blur-md rounded-xl px-7 py-5 border border-amber-500/40 shadow-lg"
-          >
-            <div className="p-2 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full shadow-md">
-              <Coins className="w-7 h-7 text-black" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-white drop-shadow">{userStats.totalPoints.toLocaleString()}</div>
-              <div className="text-amber-200 text-sm font-semibold">Total Points</div>
-            </div>
-          </motion.div>
-        </motion.div>
+          <div className="flex items-center space-x-3 bg-black/50 backdrop-blur rounded-lg px-4 py-2">
+            <Coins className="w-5 h-5 text-yellow-500" />
+            <span className="text-yellow-500 font-semibold">{userStats.totalPoints.toLocaleString()}</span>
+            <span className="text-gray-400 text-sm">points</span>
+          </div>
+        </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-7 mb-14">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
           {/* Total Points */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            whileHover={{ scale: 1.03, y: -3 }}
-            className="relative overflow-hidden bg-gradient-to-br from-amber-500/15 via-orange-500/10 to-amber-500/15 backdrop-blur-md rounded-2xl p-8 border border-amber-500/30 group shadow-lg hover:shadow-2xl transition"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-orange-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <div className="relative flex items-center space-x-4">
-              <div className="p-4 bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl shadow-lg">
-                <Coins className="w-8 h-8 text-black" />
+          <div className="bg-gray-900/80 backdrop-blur rounded-lg p-6 border border-gray-800">
+            <div className="flex items-center space-x-3 mb-3">
+              <div className="p-2 bg-yellow-500 rounded-lg">
+                <Coins className="w-5 h-5 text-black" />
               </div>
-              <div>
-                <p className="text-3xl font-extrabold text-white mb-1">{userStats.totalPoints.toLocaleString()}</p>
-                <p className="text-amber-200 font-semibold">Total Points</p>
-              </div>
+              <span className="text-gray-400 text-sm">Total Points</span>
             </div>
-            <div className="absolute top-4 right-4">
-              <Zap className="w-6 h-6 text-amber-400/30" />
-            </div>
-          </motion.div>
+            <p className="text-2xl font-bold text-white">{userStats.totalPoints.toLocaleString()}</p>
+          </div>
+
           {/* Current Streak */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            whileHover={{ scale: 1.03, y: -3 }}
-            className="relative overflow-hidden bg-gradient-to-br from-orange-500/15 via-red-500/10 to-orange-500/15 backdrop-blur-md rounded-2xl p-8 border border-orange-500/30 group shadow-lg hover:shadow-2xl transition"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-red-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <div className="relative flex items-center space-x-4">
-              <div className="p-4 bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl shadow-lg">
-                <Flame className="w-8 h-8 text-white" />
+          <div className="bg-gray-900/80 backdrop-blur rounded-lg p-6 border border-gray-800">
+            <div className="flex items-center space-x-3 mb-3">
+              <div className="p-2 bg-orange-500 rounded-lg">
+                <Flame className="w-5 h-5 text-white" />
               </div>
-              <div>
-                <p className="text-3xl font-extrabold text-white mb-1">{userStats.currentStreak}</p>
-                <p className="text-orange-200 font-semibold">Current Streak</p>
-              </div>
+              <span className="text-gray-400 text-sm">Current Streak</span>
             </div>
-            <div className="absolute top-4 right-4">
-              <Target className="w-6 h-6 text-orange-400/30" />
-            </div>
-          </motion.div>
+            <p className="text-2xl font-bold text-white">{userStats.currentStreak}</p>
+          </div>
+
           {/* Longest Streak */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            whileHover={{ scale: 1.03, y: -3 }}
-            className="relative overflow-hidden bg-gradient-to-br from-green-500/15 via-emerald-500/10 to-green-500/15 backdrop-blur-md rounded-2xl p-8 border border-green-500/30 group shadow-lg hover:shadow-2xl transition"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-emerald-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <div className="relative flex items-center space-x-4">
-              <div className="p-4 bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl shadow-lg">
-                <TrendingUp className="w-8 h-8 text-white" />
+          <div className="bg-gray-900/80 backdrop-blur rounded-lg p-6 border border-gray-800">
+            <div className="flex items-center space-x-3 mb-3">
+              <div className="p-2 bg-green-500 rounded-lg">
+                <TrendingUp className="w-5 h-5 text-white" />
               </div>
-              <div>
-                <p className="text-3xl font-extrabold text-white mb-1">{userStats.longestStreak}</p>
-                <p className="text-green-200 font-semibold">Longest Streak</p>
-              </div>
+              <span className="text-gray-400 text-sm">Best Streak</span>
             </div>
-            <div className="absolute top-4 right-4">
-              <Award className="w-6 h-6 text-green-400/30" />
-            </div>
-          </motion.div>
+            <p className="text-2xl font-bold text-white">{userStats.longestStreak}</p>
+          </div>
+
           {/* Movies Watched */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            whileHover={{ scale: 1.03, y: -3 }}
-            className="relative overflow-hidden bg-gradient-to-br from-blue-500/15 via-purple-500/10 to-blue-500/15 backdrop-blur-md rounded-2xl p-8 border border-blue-500/30 group shadow-lg hover:shadow-2xl transition"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <div className="relative flex items-center space-x-4">
-              <div className="p-4 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl shadow-lg">
-                <Eye className="w-8 h-8 text-white" />
+          <div className="bg-gray-900/80 backdrop-blur rounded-lg p-6 border border-gray-800">
+            <div className="flex items-center space-x-3 mb-3">
+              <div className="p-2 bg-blue-500 rounded-lg">
+                <Eye className="w-5 h-5 text-white" />
               </div>
-              <div>
-                <p className="text-3xl font-extrabold text-white mb-1">{viewingHistory.length}</p>
-                <p className="text-blue-200 font-semibold">Movies Watched</p>
-              </div>
+              <span className="text-gray-400 text-sm">Movies</span>
             </div>
-            <div className="absolute top-4 right-4">
-              <Star className="w-6 h-6 text-blue-400/30" />
-            </div>
-          </motion.div>
+            <p className="text-2xl font-bold text-white">{viewingHistory.length}</p>
+          </div>
         </div>
 
         {/* Tabs */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="flex flex-wrap gap-3 mb-10 p-2 bg-gray-800/40 backdrop-blur-md rounded-2xl border border-gray-700/50 shadow"
-        >
+        <div className="flex space-x-2 mb-8 overflow-x-auto">
           {[
-            { id: "activity", label: "Point Activity", icon: Coins },
-            { id: "viewing", label: `Viewing History (${viewingHistory.length})`, icon: Eye },
-            { id: "redemptions", label: "Redemption History", icon: Gift },
+            { id: "activity", label: "Activity", icon: Coins },
+            { id: "streak", label: "Streak", icon: Flame },
+            { id: "viewing", label: `Viewing (${viewingHistory.length})`, icon: Eye },
+            { id: "redemptions", label: "Rewards", icon: Gift },
           ].map((tab) => (
-            <motion.button
+            <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              whileHover={{ scale: 1.04 }}
-              whileTap={{ scale: 0.98 }}
-              className={`flex items-center space-x-3 px-7 py-4 rounded-xl font-semibold transition-all duration-300 shadow-sm ${
+              className={`flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
                 activeTab === tab.id
-                  ? "bg-gradient-to-r from-amber-500 to-orange-500 text-black shadow-lg"
-                  : "text-white hover:bg-gray-700/60"
+                  ? "bg-white text-black"
+                  : "bg-gray-800/60 text-gray-300 hover:bg-gray-700/60 hover:text-white"
               }`}
             >
-              <tab.icon className="w-5 h-5" />
+              <tab.icon className="w-4 h-4" />
               <span>{tab.label}</span>
-            </motion.button>
+            </button>
           ))}
-        </motion.div>
+        </div>
 
         {/* Content */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -30 }}
-            transition={{ duration: 0.3 }}
-            className="bg-gray-900/60 backdrop-blur-lg rounded-2xl p-8 border border-gray-700/40 shadow-2xl"
-          >
-            {activeTab === "activity" ? (
-              <div>
-                <h2 className="text-2xl font-bold text-white mb-8 flex items-center space-x-3">
-                  <Coins className="w-7 h-7 text-amber-400" />
-                  <span>Your Point Activity</span>
-                </h2>
+        <div className="bg-gray-900/50 backdrop-blur rounded-lg p-6 border border-gray-800">
+          {activeTab === "activity" ? (
+            <div>
+              <h2 className="text-xl font-bold text-white mb-6 flex items-center space-x-2">
+                <Coins className="w-5 h-5 text-yellow-500" />
+                <span>Point Activity</span>
+              </h2>
 
-                {pointHistory.length === 0 ? (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="text-center py-16"
+              {pointHistory.length === 0 ? (
+                <div className="text-center py-12">
+                  <Coins className="w-12 h-12 text-gray-600 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-400 mb-2">No activity yet</h3>
+                  <p className="text-gray-500 mb-4">Start watching movies to earn points!</p>
+                  <Button
+                    onClick={() => navigate("/home")}
+                    className="bg-white text-black px-6 py-2 rounded font-semibold hover:bg-gray-200 transition-colors"
                   >
-                    <div className="p-6 bg-gradient-to-r from-amber-500/10 to-orange-500/10 rounded-full w-32 h-32 mx-auto mb-6 flex items-center justify-center">
-                      <Coins className="w-16 h-16 text-amber-400" />
-                    </div>
-                    <h3 className="text-2xl font-bold text-gray-300 mb-4">No activity yet</h3>
-                    <p className="text-gray-500 text-lg mb-6">
-                      Start watching movies and taking quizzes to earn points!
-                    </p>
-                    <Button
-                      onClick={() => navigate("/home")}
-                      className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black font-bold px-8 py-4 rounded-xl"
-                    >
-                      Start Earning Points
-                    </Button>
-                  </motion.div>
-                ) : (
-                  <div className="space-y-4">
-                    {pointHistory.map((activity, index) => (
-                      <motion.div
-                        key={activity.id}
-                        initial={{ opacity: 0, x: -30 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.05 }}
-                        whileHover={{ scale: 1.01, x: 5 }}
-                        className="flex items-center space-x-6 p-6 bg-gray-800/40 backdrop-blur-sm rounded-xl hover:bg-gray-800/60 transition-all duration-300 border border-gray-700/30"
-                      >
-                        <div
-                          className={`w-16 h-16 rounded-2xl bg-gradient-to-r ${getActivityColor(
-                            activity.type,
-                          )} flex items-center justify-center flex-shrink-0 shadow-lg`}
-                        >
-                          {getActivityIcon(activity.type)}
-                        </div>
-
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center space-x-3 mb-2">
-                            <span className="text-sm text-gray-400 uppercase tracking-wider font-semibold px-3 py-1 bg-gray-700/50 rounded-full">
-                              {activity.type.replace("_", " ")}
-                            </span>
-                          </div>
-                          <p className="text-white font-semibold text-lg mb-1">{activity.description}</p>
-                          <p className="text-gray-400">{formatDate(activity.date)}</p>
-                        </div>
-
-                        <div className="text-right">
-                          <div
-                            className={`text-2xl font-bold ${activity.points > 0 ? "text-green-400" : "text-red-400"}`}
-                          >
-                            {activity.points > 0 ? "+" : ""}
-                            {activity.points}
-                          </div>
-                          <div className="text-sm text-gray-500">points</div>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ) : activeTab === "viewing" ? (
-              <div>
-                <div className="flex items-center justify-between mb-8">
-                  <h2 className="text-2xl font-bold text-white flex items-center space-x-3">
-                    <Eye className="w-7 h-7 text-blue-400" />
-                    <span>Your Viewing History</span>
-                  </h2>
-                  {viewingHistory.length > 0 && (
-                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                      <Button
-                        onClick={() => {
-                          viewingHistoryManager.clearHistory()
-                          setViewingHistory([])
-                        }}
-                        className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-400 hover:to-red-500 text-white font-semibold px-6 py-3 rounded-xl"
-                      >
-                        <Trash2 className="w-5 h-5 mr-2" />
-                        Clear All
-                      </Button>
-                    </motion.div>
-                  )}
+                    Start Earning
+                  </Button>
                 </div>
-
-                {viewingHistory.length === 0 ? (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="text-center py-16"
-                  >
-                    <div className="p-6 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-full w-32 h-32 mx-auto mb-6 flex items-center justify-center">
-                      <Eye className="w-16 h-16 text-blue-400" />
-                    </div>
-                    <h3 className="text-2xl font-bold text-gray-300 mb-4">No viewing history yet</h3>
-                    <p className="text-gray-500 text-lg mb-6">Start watching movies to build your viewing history!</p>
-                    <Button
-                      onClick={() => navigate("/home")}
-                      className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-400 hover:to-purple-500 text-white font-bold px-8 py-4 rounded-xl"
+              ) : (
+                <div className="space-y-3">
+                  {pointHistory.map((activity, index) => (
+                    <div
+                      key={activity.id}
+                      className="flex items-center space-x-4 p-4 bg-gray-800/40 rounded-lg hover:bg-gray-800/60 transition-colors"
                     >
-                      Browse Movies
-                    </Button>
-                  </motion.div>
-                ) : (
-                  <div className="space-y-6">
-                    {viewingHistory.map((movie, index) => (
-                      <motion.div
-                        key={movie.id}
-                        initial={{ opacity: 0, x: -30 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.05 }}
-                        whileHover={{ scale: 1.01, y: -2 }}
-                        className="flex items-center space-x-6 p-6 bg-gray-800/40 backdrop-blur-sm rounded-2xl hover:bg-gray-800/60 transition-all duration-300 border border-gray-700/30 group"
-                      >
-                        <div className="flex-shrink-0 relative overflow-hidden rounded-xl">
-                          <img
-                            src={movie.image || "/placeholder.svg?height=160&width=120"}
-                            alt={movie.title}
-                            className="w-24 h-36 object-cover transition-transform duration-300 group-hover:scale-110"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      <div className={`w-10 h-10 rounded-lg bg-gradient-to-r ${getActivityColor(activity.type)} flex items-center justify-center`}>
+                        {getActivityIcon(activity.type)}
+                      </div>
+
+                      <div className="flex-1">
+                        <p className="text-white font-medium">{activity.description}</p>
+                        <p className="text-gray-400 text-sm">{formatDate(activity.date)}</p>
+                      </div>
+
+                      <div className="text-right">
+                        <div className={`text-lg font-bold ${activity.points > 0 ? "text-green-400" : "text-red-400"}`}>
+                          {activity.points > 0 ? "+" : ""}{activity.points}
                         </div>
-
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-white font-bold text-xl mb-3">{movie.title}</h3>
-
-                          <div className="flex items-center space-x-6 mb-4">
-                            <div className="flex items-center space-x-2">
-                              <Clock className="w-5 h-5 text-gray-400" />
-                              <span className="text-gray-300 font-medium">
-                                {formatDuration(movie.watchedDuration)} / {formatDuration(movie.totalDuration)}
-                              </span>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <Calendar className="w-5 h-5 text-gray-400" />
-                              <span className="text-gray-300 font-medium">
-                                {new Date(movie.lastWatched).toLocaleDateString()}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Enhanced Progress Bar */}
-                          <div className="mb-4">
-                            <div className="flex justify-between items-center mb-2">
-                              <span className="text-sm text-gray-400 font-medium">Progress</span>
-                              <span className="text-sm text-gray-400 font-bold">
-                                {Math.round(getWatchProgress(movie.watchedDuration, movie.totalDuration))}%
-                              </span>
-                            </div>
-                            <div className="w-full bg-gray-700 rounded-full h-3 overflow-hidden">
-                              <motion.div
-                                initial={{ width: 0 }}
-                                animate={{
-                                  width: `${getWatchProgress(movie.watchedDuration, movie.totalDuration)}%`,
-                                }}
-                                transition={{ duration: 1, delay: index * 0.1 }}
-                                className={`h-3 rounded-full ${
-                                  movie.completed
-                                    ? "bg-gradient-to-r from-green-400 to-emerald-500"
-                                    : "bg-gradient-to-r from-amber-400 to-orange-500"
-                                }`}
-                              />
-                            </div>
-                          </div>
-
-                          <p className="text-gray-400">Last watched: {formatDate(movie.lastWatched)}</p>
-                        </div>
-
-                        <div className="flex flex-col space-y-3">
-                          {movie.completed ? (
-                            <div className="flex items-center space-x-3 text-green-400 font-semibold bg-green-500/10 px-4 py-2 rounded-xl">
-                              <Trophy className="w-5 h-5" />
-                              <span>Completed</span>
-                            </div>
-                          ) : (
-                            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                              <Button
-                                onClick={() => handleContinueWatching(movie)}
-                                className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black font-bold px-6 py-3 rounded-xl shadow-lg"
-                              >
-                                <Play className="w-5 h-5 mr-2" />
-                                Continue
-                              </Button>
-                            </motion.div>
-                          )}
-
-                          <div className="flex space-x-2">
-                            <Button
-                              onClick={() => navigate(`/info/${movie.movieId}`)}
-                              variant="outline"
-                              className="border-gray-600 text-black hover:bg-gray-700 px-4 py-2 rounded-xl transition-all duration-300"
-                            >
-                              Info
-                            </Button>
-                            <Button
-                              onClick={() => handleRemoveFromHistory(movie.movieId)}
-                              variant="outline"
-                              className="border-red-600 text-red-400 hover:bg-red-600 px-4 py-2 rounded-xl transition-all duration-300"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div>
-                <h2 className="text-2xl font-bold text-white mb-8 flex items-center space-x-3">
-                  <Gift className="w-7 h-7 text-red-400" />
-                  <span>Redemption History</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : activeTab === "streak" ? (
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-white flex items-center space-x-2">
+                  <Flame className="w-5 h-5 text-orange-500" />
+                  <span>Viewing Streak</span>
                 </h2>
-
-                {redemptionHistory.length === 0 ? (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="text-center py-16"
+                
+                {/* Toggle Button */}
+                <div className="flex bg-gray-800/80 backdrop-blur rounded-xl p-1 border border-gray-700">
+                  <button
+                    onClick={() => setStreakMode("watchtime")}
+                    className={`px-6 py-3 rounded-lg text-sm font-semibold transition-all duration-300 ${
+                      streakMode === "watchtime"
+                        ? "bg-white text-black shadow-lg"
+                        : "text-gray-400 hover:text-white hover:bg-gray-700/50"
+                    }`}
                   >
-                    <div className="p-6 bg-gradient-to-r from-red-500/10 to-pink-500/10 rounded-full w-32 h-32 mx-auto mb-6 flex items-center justify-center">
-                      <Gift className="w-16 h-16 text-red-400" />
+                    <div className="flex items-center space-x-2">
+                      <Clock className="w-4 h-4" />
+                      <span>Watch Time</span>
                     </div>
-                    <h3 className="text-2xl font-bold text-gray-300 mb-4">No redemptions yet</h3>
-                    <p className="text-gray-500 text-lg mb-6">Earn more points to unlock amazing rewards!</p>
-                    <Button
-                      onClick={() => navigate("/redeem")}
-                      className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-400 hover:to-pink-400 text-white font-bold px-8 py-4 rounded-xl"
-                    >
-                      View Rewards
-                    </Button>
-                  </motion.div>
-                ) : (
-                  <div className="space-y-4">
-                    {redemptionHistory.map((redemption, index) => (
-                      <motion.div
-                        key={redemption.id}
-                        initial={{ opacity: 0, x: -30 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.05 }}
-                        whileHover={{ scale: 1.01, x: 5 }}
-                        className="flex items-center space-x-6 p-6 bg-gray-800/40 backdrop-blur-sm rounded-xl hover:bg-gray-800/60 transition-all duration-300 border border-gray-700/30"
-                      >
-                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-r from-red-500 to-pink-500 flex items-center justify-center flex-shrink-0 shadow-lg">
-                          <Gift className="w-8 h-8 text-white" />
-                        </div>
+                  </button>
+                  <button
+                    onClick={() => setStreakMode("mood")}
+                    className={`px-6 py-3 rounded-lg text-sm font-semibold transition-all duration-300 ${
+                      streakMode === "mood"
+                        ? "bg-white text-black shadow-lg"
+                        : "text-gray-400 hover:text-white hover:bg-gray-700/50"
+                    }`}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <Star className="w-4 h-4" />
+                      <span>Mood Based</span>
+                    </div>
+                  </button>
+                </div>
+              </div>
 
-                        <div className="flex-1 min-w-0">
-                          <p className="text-white font-semibold text-lg mb-1">{redemption.description}</p>
-                          <p className="text-gray-400">{formatDate(redemption.date)}</p>
-                        </div>
-
-                        <div className="text-right">
-                          <div className="text-2xl font-bold text-red-400">{redemption.points}</div>
-                          <div className="text-sm text-gray-500">points</div>
-                        </div>
-                      </motion.div>
-                    ))}
+              {streakMode === "watchtime" ? (
+                <>
+                  {/* Streak Stats */}
+                  <div className="grid grid-cols-3 gap-4 mb-8">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-white">{userStats.currentStreak}</div>
+                      <div className="text-gray-400 text-sm">Current Streak</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-white">{userStats.longestStreak}</div>
+                      <div className="text-gray-400 text-sm">Best Streak</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-white">{streakData.filter(d => d.hours > 0).length}</div>
+                      <div className="text-gray-400 text-sm">Active Days</div>
+                    </div>
                   </div>
+
+                  {/* Watch Time Heatmap */}
+                  <div className="mb-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="font-semibold text-white">Last 12 Months</h3>
+                      <div className="flex items-center space-x-2 text-sm text-gray-400">
+                        <span>Less</span>
+                        <div className="flex space-x-1">
+                          <div className="w-3 h-3 bg-gray-800 rounded-sm"></div>
+                          <div className="w-3 h-3 bg-green-900 rounded-sm"></div>
+                          <div className="w-3 h-3 bg-green-700 rounded-sm"></div>
+                          <div className="w-3 h-3 bg-green-500 rounded-sm"></div>
+                          <div className="w-3 h-3 bg-green-400 rounded-sm"></div>
+                        </div>
+                        <span>More</span>
+                      </div>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                      <div className="inline-block min-w-full">
+                        <div className="grid grid-cols-53 gap-1">
+                          {streakData.map((day, index) => (
+                            <div
+                              key={index}
+                              title={`${day.date}: ${day.hours} hours watched`}
+                              className={`w-3 h-3 rounded-sm ${getHeatmapColor(day.level)} hover:opacity-80 transition-opacity cursor-pointer`}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Monthly breakdown */}
+                  <div>
+                    <h3 className="font-semibold text-white mb-4">Monthly Breakdown</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      {Array.from({ length: 6 }, (_, i) => {
+                        const month = new Date()
+                        month.setMonth(month.getMonth() - i)
+                        const monthName = month.toLocaleString('default', { month: 'long' })
+                        const monthData = streakData.filter(d => d.date.startsWith(month.getFullYear() + '-' + String(month.getMonth() + 1).padStart(2, '0')))
+                        const totalHours = monthData.reduce((sum, d) => sum + d.hours, 0)
+                        
+                        return (
+                          <div key={i} className="bg-gray-800/40 rounded-lg p-4">
+                            <div className="text-lg font-bold text-white">{totalHours}h</div>
+                            <div className="text-gray-400 text-sm">{monthName}</div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Mood Stats */}
+                  <div className="grid grid-cols-3 gap-4 mb-8">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-white">{moodData.filter(d => d.mood).length}</div>
+                      <div className="text-gray-400 text-sm">Mood Entries</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl">
+                        {getMoodEmoji(moodData.filter(d => d.mood).reduce((mostFrequent, current) => {
+                          const currentCount = moodData.filter(d => d.mood === current.mood).length
+                          const mostFrequentCount = moodData.filter(d => d.mood === mostFrequent.mood).length
+                          return currentCount > mostFrequentCount ? current : mostFrequent
+                        }, { mood: 'happy' }).mood)}
+                      </div>
+                      <div className="text-gray-400 text-sm">Most Common</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-white">
+                        {Math.round((moodData.filter(d => d.mood === 'happy').length / moodData.filter(d => d.mood).length) * 100) || 0}%
+                      </div>
+                      <div className="text-gray-400 text-sm">Happy Days</div>
+                    </div>
+                  </div>
+
+                  {/* Mood Heatmap */}
+                  <div className="mb-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="font-semibold text-white">Mood Calendar</h3>
+                      <div className="flex items-center space-x-4 text-xs text-gray-400">
+                        <div className="flex items-center space-x-3">
+                          <div className="flex items-center space-x-1">
+                            <div className="w-3 h-3 bg-red-600 rounded-sm"></div>
+                            <span>Angry</span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <div className="w-3 h-3 bg-yellow-500 rounded-sm"></div>
+                            <span>Happy</span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <div className="w-3 h-3 bg-blue-500 rounded-sm"></div>
+                            <span>Sad</span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <div className="w-3 h-3 bg-purple-500 rounded-sm"></div>
+                            <span>Fear</span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <div className="w-3 h-3 bg-orange-500 rounded-sm"></div>
+                            <span>Surprise</span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <div className="w-3 h-3 bg-green-500 rounded-sm"></div>
+                            <span>Disgust</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                      <div className="inline-block min-w-full">
+                        <div className="grid grid-cols-53 gap-1">
+                          {moodData.map((day, index) => (
+                            <div
+                              key={index}
+                              title={`${day.date}: ${day.mood ? `${getMoodEmoji(day.mood)} ${day.mood}` : 'No mood recorded'}`}
+                              className={`w-3 h-3 rounded-sm ${getMoodColor(day.mood, day.intensity)} hover:opacity-80 transition-opacity cursor-pointer border border-gray-700`}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Mood Distribution */}
+                  <div>
+                    <h3 className="font-semibold text-white mb-4">Mood Distribution</h3>
+                    <div className="flex flex-col md:flex-row items-center gap-6">
+                      <div className="w-48 h-48 flex-shrink-0">
+                        <PieChart
+                          data={pieData}
+                          animate
+                          lineWidth={40}
+                          paddingAngle={2}
+                          rounded
+                          label={({ dataEntry }) =>
+                            hoveredMoodIdx === undefined
+                              ? ''
+                              : dataEntry.title === pieData[hoveredMoodIdx]?.title
+                                ? `${dataEntry.title} (${Math.round((dataEntry.value / moodTotal) * 100)}%)`
+                                : ''
+                          }
+                          labelStyle={{
+                            fontSize: '0.5em', // reduced from 1.1em
+                            fontWeight: 'bold',
+                            fill: '#fff',
+                            wordBreak: 'break-word',
+                            textAlign: 'center',
+                          }}
+                          segmentsStyle={(idx) => ({
+                            cursor: 'pointer',
+                            opacity: hoveredMoodIdx === undefined || hoveredMoodIdx === idx ? 1 : 0.5,
+                            transition: 'opacity 0.2s',
+                          })}
+                          onMouseOver={(_, idx) => setHoveredMoodIdx(idx)}
+                          onMouseOut={() => setHoveredMoodIdx(undefined)}
+                        />
+                      </div>
+                      <div className="flex-1 grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {moodDistribution.map(({ mood, color, label }, idx) => {
+                          const count = moodData.filter(d => d.mood === mood).length
+                          const percentage = moodTotal > 0 ? Math.round((count / moodTotal) * 100) : 0
+                          if (count === 0) return null
+                          return (
+                            <div
+                              key={mood}
+                              className={`bg-gray-800/40 rounded-lg p-4 text-center transition-all duration-200 ${
+                                hoveredMoodIdx === idx ? 'ring-2 ring-white' : ''
+                              }`}
+                              onMouseEnter={() => setHoveredMoodIdx(pieData.findIndex(d => d.mood === mood))}
+                              onMouseLeave={() => setHoveredMoodIdx(undefined)}
+                            >
+                              <div className="flex items-center justify-center mb-2">
+                                <span className="text-2xl mr-2">{getMoodEmoji(mood)}</span>
+                                <div className="w-5 h-5 rounded-full" style={{ background: color }}></div>
+                              </div>
+                              <div className="text-lg font-bold text-white">{count}</div>
+                              <div className="text-gray-400 text-sm">{label} ({percentage}%)</div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          ) : activeTab === "viewing" ? (
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-white flex items-center space-x-2">
+                  <Eye className="w-5 h-5 text-blue-500" />
+                  <span>Viewing History</span>
+                </h2>
+                {viewingHistory.length > 0 && (
+                  <Button
+                    onClick={() => {
+                      viewingHistoryManager.clearHistory()
+                      setViewingHistory([])
+                    }}
+                    className="bg-red-600 hover:bg-red-700 text-white text-sm px-4 py-2 rounded"
+                  >
+                    <Trash2 className="w-4 h-4 mr-1" />
+                    Clear
+                  </Button>
                 )}
               </div>
-            )}
-          </motion.div>
-        </AnimatePresence>
+
+              {viewingHistory.length === 0 ? (
+                <div className="text-center py-12">
+                  <Eye className="w-12 h-12 text-gray-600 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-400 mb-2">No viewing history</h3>
+                  <p className="text-gray-500 mb-4">Start watching movies!</p>
+                  <Button
+                    onClick={() => navigate("/home")}
+                    className="bg-white text-black px-6 py-2 rounded font-semibold hover:bg-gray-200 transition-colors"
+                  >
+                    Browse Movies
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {viewingHistory.map((movie, index) => (
+                    <div
+                      key={movie.id}
+                      className="flex items-center space-x-4 p-4 bg-gray-800/40 rounded-lg hover:bg-gray-800/60 transition-colors group"
+                    >
+                      <div className="flex-shrink-0">
+                        <img
+                          src={movie.image || "/placeholder.svg?height=120&width=80"}
+                          alt={movie.title}
+                          className="w-16 h-24 object-cover rounded"
+                        />
+                      </div>
+
+                      <div className="flex-1">
+                        <h3 className="text-white font-semibold mb-2">{movie.title}</h3>
+                        
+                        <div className="flex items-center space-x-4 mb-2 text-sm text-gray-400">
+                          <span>{formatDuration(movie.watchedDuration)} / {formatDuration(movie.totalDuration)}</span>
+                          <span>{new Date(movie.lastWatched).toLocaleDateString()}</span>
+                        </div>
+
+                        <div className="w-full bg-gray-700 rounded-full h-2">
+                          <div
+                            className={`h-2 rounded-full transition-all ${
+                              movie.completed
+                                ? "bg-green-500"
+                                : "bg-yellow-500"
+                            }`}
+                            style={{ width: `${getWatchProgress(movie.watchedDuration, movie.totalDuration)}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex space-x-2">
+                        {movie.completed ? (
+                          <div className="flex items-center text-green-400 text-sm">
+                            <Trophy className="w-4 h-4 mr-1" />
+                            Complete
+                          </div>
+                        ) : (
+                          <Button
+                            onClick={() => handleContinueWatching(movie)}
+                            className="bg-white text-black text-sm px-4 py-2 rounded hover:bg-gray-200 transition-colors"
+                          >
+                            <Play className="w-4 h-4 mr-1" />
+                            Continue
+                          </Button>
+                        )}
+                        
+                        <Button
+                          onClick={() => handleRemoveFromHistory(movie.movieId)}
+                          className="border border-gray-600 text-gray-400 hover:bg-gray-700 text-sm px-3 py-2 rounded"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div>
+              <h2 className="text-xl font-bold text-white mb-6 flex items-center space-x-2">
+                <Gift className="w-5 h-5 text-red-500" />
+                <span>Redemption History</span>
+              </h2>
+
+              {redemptionHistory.length === 0 ? (
+                <div className="text-center py-12">
+                  <Gift className="w-12 h-12 text-gray-600 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-400 mb-2">No redemptions yet</h3>
+                  <p className="text-gray-500 mb-4">Earn points to unlock rewards!</p>
+                  <Button
+                    onClick={() => navigate("/redeem")}
+                    className="bg-white text-black px-6 py-2 rounded font-semibold hover:bg-gray-200 transition-colors"
+                  >
+                    View Rewards
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {redemptionHistory.map((redemption, index) => (
+                    <div
+                      key={redemption.id}
+                      className="flex items-center space-x-4 p-4 bg-gray-800/40 rounded-lg"
+                    >
+                      <div className="w-10 h-10 rounded-lg bg-red-500 flex items-center justify-center">
+                        <Gift className="w-5 h-5 text-white" />
+                      </div>
+
+                      <div className="flex-1">
+                        <p className="text-white font-medium">{redemption.description}</p>
+                        <p className="text-gray-400 text-sm">{formatDate(redemption.date)}</p>
+                      </div>
+
+                      <div className="text-right">
+                        <div className="text-lg font-bold text-red-400">{redemption.points}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
