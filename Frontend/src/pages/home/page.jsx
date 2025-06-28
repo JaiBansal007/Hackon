@@ -32,6 +32,9 @@ const HomePage = ({ startPictureInPicture }) => {
   const [videoAnalyzed, setVideoAnalyzed] = useState(false)
   const [quizLocked, setQuizLocked] = useState(false)
 
+  const [polls, setPolls] = useState({})
+  const [pollsEnabled, setPollsEnabled] = useState(true)
+
   // Room functionality state
   const [roomStatus, setRoomStatus] = useState("none")
   const [roomId, setRoomId] = useState("")
@@ -151,6 +154,54 @@ const HomePage = ({ startPictureInPicture }) => {
       setTimeout(() => {
         setRecentReactions((prev) => prev.filter((r) => r.id !== newReaction.id))
       }, 4000)
+    })
+
+    wsRef.current.on("poll", (data) => {
+      const pollMessage = `POLL:${JSON.stringify(data.pollData)}`
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          id: data.id,
+          user: data.userName,
+          text: pollMessage,
+          timestamp: new Date(data.timestamp).toLocaleTimeString(),
+        },
+      ])
+
+      // Store poll data
+      setPolls((prev) => ({
+        ...prev,
+        [data.pollData.id]: data.pollData,
+      }))
+    })
+
+    wsRef.current.on("poll_vote", (data) => {
+      // Update poll data with new vote
+      setPolls((prev) => {
+        const updatedPolls = { ...prev }
+        const poll = updatedPolls[data.pollId]
+        if (poll) {
+          poll.options.forEach((option) => {
+            if (option.id === data.optionId) {
+              if (!option.votes.includes(data.userName)) {
+                option.votes.push(data.userName)
+                option.count = option.votes.length
+              }
+            } else if (!poll.allowMultiple) {
+              // Remove vote from other options if single selection
+              option.votes = option.votes.filter((voter) => voter !== data.userName)
+              option.count = option.votes.length
+            }
+          })
+        }
+        return updatedPolls
+      })
+    })
+
+    wsRef.current.on("poll_settings", (data) => {
+      if (data.settings.pollsEnabled !== undefined) {
+        setPollsEnabled(data.settings.pollsEnabled)
+      }
     })
 
     return () => {
@@ -285,9 +336,46 @@ const HomePage = ({ startPictureInPicture }) => {
   const sendMessage = async (message) => {
     console.log("📤 Sending message:", message)
 
-    // Do NOT optimistically update chatMessages here!
-    // Only send to Firestore, let the listener update the UI
+    // Handle poll messages
+    if (message.startsWith("POLL:")) {
+      try {
+        const pollData = JSON.parse(message.substring(5))
+        if (wsRef.current && roomStatus !== "none") {
+          wsRef.current.sendPoll(pollData)
+        }
+        return
+      } catch (e) {
+        console.error("Error parsing poll data:", e)
+      }
+    }
 
+    // Handle poll vote messages
+    if (message.startsWith("POLL_VOTE:")) {
+      try {
+        const voteData = JSON.parse(message.substring(10))
+        if (wsRef.current && roomStatus !== "none") {
+          wsRef.current.sendPollVote(voteData.pollId, voteData.optionId)
+        }
+        return
+      } catch (e) {
+        console.error("Error parsing poll vote data:", e)
+      }
+    }
+
+    // Handle poll settings messages
+    if (message.startsWith("POLL_SETTINGS:")) {
+      try {
+        const settingsData = JSON.parse(message.substring(14))
+        if (wsRef.current && roomStatus !== "none") {
+          wsRef.current.sendPollSettings(settingsData)
+        }
+        return
+      } catch (e) {
+        console.error("Error parsing poll settings data:", e)
+      }
+    }
+
+    // Rest of the existing sendMessage logic...
     if (wsRef.current && roomStatus !== "none") {
       wsRef.current.sendChatMessage(message)
     }
@@ -573,6 +661,8 @@ const HomePage = ({ startPictureInPicture }) => {
             onSendReaction={sendReaction}
             onTimeUpdate={updateVideoTime}
             showReactions={showReactions}
+            showChat={showChat}
+            showRoomMembers={showRoomMembers}
             wsRef={wsRef}
             // Video sync props
             onPlay={handlePlay}
@@ -593,6 +683,7 @@ const HomePage = ({ startPictureInPicture }) => {
           roomStatus={roomStatus}
           roomMembers={roomMembers}
           user={user}
+          polls={polls}
         />
 
         {/* Enhanced Room Members Sidebar */}

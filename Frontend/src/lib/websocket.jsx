@@ -1,5 +1,16 @@
 import { db } from "@/firebase/db"
-import { doc, setDoc, getDoc, updateDoc, arrayUnion, onSnapshot, collection, addDoc, deleteDoc, query, orderBy } from "firebase/firestore"
+import {
+  doc,
+  setDoc,
+  getDoc,
+  updateDoc,
+  arrayUnion,
+  onSnapshot,
+  collection,
+  addDoc,
+  query,
+  orderBy,
+} from "firebase/firestore"
 
 export class WebSocketManager {
   roomId = null
@@ -57,7 +68,7 @@ export class WebSocketManager {
           joinedAt: Date.now(),
         }),
       },
-      { merge: true }
+      { merge: true },
     )
 
     // Listen for room changes (members)
@@ -110,6 +121,31 @@ export class WebSocketManager {
               timestamp: msg.payload.timestamp,
             })
           }
+          if (msg.type === "poll") {
+            this.emit("poll", {
+              id: docId,
+              userName: msg.payload.userName,
+              pollData: msg.payload.pollData,
+              timestamp: msg.payload.timestamp,
+            })
+          }
+          if (msg.type === "poll_vote") {
+            this.emit("poll_vote", {
+              id: docId,
+              userName: msg.payload.userName,
+              pollId: msg.payload.pollId,
+              optionId: msg.payload.optionId,
+              timestamp: msg.payload.timestamp,
+            })
+          }
+          if (msg.type === "poll_settings") {
+            this.emit("poll_settings", {
+              id: docId,
+              userName: msg.payload.userName,
+              settings: msg.payload.settings,
+              timestamp: msg.payload.timestamp,
+            })
+          }
         }
       })
     })
@@ -148,12 +184,34 @@ export class WebSocketManager {
   async sendMessage(type, payload) {
     if (this.isConnected && this.roomId) {
       const messagesRef = collection(db, "rooms", this.roomId, "messages")
-      // Store the message in the messages subcollection
-      await addDoc(messagesRef, {
-        type,
-        payload: { ...payload, userId: this.userId, userName: this.userName },
-        timestamp: Date.now(),
-      })
+
+      // Handle poll messages specially
+      if (type === "poll_message") {
+        await addDoc(messagesRef, {
+          type: "poll",
+          payload: { ...payload, userId: this.userId, userName: this.userName },
+          timestamp: Date.now(),
+        })
+      } else if (type === "poll_vote") {
+        await addDoc(messagesRef, {
+          type: "poll_vote",
+          payload: { ...payload, userId: this.userId, userName: this.userName },
+          timestamp: Date.now(),
+        })
+      } else if (type === "poll_settings") {
+        await addDoc(messagesRef, {
+          type: "poll_settings",
+          payload: { ...payload, userId: this.userId, userName: this.userName },
+          timestamp: Date.now(),
+        })
+      } else {
+        // Store the message in the messages subcollection
+        await addDoc(messagesRef, {
+          type,
+          payload: { ...payload, userId: this.userId, userName: this.userName },
+          timestamp: Date.now(),
+        })
+      }
     }
   }
 
@@ -186,6 +244,58 @@ export class WebSocketManager {
           userId: this.userId,
           userName: this.userName,
           emoji,
+          timestamp: Date.now(),
+        },
+        timestamp: Date.now(),
+      })
+    }
+  }
+
+  // Add sendPoll for polls
+  async sendPoll(pollData) {
+    if (this.isConnected && this.roomId) {
+      const messagesRef = collection(db, "rooms", this.roomId, "messages")
+      await addDoc(messagesRef, {
+        type: "poll",
+        payload: {
+          userId: this.userId,
+          userName: this.userName,
+          pollData,
+          timestamp: Date.now(),
+        },
+        timestamp: Date.now(),
+      })
+    }
+  }
+
+  // Add sendPollVote for poll votes
+  async sendPollVote(pollId, optionId) {
+    if (this.isConnected && this.roomId) {
+      const messagesRef = collection(db, "rooms", this.roomId, "messages")
+      await addDoc(messagesRef, {
+        type: "poll_vote",
+        payload: {
+          userId: this.userId,
+          userName: this.userName,
+          pollId,
+          optionId,
+          timestamp: Date.now(),
+        },
+        timestamp: Date.now(),
+      })
+    }
+  }
+
+  // Add sendPollSettings for poll settings
+  async sendPollSettings(settings) {
+    if (this.isConnected && this.roomId) {
+      const messagesRef = collection(db, "rooms", this.roomId, "messages")
+      await addDoc(messagesRef, {
+        type: "poll_settings",
+        payload: {
+          userId: this.userId,
+          userName: this.userName,
+          settings,
           timestamp: Date.now(),
         },
         timestamp: Date.now(),

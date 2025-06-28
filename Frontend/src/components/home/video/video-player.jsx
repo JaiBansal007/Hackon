@@ -37,6 +37,8 @@ export function VideoPlayer({
   onTogglePiP,
   onSendReaction,
   showReactions,
+  showChat,
+  showRoomMembers,
   wsRef,
   onPlay,
   onPause,
@@ -349,7 +351,9 @@ export function VideoPlayer({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className={`fixed inset-0 bg-black z-40 flex ${isFullscreen ? "z-50" : ""}`}
+      className={`fixed bg-black z-40 flex transition-all duration-300 ${
+        isFullscreen ? "inset-0 z-50" : `inset-0 ${showChat || showRoomMembers ? "right-80" : ""}`
+      }`}
     >
       <div className="relative w-full h-full bg-black">
         <video
