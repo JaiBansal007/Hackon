@@ -474,13 +474,13 @@ export function ChatSidebar({
     })}`);
     
     // Also call external reaction handler if provided (for video reactions)
-    if (onReactionSend && roomStatus !== "none") {
-      onReactionSend({
-        emoji: reaction.emoji,
-        user: user?.name || "User",
-        id: Date.now()
-      });
-    }
+    // if (onReactionSend && roomStatus !== "none") {
+    //   onReactionSend({
+    //     emoji: reaction.emoji,
+    //     user: user?.name || "User",
+    //     id: Date.now()
+    //   });
+    // }
     
     setShowReactions(false);
   };
@@ -746,7 +746,7 @@ export function ChatSidebar({
                                 >
                                   {message.user === "Tree.io" || message.text.startsWith("Tree.io:")
                                     ? "AI"
-                                    : message.user.charAt(0).toUpperCase()}
+                                    : message?.user?.charAt(0).toUpperCase()}
                                 </motion.div>
                                 <span
                                   className={`font-semibold text-xs ${
