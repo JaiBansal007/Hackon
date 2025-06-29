@@ -1,6 +1,6 @@
 "use client"
-
-import { useState, useRef, useEffect } from "react";
+import React from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "../../ui/button";
 import { Input } from "../../ui/input";
@@ -90,7 +90,7 @@ export function ChatSidebar({
     };
   }, []);
 
-  const PollMessage = ({ poll, onVote, currentUser }) => {
+  const PollMessage = ({ poll, onVote, currentUser, currentUserId }) => {
     const [votingFor, setVotingFor] = useState(null);
     const [showVoters, setShowVoters] = useState({});
 
@@ -110,9 +110,10 @@ export function ChatSidebar({
       }
     };
 
-    const totalVotes = poll.options.reduce((sum, option) => sum + (option.count || 0), 0);
+    const totalVotes = poll.options.reduce((sum, option) => sum + (option.count || (option.votes ? option.votes.length : 0)), 0);
+    // Use userId for vote tracking
     const currentUserVotes = poll.options.filter(option => 
-      option.votes && option.votes.includes(currentUser)
+      (option.votes && option.votes.includes(currentUserId))
     );
 
     const toggleVotersDisplay = (optionId) => {
@@ -155,10 +156,9 @@ export function ChatSidebar({
 
           <div className="space-y-2">
             {poll.options.map((option, index) => {
-              const percentage = totalVotes > 0 ? Math.round((option.count / totalVotes) * 100) : 0;
-              const hasVoted = currentUserVotes.some(vote => 
-                vote.id === option.id || vote.id === index
-              );
+              const percentage = totalVotes > 0 ? Math.round(((option.count || (option.votes ? option.votes.length : 0)) / totalVotes) * 100) : 0;
+              // Use userId for vote highlighting
+              const hasVoted = option.votes && option.votes.includes(currentUserId);
               const isVoting = votingFor === (option.id ?? index);
 
               return (
@@ -216,7 +216,7 @@ export function ChatSidebar({
                         <span className="text-sm font-semibold">
                           {percentage}%
                         </span>
-                        {option.count > 0 && poll.showWhoVoted && (
+                        {(option.count > 0 || (option.votes && option.votes.length > 0)) && poll.showWhoVoted && (
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -224,7 +224,7 @@ export function ChatSidebar({
                             }}
                             className="text-xs text-gray-400 hover:text-gray-300 underline"
                           >
-                            {option.count} vote{option.count !== 1 ? 's' : ''}
+                            {(option.count || (option.votes ? option.votes.length : 0))} vote{(option.count || (option.votes ? option.votes.length : 0)) !== 1 ? 's' : ''}
                           </button>
                         )}
                       </div>
@@ -239,19 +239,33 @@ export function ChatSidebar({
                         className="mt-2 pt-2 border-t border-gray-600/30"
                       >
                         <div className="flex flex-wrap gap-1">
-                          {option.votes.map((voter, voterIndex) => (
-                            <div
-                              key={voterIndex}
-                              className="inline-flex items-center space-x-1 bg-gray-700/50 rounded-full px-2 py-1"
-                            >
-                              <div className="w-4 h-4 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
-                                <span className="text-xs text-white font-bold">
-                                  {voter.charAt(0).toUpperCase()}
-                                </span>
-                              </div>
-                              <span className="text-xs text-gray-300">{voter}</span>
-                            </div>
-                          ))}
+                          {option.voterDetails && option.voterDetails.length > 0
+                            ? option.voterDetails.map((voter, voterIndex) => (
+                                <div
+                                  key={voterIndex}
+                                  className="inline-flex items-center space-x-1 bg-gray-700/50 rounded-full px-2 py-1"
+                                >
+                                  <div className="w-4 h-4 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                                    <span className="text-xs text-white font-bold">
+                                      {voter.userName?.charAt(0).toUpperCase()}
+                                    </span>
+                                  </div>
+                                  <span className="text-xs text-gray-300">{voter.userName}</span>
+                                </div>
+                              ))
+                            : option.votes.map((voter, voterIndex) => (
+                                <div
+                                  key={voterIndex}
+                                  className="inline-flex items-center space-x-1 bg-gray-700/50 rounded-full px-2 py-1"
+                                >
+                                  <div className="w-4 h-4 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                                    <span className="text-xs text-white font-bold">
+                                      {typeof voter === 'string' ? voter.charAt(0).toUpperCase() : ''}
+                                    </span>
+                                  </div>
+                                  <span className="text-xs text-gray-300">{typeof voter === 'string' ? voter : ''}</span>
+                                </div>
+                              ))}
                         </div>
                       </motion.div>
                     )}
@@ -437,12 +451,15 @@ export function ChatSidebar({
   };
 
   const votePoll = async (pollId, optionId) => {
-    // Handle both Firebase polls and legacy polls
     if (firebasePolls[pollId]) {
-      // Firebase poll - handled by PollMessage component
+      // Firebase poll - call backend
+      try {
+        await pollsService.votePoll(roomId, pollId, optionId, user?.uid, user?.name, user?.photoURL)
+      } catch (e) {
+        console.error("Error voting on Firebase poll:", e)
+      }
       return;
     }
-    
     // Legacy poll handling
     onSendMessage(`POLL_VOTE:${JSON.stringify({ pollId, optionId, voter: user?.name || "User" })}`);
   };
@@ -489,16 +506,18 @@ export function ChatSidebar({
     setShowReactions(false);
   };
 
-  const renderMessageWithMentions = (text) => {
+  const renderMessageWithMentions = (text, message) => {
     // Handle poll messages
     if (text.startsWith("POLL:")) {
       try {
-        const poll = JSON.parse(text.substring(5))
+        const poll = JSON.parse(text.substring(5));
+        // If poll is already shown in firebasePolls (Live Polls), don't render it again in messages
+        if (isPollInFirebasePolls(poll.id)) return null;
         // Use the latest poll data from props.polls if available, otherwise use Firebase polls
-        const latestPoll = (polls && polls[poll.id]) ? polls[poll.id] : poll
-        return <PollMessage poll={latestPoll} onVote={votePoll} currentUser={user?.name} />
+        const latestPoll = (polls && polls[poll.id]) ? polls[poll.id] : poll;
+        return <MemoizedPollMessage poll={latestPoll} onVote={votePoll} currentUser={user?.name} currentUserId={user?.uid} />;
       } catch (e) {
-        return text
+        return text;
       }
     }
 
@@ -604,6 +623,14 @@ export function ChatSidebar({
     }
   }
 
+  // Memoize PollMessage to avoid unnecessary re-renders
+  const MemoizedPollMessage = useMemo(() => React.memo(PollMessage), []);
+
+  // Helper to check if a poll is already shown in firebasePolls (Live Polls)
+  const isPollInFirebasePolls = (pollId) => {
+    return firebasePolls && firebasePolls[pollId];
+  };
+
   return (
     <AnimatePresence>
       {show && (
@@ -682,10 +709,11 @@ export function ChatSidebar({
                             transition={{ duration: 0.3, ease: "easeOut" }}
                             className="mb-1.5 last:mb-0"
                           >
-                            <PollMessage 
+                            <MemoizedPollMessage 
                               poll={poll} 
                               onVote={votePoll} 
                               currentUser={user?.name} 
+                              currentUserId={user?.uid}
                             />
                           </motion.div>
                         ))}
@@ -717,67 +745,77 @@ export function ChatSidebar({
                     </motion.div>
                   ) : (
                     <AnimatePresence mode="popLayout">
-                      {messages.map((message, index) => (
-                        <motion.div
-                          key={message.id}
-                          layout
-                          initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                          transition={{ 
-                            duration: 0.3, 
-                            ease: "easeOut",
-                            delay: index * 0.05 // Stagger animation
-                          }}
-                          className="text-sm"
-                        >
-                          {message.isSystem ? (
-                            <div className="text-center">
-                              <span className="text-xs text-gray-400 bg-gray-800/40 px-2 py-1 rounded-full border border-gray-700/30">
-                                {message.text}
-                              </span>
-                            </div>
-                          ) : (
-                            <div className="space-y-1.5">
-                              {/* Message Header - Enhanced */}
-                              <div className="flex items-center space-x-2 mb-1">
-                                <motion.div
-                                  whileHover={{ scale: 1.05 }}
-                                  className={`w-4 h-4 rounded-full flex items-center justify-center text-xs font-bold shadow-lg ${
-                                    message.user === "Tree.io" || message.text.startsWith("Tree.io:")
-                                      ? "bg-gradient-to-r from-orange-500 to-red-500 text-white"
-                                      : "bg-gradient-to-r from-blue-500 to-purple-500 text-white"
-                                  }`}
-                                >
-                                  {message.user === "Tree.io" || message.text.startsWith("Tree.io:")
-                                    ? "AI"
-                                    : message?.user?.charAt(0).toUpperCase()}
-                                </motion.div>
-                                <span
-                                  className={`font-semibold text-xs ${
-                                    message.user === "Tree.io" || message.text.startsWith("Tree.io:")
-                                      ? "text-orange-300"
-                                      : "text-blue-300"
-                                  }`}
-                                >
-                                  {message.user === "Tree.io" || message.text.startsWith("Tree.io:")
-                                    ? "Tree.io"
-                                    : message.user}
-                                </span>
-                                <span className="text-xs text-gray-400 bg-gray-800/30 px-1 py-0.5 rounded-full">
-                                  {formatWhatsAppTime(message.timestamp)}
+                      {messages.map((message, index) => {
+                        // If this is a poll message and poll is already shown in firebasePolls, skip rendering
+                        if (message.text.startsWith("POLL:")) {
+                          try {
+                            const poll = JSON.parse(message.text.substring(5));
+                            if (isPollInFirebasePolls(poll.id)) return null;
+                          } catch (e) {}
+                        }
+                        return (
+                          <motion.div
+                            key={message.id}
+                            layout
+                            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            transition={{ 
+                              duration: 0.3, 
+                              ease: "easeOut",
+                              delay: index * 0.05 // Stagger animation
+                            }}
+                            className="text-sm"
+                          >
+                            {message.isSystem ? (
+                              <div className="text-center">
+                                <span className="text-xs text-gray-400 bg-gray-800/40 px-2 py-1 rounded-full border border-gray-700/30">
+                                  {message.text}
                                 </span>
                               </div>
-                              
-                              {/* Message Content - Enhanced */}
-                              <div className="ml-5 text-gray-100 text-xs leading-relaxed bg-gray-800/20 rounded-lg p-2 border border-gray-700/20">
-                                {renderMessageWithMentions(
-                                  message.text.startsWith("Tree.io:") ? message.text.substring(8) : message.text,
-                                )}
+                            ) : (
+                              <div className="space-y-1.5">
+                                {/* Message Header - Enhanced */}
+                                <div className="flex items-center space-x-2 mb-1">
+                                  <motion.div
+                                    whileHover={{ scale: 1.05 }}
+                                    className={`w-4 h-4 rounded-full flex items-center justify-center text-xs font-bold shadow-lg ${
+                                      message.user === "Tree.io" || message.text.startsWith("Tree.io:")
+                                        ? "bg-gradient-to-r from-orange-500 to-red-500 text-white"
+                                        : "bg-gradient-to-r from-blue-500 to-purple-500 text-white"
+                                    }`}
+                                  >
+                                    {message.user === "Tree.io" || message.text.startsWith("Tree.io:")
+                                      ? "AI"
+                                      : message?.user?.charAt(0).toUpperCase()}
+                                  </motion.div>
+                                  <span
+                                    className={`font-semibold text-xs ${
+                                      message.user === "Tree.io" || message.text.startsWith("Tree.io:")
+                                        ? "text-orange-300"
+                                        : "text-blue-300"
+                                    }`}
+                                  >
+                                    {message.user === "Tree.io" || message.text.startsWith("Tree.io:")
+                                      ? "Tree.io"
+                                      : message.user}
+                                  </span>
+                                  <span className="text-xs text-gray-400 bg-gray-800/30 px-1 py-0.5 rounded-full">
+                                    {formatWhatsAppTime(message.timestamp)}
+                                  </span>
+                                </div>
+                                
+                                {/* Message Content - Enhanced */}
+                                <div className="ml-5 text-gray-100 text-xs leading-relaxed bg-gray-800/20 rounded-lg p-2 border border-gray-700/20">
+                                  {renderMessageWithMentions(
+                                    message.text.startsWith("Tree.io:") ? message.text.substring(8) : message.text,
+                                    message
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                          )}
-                        </motion.div>
-                      ))}
+                            )}
+                          </motion.div>
+                        );
+                      })}
                     </AnimatePresence>
                   )}
                 </div>
@@ -1149,7 +1187,7 @@ export function ChatSidebar({
                   </AnimatePresence>
 
                   {/* Input area - Enhanced WhatsApp style */}
-                  <div className="flex space-x-2">
+                  <div className="flex space-x-1">
                     {/* Poll Button - Enhanced */}
                     {roomStatus !== "none" && (
                       <motion.button
@@ -1192,6 +1230,22 @@ export function ChatSidebar({
                         }`}
                       >
                         <Heart className="w-4 h-4" />
+                      </motion.button>
+                    )}
+
+                    {/* Record Button - New */}
+                    {roomStatus !== "none" && (
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        // Placeholder onClick for record action
+                        onClick={() => { /* TODO: Add record functionality */ }}
+                        className="p-2 rounded-full transition-all shadow-lg text-gray-400 hover:text-red-400 hover:bg-red-500/10 hover:shadow-red-500/10"
+                        title="Record"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                          <circle cx="12" cy="12" r="6" fill="currentColor" />
+                        </svg>
                       </motion.button>
                     )}
 

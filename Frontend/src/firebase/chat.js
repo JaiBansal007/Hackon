@@ -161,12 +161,13 @@ class ChatService {
     async setTyping(roomId, user, isTyping) {
         try {
             if (!realtimeDb) return;
+            if (!user || !user.uid) return; // Prevent undefined user/uid
 
             const typingRef = ref(realtimeDb, `rooms/${roomId}/typing/${user.uid}`);
             
             if (isTyping) {
                 await set(typingRef, {
-                    name: user.name,
+                    name: user.name || "",
                     timestamp: serverTimestamp()
                 });
             } else {

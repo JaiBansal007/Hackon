@@ -656,9 +656,12 @@ const HomePage = ({ startPictureInPicture, isPiPActive }) => {
     }
 
     try {
-      console.log("Voting on poll:", pollId, "option:", optionId)
-      // For now, we'll use the same Firebase message approach
-      // In the future, this could be enhanced to use a dedicated poll voting service
+      // Use Firebase poll voting for real-time updates
+      if (polls[pollId]) {
+        await pollsService.votePoll(roomId, pollId, optionId, user.uid, user.name, user.photoURL)
+        return
+      }
+      // Fallback for legacy polls
       const voteMessage = `POLL_VOTE:${JSON.stringify({ pollId, optionId })}`
       await chatService.sendMessage(roomId, voteMessage, user)
     } catch (error) {
@@ -1060,23 +1063,55 @@ const HomePage = ({ startPictureInPicture, isPiPActive }) => {
           </motion.div>
         )}
 
-        {/* PiP Active Indicator */}
-        {isPiPActive && !isWatching && !isFullscreen && (
-          <motion.div
-            initial={{ opacity: 0, y: -50 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 max-w-md w-full mx-4"
-          >
-            <div className="bg-gradient-to-r from-orange-600/95 to-red-600/95 backdrop-blur-xl border border-orange-400/30 rounded-2xl p-4 shadow-2xl">
-              <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 bg-orange-400 rounded-full animate-pulse" />
-                <div className="text-white font-medium text-sm">
-                  Picture-in-Picture mode is active. Close PiP to start a new movie.
+        {/* Room Sync Notification */}
+        <AnimatePresence>
+          {roomSyncNotification.show && (
+            <motion.div
+              initial={{ opacity: 0, y: -50 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -50 }}
+              className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 max-w-md w-full mx-4"
+            >
+              {/* <div className="bg-gradient-to-r from-blue-600/95 to-purple-600/95 backdrop-blur-xl border border-blue-400/30 rounded-2xl p-6 shadow-2xl">
+                <div className="flex items-start space-x-4">
+                  <div className="w-16 h-24 rounded-lg overflow-hidden flex-shrink-0">
+                    <img
+                      src={roomSyncNotification.movie?.image}
+                      alt={roomSyncNotification.movie?.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-white font-bold text-lg mb-1">
+                      Room is watching
+                    </h3>
+                    <p className="text-blue-100 font-medium mb-2">
+                      {roomSyncNotification.movie?.title}
+                    </p>
+                    <p className="text-blue-200 text-sm mb-4">
+                      Join the synced viewing session?
+                    </p>
+                    <div className="flex space-x-3">
+                      <Button
+                        onClick={joinSyncedVideo}
+                        className="bg-white/20 hover:bg-white/30 text-white border border-white/30 hover:border-white/50 rounded-lg px-4 py-2 text-sm font-medium transition-all"
+                      >
+                        Join Now
+                      </Button>
+                      <Button
+                        onClick={dismissSyncNotification}
+                        variant="ghost"
+                        className="text-white/70 hover:text-white hover:bg-white/10 rounded-lg px-4 py-2 text-sm font-medium transition-all"
+                      >
+                        Maybe Later
+                      </Button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
+              </div> */}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Video Player */}
         {isWatching && (
