@@ -3,6 +3,9 @@ const cors = require('cors');
 const http = require('http');
 const socketIo = require('socket.io');
 
+// Import mood recommendation functionality
+const { getMoodBasedRecommendations } = require('./temp/index.js');
+
 const app = express();
 const server = http.createServer(app);
 
@@ -30,6 +33,40 @@ app.get('/health', (req, res) => {
     message: 'Movie Watch Party Server is running',
     timestamp: new Date().toISOString()
   });
+});
+
+// Mood-based recommendation endpoint
+app.post('/api/recommendations/mood', async (req, res) => {
+  try {
+    const { mood, viewingHistory } = req.body;
+    
+    console.log('Received mood recommendation request:', { mood, viewingHistoryLength: viewingHistory?.length || 0 });
+    
+    if (!mood || typeof mood !== 'string') {
+      console.log('Invalid mood parameter:', mood);
+      return res.status(400).json({
+        success: false,
+        error: 'Mood parameter is required and must be a string'
+      });
+    }
+
+    console.log('Calling getMoodBasedRecommendations...');
+    const result = await getMoodBasedRecommendations(mood, viewingHistory || []);
+    console.log('Recommendation result:', result);
+    
+    // Ensure the result has the required structure
+    if (!result || typeof result !== 'object') {
+      throw new Error('Invalid result format from recommendation function');
+    }
+    
+    res.json(result);
+  } catch (error) {
+    console.error('Error in mood recommendation endpoint:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
 });
 
 // Socket connection handling

@@ -763,7 +763,7 @@ const MoviePage = ({ isPiPActive }) => {
             setRoomStatus("member");
             // Initialize room connection if needed
           }}
-          currentMovie={movie}
+          currentMovie={currentWatchingMovie}
         />
 
         {/* Room Members Sidebar */}
