@@ -47,6 +47,12 @@ const HomePage = ({ startPictureInPicture }) => {
   const [showJoinDialog, setShowJoinDialog] = useState(false)
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [roomMembers, setRoomMembers] = useState([])
+  const [roomSyncNotification, setRoomSyncNotification] = useState({
+    show: false,
+    movie: null,
+    currentTime: 0,
+    isPlaying: false
+  })
 
   // Firebase-related state
   const [isHost, setIsHost] = useState(false)
@@ -106,12 +112,11 @@ const HomePage = ({ startPictureInPicture }) => {
     return unsubscribe
   }, [navigate])
 
-  // Persist and restore watching state
+  // Persist and restore room state only (not video state)
   useEffect(() => {
     // Restore watching state from localStorage on mount
     const savedWatchingState = localStorage.getItem("watchingState")
     const savedMovie = localStorage.getItem("currentWatchingMovie")
-    const savedRoomState = localStorage.getItem("roomState")
 
     if (savedWatchingState && savedMovie) {
       try {
@@ -131,21 +136,27 @@ const HomePage = ({ startPictureInPicture }) => {
       }
     }
 
+    // Only restore room state from localStorage on mount
+    const savedRoomState = localStorage.getItem('roomState');
+    
     if (savedRoomState) {
       try {
         const roomState = JSON.parse(savedRoomState)
         if (roomState.roomId && roomState.roomStatus !== "none") {
-          setRoomId(roomState.roomId)
-          setRoomStatus(roomState.roomStatus)
-          setIsHost(roomState.isHost || false)
-          console.log("🔄 Restored room state:", roomState.roomId)
+          setRoomId(roomState.roomId);
+          setRoomStatus(roomState.roomStatus);
+          setIsHost(roomState.isHost || false);
+          console.log("🔄 Restored room state:", roomState.roomId);
+          
+          // Re-join the room but don't auto-start video
+          rejoinRoom(roomState.roomId, roomState.isHost);
         }
       } catch (error) {
         console.warn("Failed to restore room state:", error)
         localStorage.removeItem("roomState")
       }
     }
-  }, [])
+  }, [user])
 
   // Save watching state to localStorage when it changes
   useEffect(() => {
@@ -164,7 +175,29 @@ const HomePage = ({ startPictureInPicture }) => {
     }
   }, [isWatching, currentWatchingMovie, currentVideoTime])
 
-  // Save room state to localStorage when it changes
+  // Helper function to rejoin room without auto-starting video
+  const rejoinRoom = async (roomId, wasHost) => {
+    if (!user) return;
+    
+    try {
+      if (wasHost) {
+        // For hosts, recreate room connection
+        await chatService.createRoom(roomId, user);
+      } else {
+        // For guests, rejoin room
+        await chatService.joinRoom(roomId, user);
+      }
+      console.log("🔄 Rejoined room:", roomId);
+    } catch (error) {
+      console.warn("Failed to rejoin room:", error);
+      // Clear invalid room state
+      setRoomStatus("none");
+      setRoomId("");
+      localStorage.removeItem('roomState');
+    }
+  };
+
+  // Save room state to localStorage when it changes (but not video state)
   useEffect(() => {
     if (roomId && roomStatus !== "none") {
       localStorage.setItem(
@@ -186,15 +219,75 @@ const HomePage = ({ startPictureInPicture }) => {
 
     // Listen to chat messages
     const unsubscribeChat = chatService.listenToMessages(roomId, (messages) => {
-      setChatMessages(
-        messages.map((msg) => ({
+      // Process messages and handle special message types
+      const processedMessages = []
+      
+      messages.forEach(msg => {
+        // Handle poll vote messages
+        if (msg.text.startsWith("POLL_VOTE:")) {
+          try {
+            const voteData = JSON.parse(msg.text.substring(10))
+            
+            // Update polls state with vote
+            setPolls((prev) => {
+              const updatedPolls = { ...prev }
+              const poll = updatedPolls[voteData.pollId]
+              if (poll) {
+                poll.options.forEach((option) => {
+                  if (option.id === voteData.optionId) {
+                    if (!option.votes) option.votes = []
+                    if (!option.votes.includes(msg.userName)) {
+                      option.votes.push(msg.userName)
+                      option.count = option.votes.length
+                    }
+                  } else if (!poll.allowMultiple) {
+                    // Remove vote from other options if single selection
+                    if (option.votes) {
+                      option.votes = option.votes.filter((voter) => voter !== msg.userName)
+                      option.count = option.votes.length
+                    }
+                  }
+                })
+              }
+              return updatedPolls
+            })
+            
+            // Don't add poll vote messages to the chat display
+            return
+          } catch (e) {
+            console.error("Error parsing poll vote data:", e)
+          }
+        }
+        
+        // Handle poll creation messages
+        if (msg.text.startsWith("POLL:")) {
+          try {
+            const pollData = JSON.parse(msg.text.substring(5))
+            
+            // Store poll data
+            setPolls((prev) => ({
+              ...prev,
+              [pollData.id]: pollData,
+            }))
+            
+            // Don't add poll creation messages to the chat display
+            return
+          } catch (e) {
+            console.error("Error parsing poll data:", e)
+          }
+        }
+        
+        // Add regular messages to chat
+        processedMessages.push({
           id: msg.id,
           user: msg.userName,
           text: msg.text,
           timestamp: new Date(msg.timestamp).toLocaleTimeString(),
-          isSystem: false,
-        })),
-      )
+          isSystem: false
+        })
+      })
+      
+      setChatMessages(processedMessages)
     })
 
     // Listen to room members
@@ -202,17 +295,26 @@ const HomePage = ({ startPictureInPicture }) => {
       setRoomMembers(members)
     })
 
-    // Listen to video state
+    // Listen to video state - but don't auto-start videos
     const unsubscribeVideo = videoSyncService.listenToVideoState(roomId, (videoState) => {
       if (videoState) {
         setSyncedVideoState(videoState)
         setCurrentVideoTime(videoState.currentTime || 0)
-        if (videoState.videoUrl) {
-          const foundMovie = featuredMovies.find((m) => m.videoUrl === videoState.videoUrl)
+        // If there's a synced video and user is not currently watching anything
+        if (videoState.videoUrl && !isWatching) {
+          const foundMovie = featuredMovies.find(m => m.videoUrl === videoState.videoUrl)
           if (foundMovie) {
-            setCurrentWatchingMovie(foundMovie)
-            setIsWatching(true)
+            // Show notification to join synced video instead of auto-starting
+            setRoomSyncNotification({
+              show: true,
+              movie: foundMovie,
+              currentTime: videoState.currentTime || 0,
+              isPlaying: videoState.isPlaying || false
+            });
           }
+        } else if (isWatching && currentWatchingMovie?.videoUrl === videoState.videoUrl) {
+          // If user is already watching the same movie, sync the time
+          setCurrentVideoTime(videoState.currentTime || 0)
         }
       }
     })
@@ -440,6 +542,14 @@ const HomePage = ({ startPictureInPicture }) => {
   }
 
   const startWatching = (movie) => {
+    // Check if user is in a room
+    if (roomStatus === "none") {
+      // If not in a room, suggest joining/creating a room for sync features
+      setShowCreateDialog(true);
+      console.log("📱 User needs to join a room for synced watching");
+      return;
+    }
+
     // Ensure movie has movieId for tracking
     const movieWithId = {
       ...movie,
@@ -455,6 +565,32 @@ const HomePage = ({ startPictureInPicture }) => {
     setIsWatching(true)
     setVideoAnalyzed(false)
     setCurrentVideoTime(0)
+
+    // If in a room, sync the video start with room members
+    if (roomStatus !== "none" && roomId && user) {
+      console.log("🎬 Starting movie in room:", movie.title);
+      // Sync movie selection with room
+      videoSyncService.syncMovieChange(roomId, movieWithId, user);
+    }
+  }
+
+  // New function for solo watching (without room)
+  const startSoloWatching = (movie) => {
+    const movieWithId = {
+      ...movie,
+      movieId:
+        movie.movieId ||
+        movie.title
+          .toLowerCase()
+          .replace(/\s+/g, "-")
+          .replace(/[^\w-]/g, ""),
+    }
+
+    setCurrentWatchingMovie(movieWithId)
+    setIsWatching(true)
+    setVideoAnalyzed(false)
+    setCurrentVideoTime(0)
+    console.log("🎬 Starting solo movie watching:", movie.title);
   }
 
   const startQuiz = (movieSlug) => {
@@ -464,6 +600,24 @@ const HomePage = ({ startPictureInPicture }) => {
 
   const updateVideoTime = (time) => {
     setCurrentVideoTime(time)
+  }
+
+  // Poll vote handler
+  const handlePollVote = async (pollId, optionId) => {
+    if (!roomId || roomStatus === "none") {
+      console.log("Cannot vote: not in a room")
+      return
+    }
+
+    try {
+      console.log("Voting on poll:", pollId, "option:", optionId)
+      // For now, we'll use the same Firebase message approach
+      // In the future, this could be enhanced to use a dedicated poll voting service
+      const voteMessage = `POLL_VOTE:${JSON.stringify({ pollId, optionId })}`
+      await chatService.sendMessage(roomId, voteMessage, user)
+    } catch (error) {
+      console.error("Error voting on poll:", error)
+    }
   }
 
   const sendMessage = async (message) => {
@@ -727,6 +881,21 @@ const HomePage = ({ startPictureInPicture }) => {
     syncOnJoin()
   }, [user, roomId, roomStatus, featuredMovies])
 
+  // Handle room sync notification actions
+  const joinSyncedVideo = () => {
+    if (roomSyncNotification.movie) {
+      setCurrentWatchingMovie(roomSyncNotification.movie);
+      setIsWatching(true);
+      setCurrentVideoTime(roomSyncNotification.currentTime);
+      setRoomSyncNotification({ show: false, movie: null, currentTime: 0, isPlaying: false });
+      console.log("🎬 Joined synced video:", roomSyncNotification.movie.title);
+    }
+  };
+
+  const dismissSyncNotification = () => {
+    setRoomSyncNotification({ show: false, movie: null, currentTime: 0, isPlaying: false });
+  };
+
   if (authLoading) {
     return (
       <div className="fixed inset-0 bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center">
@@ -789,7 +958,7 @@ const HomePage = ({ startPictureInPicture }) => {
               >
                 <Button
                   onClick={() => setShowChat(!showChat)}
-                  className="rounded-full p-3 bg-amber-400 hover:bg-amber-600 text-white shadow-lg transition-all duration-300 hover:scale-110"
+                  className="rounded-full p-3 bg-red-500 hover:bg-amber-600 text-white shadow-lg transition-all duration-300 hover:scale-110"
                 >
                   <MessageSquareIcon className="w-5 h-5" />
                 </Button>
@@ -802,23 +971,104 @@ const HomePage = ({ startPictureInPicture }) => {
                 <FeaturedSection
                   movie={currentFeatured}
                   onStartWatching={startWatching}
+                  onStartSoloWatching={startSoloWatching}
                   onStartQuiz={startQuiz}
                   quizLocked={quizLocked}
+                  roomStatus={roomStatus}
                 />
 
                 {/* Movie Categories - positioned after the fixed height featured section */}
                 <div className="relative z-20 bg-black">
-                  <MovieCategories
-                    onStartWatching={startWatching}
-                    onStartQuiz={startQuiz}
-                    quizLocked={quizLocked}
-                    user={user}
+                  <MovieCategories 
+                    onStartWatching={startWatching} 
+                    onStartSoloWatching={startSoloWatching}
+                    onStartQuiz={startQuiz} 
+                    quizLocked={quizLocked} 
+                    user={user} 
+                    roomStatus={roomStatus}
                   />
                 </div>
               </div>
             )}
           </div>
         </div>
+
+        {/* Room Status Indicator */}
+        {!isWatching && !isFullscreen && (
+          <motion.div
+            initial={{ opacity: 0, x: 100 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="fixed bottom-20 right-6 z-40"
+          >
+            <div className={`px-4 py-2 rounded-full backdrop-blur-xl border text-sm font-medium ${
+              roomStatus === "none" 
+                ? "bg-gray-800/90 border-gray-600 text-gray-300" 
+                : "bg-blue-600/90 border-blue-400 text-white"
+            }`}>
+              {roomStatus === "none" ? (
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-gray-400 rounded-full" />
+                  <span>Solo Mode</span>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+                  <span>Room: {roomId}</span>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Room Sync Notification */}
+        <AnimatePresence>
+          {roomSyncNotification.show && (
+            <motion.div
+              initial={{ opacity: 0, y: -50 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -50 }}
+              className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 max-w-md w-full mx-4"
+            >
+              <div className="bg-gradient-to-r from-blue-600/95 to-purple-600/95 backdrop-blur-xl border border-blue-400/30 rounded-2xl p-6 shadow-2xl">
+                <div className="flex items-start space-x-4">
+                  <div className="w-16 h-24 rounded-lg overflow-hidden flex-shrink-0">
+                    <img
+                      src={roomSyncNotification.movie?.image}
+                      alt={roomSyncNotification.movie?.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-white font-bold text-lg mb-1">
+                      Room is watching
+                    </h3>
+                    <p className="text-blue-100 font-medium mb-2">
+                      {roomSyncNotification.movie?.title}
+                    </p>
+                    <p className="text-blue-200 text-sm mb-4">
+                      Join the synced viewing session?
+                    </p>
+                    <div className="flex space-x-3">
+                      <Button
+                        onClick={joinSyncedVideo}
+                        className="bg-white/20 hover:bg-white/30 text-white border border-white/30 hover:border-white/50 rounded-lg px-4 py-2 text-sm font-medium transition-all"
+                      >
+                        Join Now
+                      </Button>
+                      <Button
+                        onClick={dismissSyncNotification}
+                        variant="ghost"
+                        className="text-white/70 hover:text-white hover:bg-white/10 rounded-lg px-4 py-2 text-sm font-medium transition-all"
+                      >
+                        Maybe Later
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Video Player */}
         {isWatching && (
@@ -865,6 +1115,7 @@ const HomePage = ({ startPictureInPicture }) => {
           onClose={() => setShowChat(false)}
           messages={chatMessages}
           onSendMessage={sendMessage}
+          onVote={handlePollVote}
           onTyping={handleTyping}
           typingUsers={typingUsers}
           roomStatus={roomStatus}
@@ -896,44 +1147,37 @@ const HomePage = ({ startPictureInPicture }) => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+              className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
             >
               <motion.div
-                initial={{ scale: 0.8, opacity: 0, y: 50 }}
+                initial={{ scale: 0.96, opacity: 0, y: 30 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
-                exit={{ scale: 0.8, opacity: 0, y: 50 }}
+                exit={{ scale: 0.96, opacity: 0, y: 30 }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-black to-gray-900 border border-amber-500/30 rounded-3xl max-w-md w-full shadow-2xl"
+                className="relative bg-[#181818] border border-neutral-700 rounded-2xl max-w-sm w-full shadow-lg p-0"
               >
-                {/* Animated background */}
-                <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 via-orange-500/5 to-amber-500/5" />
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-400 via-orange-500 to-amber-400" />
-
-                <div className="relative p-8">
+                <div className="px-7 py-8">
                   <div className="flex items-center space-x-3 mb-6">
-                    <div className="p-3 rounded-full bg-gradient-to-r from-amber-500/20 to-orange-500/20">
-                      <Crown className="w-6 h-6 text-amber-400" />
+                    <div className="p-2 rounded-full bg-gradient-to-br from-red-500/20 to-orange-500/20">
+                      <Crown className="w-6 h-6 text-orange-400" />
                     </div>
-                    <h3 className="text-2xl font-bold text-white">Create Room</h3>
+                    <h3 className="text-xl font-bold text-white">Create Room</h3>
                   </div>
-
-                  <p className="text-gray-300 mb-8 leading-relaxed">
-                    Create a premium watch party room to enjoy movies with friends. You'll receive a unique room ID to
-                    share.
+                  <p className="text-neutral-300 mb-8 text-sm">
+                    Create a private watch party room and get a unique Room ID to share.
                   </p>
-
-                  <div className="flex space-x-4">
+                  <div className="flex space-x-3">
                     <Button
                       onClick={createRoom}
-                      className="flex-1 h-12 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black font-semibold rounded-xl transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-amber-500/25"
+                      className="flex-1 h-11 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white font-semibold rounded-lg transition-all duration-200"
                     >
                       <Crown className="w-5 h-5 mr-2" />
-                      Create Room
+                      Create
                     </Button>
                     <Button
                       onClick={() => setShowCreateDialog(false)}
                       variant="outline"
-                      className="flex-1 h-12 border-2 border-gray-600 hover:border-amber-500/50 text-black hover:bg-amber-500/10 rounded-xl transition-all duration-300"
+                      className="flex-1 h-11 border border-neutral-700 text-black rounded-lg hover:bg-neutral-800 transition-all duration-200"
                     >
                       Cancel
                     </Button>
@@ -951,48 +1195,38 @@ const HomePage = ({ startPictureInPicture }) => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+              className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
             >
               <motion.div
-                initial={{ scale: 0.8, opacity: 0, y: 50 }}
+                initial={{ scale: 0.96, opacity: 0, y: 30 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
-                exit={{ scale: 0.8, opacity: 0, y: 50 }}
+                exit={{ scale: 0.96, opacity: 0, y: 30 }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-black to-gray-900 border border-amber-500/30 rounded-3xl max-w-md w-full shadow-2xl"
+                className="relative bg-[#181818] border border-neutral-700 rounded-2xl max-w-sm w-full shadow-lg p-0"
               >
-                {/* Animated background */}
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-blue-500/5" />
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 via-purple-500 to-blue-400" />
-
-                <div className="relative p-8">
+                <div className="px-7 py-8">
                   <div className="flex items-center space-x-3 mb-6">
-                    <div className="p-3 rounded-full bg-gradient-to-r from-blue-500/20 to-purple-500/20">
+                    <div className="p-2 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20">
                       <Users className="w-6 h-6 text-blue-400" />
                     </div>
-                    <h3 className="text-2xl font-bold text-white">Join Room</h3>
+                    <h3 className="text-xl font-bold text-white">Join Room</h3>
                   </div>
-
-                  <p className="text-gray-300 mb-6 leading-relaxed">
-                    Enter the room ID shared by your friend to join their watch party:
+                  <p className="text-neutral-300 mb-6 text-sm">
+                    Enter the Room ID shared by your friend to join their watch party.
                   </p>
-
-                  <div className="relative mb-8">
-                    <Input
-                      value={joinRoomId}
-                      onChange={(e) => setJoinRoomId(e.target.value.toUpperCase())}
-                      placeholder="Enter Room ID"
-                      className="h-12 bg-gray-800/50 border-2 border-gray-600 focus:border-blue-500 text-white text-center text-lg font-mono tracking-wider rounded-xl transition-all duration-300"
-                    />
-                    <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-500/10 to-purple-500/10 pointer-events-none" />
-                  </div>
-
-                  <div className="flex space-x-4">
+                  <Input
+                    value={joinRoomId}
+                    onChange={(e) => setJoinRoomId(e.target.value.toUpperCase())}
+                    placeholder="Enter Room ID"
+                    className="h-11 bg-neutral-800 border border-neutral-700 text-white text-center text-base font-mono tracking-wider rounded-lg mb-6"
+                  />
+                  <div className="flex space-x-3">
                     <Button
                       onClick={joinRoom}
-                      className="flex-1 h-12 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-400 hover:to-purple-500 text-white font-semibold rounded-xl transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-blue-500/25"
+                      className="flex-1 h-11 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold rounded-lg transition-all duration-200"
                     >
                       <Users className="w-5 h-5 mr-2" />
-                      Join Room
+                      Join
                     </Button>
                     <Button
                       onClick={() => {
@@ -1000,7 +1234,7 @@ const HomePage = ({ startPictureInPicture }) => {
                         setJoinRoomId("")
                       }}
                       variant="outline"
-                      className="flex-1 h-12 border-2 border-gray-600 hover:border-blue-500/50 text-black hover:bg-blue-500/10 rounded-xl transition-all duration-300"
+                      className="flex-1 h-11 border border-neutral-700 text-black rounded-lg hover:bg-neutral-800 transition-all duration-200"
                     >
                       Cancel
                     </Button>

@@ -360,6 +360,41 @@ class VideoSyncService {
         }
     }
 
+    // Sync movie change across room members
+    async syncMovieChange(roomId, movie, user) {
+        try {
+            if (!realtimeDb) {
+                throw new Error("Firebase Realtime Database not initialized");
+            }
+
+            const videoState = {
+                videoUrl: movie.videoUrl,
+                movieTitle: movie.title,
+                movieId: movie.movieId,
+                currentTime: 0,
+                isPlaying: false,
+                updatedBy: user.uid,
+                updatedByName: user.name,
+                timestamp: serverTimestamp(),
+                action: 'movie_change'
+            };
+
+            const roomVideoRef = ref(realtimeDb, `rooms/${roomId}/videoState`);
+            await set(roomVideoRef, videoState);
+
+            console.log("🎬 Movie change synced to room:", {
+                roomId,
+                movie: movie.title,
+                user: user.name
+            });
+
+            return { success: true };
+        } catch (error) {
+            console.error("❌ Error syncing movie change:", error);
+            return { success: false, error: error.message };
+        }
+    }
+
     // Cleanup all listeners
     cleanup() {
         this.activeListeners.forEach((unsubscribe, key) => {

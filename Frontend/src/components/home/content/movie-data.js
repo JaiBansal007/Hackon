@@ -1097,75 +1097,75 @@ export const movieCategories = [
         }
       ]
     },
-    {
-      title: "Documentary",
-      movies: [
-        {
-          id: 89,
-          movieId: "free-solo",
-          title: "Free Solo",
-          image: "https://image.tmdb.org/t/p/w500/zdqHHtVuJPGbUQyn2wJSSDfAjqT.jpg",
-          rating: "8.1",
-          mood: ["climbing", "extreme", "nature"],
-        },
-        {
-          id: 90,
-          movieId: "won-t-you-be-my-neighbor",
-          title: "Won't You Be My Neighbor?",
-          image: "https://image.tmdb.org/t/p/w500/gWI95ZwdGCn5yLWY0RlsGlO8V6t.jpg",
-          rating: "8.4",
-          mood: ["wholesome", "childhood", "mr-rogers"],
-        },
-        {
-          id: 91,
-          movieId: "march-of-the-penguins",
-          title: "March of the Penguins",
-          image: "https://image.tmdb.org/t/p/w500/9zOOKr8pxpP2QLTbDTgLR6m8TDP.jpg",
-          rating: "7.5",
-          mood: ["nature", "antarctica", "survival"],
-        },
-        {
-          id: 92,
-          movieId: "an-inconvenient-truth",
-          title: "An Inconvenient Truth",
-          image: "https://image.tmdb.org/t/p/w500/jJqEnCnE4cJJqA2ZjVvvWhtQODq.jpg",
-          rating: "7.4",
-          mood: ["climate", "education", "urgent"],
-        },
-        {
-          id: 93,
-          movieId: "bowling-for-columbine",
-          title: "Bowling for Columbine",
-          image: "https://image.tmdb.org/t/p/w500/6O3FYOLgDgtcXFMQ5xNMOxQYKHe.jpg",
-          rating: "8.0",
-          mood: ["guns", "america", "provocative"],
-        },
-        {
-          id: 94,
-          movieId: "fahrenheit-911",
-          title: "Fahrenheit 9/11",
-          image: "https://image.tmdb.org/t/p/w500/c1UwPrJolQvJ2ykYXFMHnHhUv5H.jpg",
-          rating: "7.5",
-          mood: ["political", "bush", "controversial"],
-        },
-        {
-          id: 95,
-          movieId: "the-social-dilemma",
-          title: "The Social Dilemma",
-          image: "https://image.tmdb.org/t/p/w500/uE8FNXv3hZKJ1T5Rx3fHhL3fQSs.jpg",
-          rating: "7.6",
-          mood: ["tech", "social-media", "warning"],
-        },
-        {
-          id: 96,
-          movieId: "my-octopus-teacher",
-          title: "My Octopus Teacher",
-          image: "https://image.tmdb.org/t/p/w500/bHhgeFEz5jvjLBWkJ6SYJBNn5rN.jpg",
-          rating: "8.1",
-          mood: ["ocean", "connection", "nature"],
-        }
-      ]
-    },
+    // {
+    //   title: "Documentary",
+    //   movies: [
+    //     {
+    //       id: 89,
+    //       movieId: "free-solo",
+    //       title: "Free Solo",
+    //       image: "https://image.tmdb.org/t/p/w500/zdqHHtVuJPGbUQyn2wJSSDfAjqT.jpg",
+    //       rating: "8.1",
+    //       mood: ["climbing", "extreme", "nature"],
+    //     },
+    //     {
+    //       id: 90,
+    //       movieId: "won-t-you-be-my-neighbor",
+    //       title: "Won't You Be My Neighbor?",
+    //       image: "https://image.tmdb.org/t/p/w500/gWI95ZwdGCn5yLWY0RlsGlO8V6t.jpg",
+    //       rating: "8.4",
+    //       mood: ["wholesome", "childhood", "mr-rogers"],
+    //     },
+    //     {
+    //       id: 91,
+    //       movieId: "march-of-the-penguins",
+    //       title: "March of the Penguins",
+    //       image: "https://image.tmdb.org/t/p/w500/9zOOKr8pxpP2QLTbDTgLR6m8TDP.jpg",
+    //       rating: "7.5",
+    //       mood: ["nature", "antarctica", "survival"],
+    //     },
+    //     {
+    //       id: 92,
+    //       movieId: "an-inconvenient-truth",
+    //       title: "An Inconvenient Truth",
+    //       image: "https://image.tmdb.org/t/p/w500/jJqEnCnE4cJJqA2ZjVvvWhtQODq.jpg",
+    //       rating: "7.4",
+    //       mood: ["climate", "education", "urgent"],
+    //     },
+    //     {
+    //       id: 93,
+    //       movieId: "bowling-for-columbine",
+    //       title: "Bowling for Columbine",
+    //       image: "https://image.tmdb.org/t/p/w500/6O3FYOLgDgtcXFMQ5xNMOxQYKHe.jpg",
+    //       rating: "8.0",
+    //       mood: ["guns", "america", "provocative"],
+    //     },
+    //     {
+    //       id: 94,
+    //       movieId: "fahrenheit-911",
+    //       title: "Fahrenheit 9/11",
+    //       image: "https://image.tmdb.org/t/p/w500/c1UwPrJolQvJ2ykYXFMHnHhUv5H.jpg",
+    //       rating: "7.5",
+    //       mood: ["political", "bush", "controversial"],
+    //     },
+    //     {
+    //       id: 95,
+    //       movieId: "the-social-dilemma",
+    //       title: "The Social Dilemma",
+    //       image: "https://image.tmdb.org/t/p/w500/uE8FNXv3hZKJ1T5Rx3fHhL3fQSs.jpg",
+    //       rating: "7.6",
+    //       mood: ["tech", "social-media", "warning"],
+    //     },
+    //     {
+    //       id: 96,
+    //       movieId: "my-octopus-teacher",
+    //       title: "My Octopus Teacher",
+    //       image: "https://image.tmdb.org/t/p/w500/bHhgeFEz5jvjLBWkJ6SYJBNn5rN.jpg",
+    //       rating: "8.1",
+    //       mood: ["ocean", "connection", "nature"],
+    //     }
+    //   ]
+    // },
     {
       title: "Recently Added",
       movies: [
