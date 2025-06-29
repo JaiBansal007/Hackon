@@ -27,12 +27,28 @@ function UserInitialAvatar({ name }) {
   )
 }
 
-export function Navbar({ user, roomStatus, roomId, roomMembers, isFullscreen, onCreateRoom, onJoinRoom, onLeaveRoom, onLogout }) {
+export function Navbar({ 
+  user, 
+  roomStatus, 
+  roomId, 
+  roomMembers, 
+  isFullscreen, 
+  onCreateRoom, 
+  onJoinRoom, 
+  onLeaveRoom, 
+  onLogout,
+  hostMovieState,
+  onJoinHostMovie,
+  isHost,
+  currentWatchingMovie
+}) {
   const [search, setSearch] = useState("")
   const [showDropdown, setShowDropdown] = useState(false)
   const [showJoinPartyModal, setShowJoinPartyModal] = useState(false)
+  const [showEnterRoomModal, setShowEnterRoomModal] = useState(false)
   const [activeParties, setActiveParties] = useState([])
   const [joinPartyCode, setJoinPartyCode] = useState("")
+  const [enterRoomId, setEnterRoomId] = useState("")
   const [isJoining, setIsJoining] = useState(false)
   const inputRef = useRef(null)
   const navigate = useNavigate()
@@ -154,6 +170,32 @@ export function Navbar({ user, roomStatus, roomId, roomMembers, isFullscreen, on
     setShowJoinPartyModal(true)
   }
 
+  // Handle entering room by room ID
+  const handleEnterRoom = async () => {
+    if (!enterRoomId.trim() || !user) return
+
+    setIsJoining(true)
+    try {
+      console.log("🚪 Attempting to enter room:", enterRoomId.trim())
+      
+      // Call the join room function with the room ID
+      const success = await onJoinRoom(enterRoomId.trim())
+      
+      if (success) {
+        setShowEnterRoomModal(false)
+        setEnterRoomId("")
+        showToast(`Successfully entered room ${enterRoomId.trim()}!`, "success")
+      } else {
+        showToast("Failed to enter room. Please check the room ID and try again.", "error")
+      }
+    } catch (error) {
+      console.error("❌ Error entering room:", error)
+      showToast("Failed to enter room. Please try again.", "error")
+    } finally {
+      setIsJoining(false)
+    }
+  }
+
   if (isFullscreen) return null
 
   return (
@@ -235,6 +277,20 @@ export function Navbar({ user, roomStatus, roomId, roomMembers, isFullscreen, on
                 <Crown className="w-3 h-3 mr-1" />
                 Create Room
               </Button>
+              
+              {/* Enter Room button - Only show for non-host users (guests) */}
+              {!isHost && (
+                <Button
+                  onClick={() => setShowEnterRoomModal(true)}
+                  size="sm"
+                  variant="outline"
+                  className="border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white rounded-full px-3 py-1 text-xs h-8"
+                >
+                  <MapPin className="w-3 h-3 mr-1" />
+                  Enter Room
+                </Button>
+              )}
+              
               <Button
                 onClick={handleJoinRoomOrParty}
                 size="sm"
@@ -265,6 +321,22 @@ export function Navbar({ user, roomStatus, roomId, roomMembers, isFullscreen, on
                   )}
                 </span>
               </div>
+              
+              {/* Join Host's Movie Button - Persistent in Navbar */}
+              {!isHost && hostMovieState?.videoUrl && 
+               (!currentWatchingMovie?.videoUrl || hostMovieState.videoUrl !== currentWatchingMovie.videoUrl) && (
+                <motion.button
+                  onClick={onJoinHostMovie}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="px-3 py-1 bg-gradient-to-r from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30 text-blue-400 border border-blue-500/30 rounded-full text-xs font-medium transition-all flex items-center gap-2 shadow-lg"
+                  title={`Join ${hostMovieState?.hostName}'s movie`}
+                >
+                  <span>📺</span>
+                  <span>Join {hostMovieState?.hostName}</span>
+                </motion.button>
+              )}
+              
               <Button
                 onClick={onLeaveRoom}
                 size="sm"
@@ -499,6 +571,118 @@ export function Navbar({ user, roomStatus, roomId, roomMembers, isFullscreen, on
                     >
                       <PartyPopper className="w-4 h-4 mr-2" />
                       Manage Parties
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Enter Room Modal */}
+      <AnimatePresence>
+        {showEnterRoomModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            onClick={(e) => e.target === e.currentTarget && setShowEnterRoomModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0, y: 50 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.8, opacity: 0, y: 50 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-black to-gray-900 border border-blue-500/30 rounded-3xl max-w-md w-full shadow-2xl"
+            >
+              {/* Close button */}
+              <button
+                onClick={() => setShowEnterRoomModal(false)}
+                className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              {/* Animated background */}
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-cyan-500/5 to-blue-500/5" />
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 via-cyan-500 to-blue-400" />
+
+              <div className="relative p-8">
+                <div className="flex items-center space-x-3 mb-6">
+                  <div className="p-3 rounded-full bg-gradient-to-r from-blue-500/20 to-cyan-500/20">
+                    <MapPin className="w-6 h-6 text-blue-400" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-white">Enter Room</h3>
+                </div>
+
+                <div className="mb-6">
+                  <h4 className="text-lg font-semibold text-white mb-2">Room ID</h4>
+                  <p className="text-gray-400 text-sm mb-4">Enter the room ID to join a specific room</p>
+                  <div className="flex space-x-3">
+                    <Input
+                      value={enterRoomId}
+                      onChange={(e) => setEnterRoomId(e.target.value)}
+                      placeholder="Enter room ID..."
+                      className="flex-1 bg-gray-800/50 border-2 border-gray-600 focus:border-blue-500 text-white text-center text-lg font-mono tracking-wider rounded-xl h-12"
+                    />
+                    <Button
+                      onClick={handleEnterRoom}
+                      disabled={!enterRoomId.trim() || isJoining}
+                      className="bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-400 hover:to-cyan-500 text-white font-semibold rounded-xl px-6 h-12"
+                    >
+                      {isJoining ? (
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <>
+                          <MapPin className="w-4 h-4 mr-2" />
+                          Enter
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Info Section */}
+                <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
+                  <div className="flex items-start space-x-3">
+                    <div className="p-2 rounded-full bg-blue-500/20">
+                      <Users className="w-4 h-4 text-blue-400" />
+                    </div>
+                    <div>
+                      <h5 className="font-semibold text-white mb-1">Room vs Party</h5>
+                      <p className="text-gray-300 text-sm">
+                        Rooms are for direct video watching sessions. Use this if someone shared a specific room ID with you.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Alternative Actions */}
+                <div className="mt-6 pt-4 border-t border-gray-700">
+                  <div className="flex space-x-3">
+                    <Button
+                      onClick={() => {
+                        setShowEnterRoomModal(false)
+                        setShowJoinPartyModal(true)
+                      }}
+                      variant="outline"
+                      className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white rounded-xl"
+                    >
+                      <PartyPopper className="w-4 h-4 mr-2" />
+                      Join Party Instead
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        setShowEnterRoomModal(false)
+                        onCreateRoom()
+                      }}
+                      variant="outline"
+                      className="flex-1 border-red-500/50 text-red-300 hover:bg-red-500/10 hover:text-red-200 rounded-xl"
+                    >
+                      <Crown className="w-4 h-4 mr-2" />
+                      Create Room
                     </Button>
                   </div>
                 </div>

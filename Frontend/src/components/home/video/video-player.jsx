@@ -66,6 +66,9 @@ export function VideoPlayer({
   const [showVolumeSlider, setShowVolumeSlider] = useState(false)
   const [hasResumed, setHasResumed] = useState(false)
   const [syncStatus, setSyncStatus] = useState({ syncing: false, message: "" })
+  const [showMovieChangeNotification, setShowMovieChangeNotification] = useState(false)
+  const [movieChangeDetails, setMovieChangeDetails] = useState(null)
+  const [hostMovieState, setHostMovieState] = useState(null) // Track host's current movie
   
   // Native Picture-in-Picture state
   const [isNativePiP, setIsNativePiP] = useState(false)
@@ -345,7 +348,88 @@ export function VideoPlayer({
     }
   }
 
-  // Enhanced synced video state handler with better accuracy and status feedback
+  // Function to join host's movie
+  const joinHostMovie = () => {
+    if (!hostMovieState?.videoUrl || !videoRef.current || !syncedVideoState) return;
+    
+    const video = videoRef.current;
+    
+    console.log('🎬 Guest joining host movie:', {
+      currentVideo: movie?.videoUrl,
+      hostVideo: hostMovieState.videoUrl,
+      hostName: hostMovieState.hostName,
+      syncedState: syncedVideoState
+    });
+    
+    // Exit PiP mode if currently active
+    if (isNativePiP) {
+      console.log('🎭 Exiting PiP to join host movie...');
+      document.exitPictureInPicture().catch(console.error);
+      setIsNativePiP(false);
+      setShowPiPPlaceholder(false);
+    }
+    
+    // Update video source to host's movie
+    video.src = hostMovieState.videoUrl;
+    
+    // Show sync status
+    setSyncStatus({ 
+      syncing: true, 
+      message: `Joining ${hostMovieState.hostName}'s movie...` 
+    });
+    
+    // When video loads, sync with host's current state
+    const handleLoadedData = () => {
+      console.log('🎬 Video loaded, syncing with host state:', syncedVideoState);
+      
+      // Sync to host's current time
+      if (syncedVideoState.currentTime !== undefined) {
+        video.currentTime = syncedVideoState.currentTime;
+        setCurrentTime(syncedVideoState.currentTime);
+      }
+      
+      // Sync play/pause state
+      if (syncedVideoState.isPlaying) {
+        video.play().then(() => {
+          setIsPlaying(true);
+          setSyncStatus({ syncing: false, message: "" });
+          console.log('🎬 Successfully joined and synced with host');
+        }).catch(err => {
+          console.warn("Play failed after join:", err);
+          setSyncStatus({ syncing: false, message: "" });
+        });
+      } else {
+        video.pause();
+        setIsPlaying(false);
+        setSyncStatus({ syncing: false, message: "" });
+        console.log('🎬 Successfully joined and synced with host (paused)');
+      }
+      
+      // Remove the event listener after use
+      video.removeEventListener('loadeddata', handleLoadedData);
+    };
+    
+    // Add event listener for when video data is loaded
+    video.addEventListener('loadeddata', handleLoadedData);
+    
+    // Load the new video
+    video.load();
+    
+    // Clear any pending notifications since we're manually joining
+    setShowMovieChangeNotification(false);
+    setMovieChangeDetails(null);
+  };
+
+  // Check if guest can join host's movie (different videos and not host)
+  const canJoinHostMovie = !isHost && 
+    hostMovieState?.videoUrl && 
+    movie?.videoUrl && 
+    hostMovieState.videoUrl !== movie.videoUrl;
+
+  // Optimized video sync handler with debouncing and better performance
+  const syncTimeoutRef = useRef(null);
+  const lastSyncIdRef = useRef(null);
+  
   useEffect(() => {
     if (!syncedVideoState || !videoRef.current) return;
 
@@ -357,46 +441,131 @@ export function VideoPlayer({
       lastUpdatedBy,
       networkDelay = 0,
       syncId,
-      lastUpdatedByName 
+      lastUpdatedByName,
+      videoUrl: syncVideoUrl
     } = syncedVideoState;
 
-    // Prevent sync loops - don't process our own updates
-    if (lastUpdatedBy === user?.uid) {
+    // Update host movie state if this sync comes from host and has a video URL
+    if (syncVideoUrl && lastUpdatedBy && lastUpdatedByName && !isHost) {
+      setHostMovieState({
+        videoUrl: syncVideoUrl,
+        hostName: lastUpdatedByName,
+        hostUid: lastUpdatedBy,
+        timestamp: Date.now()
+      });
+    }
+
+    // Prevent sync loops - don't process our own updates or duplicate sync IDs
+    if (lastUpdatedBy === user?.uid || syncId === lastSyncIdRef.current) {
+      return;
+    }
+    
+    // Track this sync ID to prevent duplicates
+    lastSyncIdRef.current = syncId;
+
+    // Check if video URL has changed - if so, exit PiP mode and switch to new video
+    if (syncVideoUrl && movie?.videoUrl && syncVideoUrl !== movie?.videoUrl) {
+      console.log('🎬 Video URL changed - exiting PiP and switching video:', {
+        currentVideo: movie?.videoUrl,
+        newVideo: syncVideoUrl,
+        isInPiP: isNativePiP
+      });
+      
+      // If user is not the host, show notification popup
+      if (!isHost && lastUpdatedByName) {
+        setMovieChangeDetails({
+          newVideoUrl: syncVideoUrl,
+          hostName: lastUpdatedByName,
+          hostUid: lastUpdatedBy
+        });
+        setShowMovieChangeNotification(true);
+        return; // Don't auto-switch, wait for user consent
+      }
+      
+      // Exit PiP mode if currently active
+      if (isNativePiP) {
+        console.log('🎭 Auto-exiting PiP due to video change...');
+        document.exitPictureInPicture().catch(console.error);
+        setIsNativePiP(false);
+        setShowPiPPlaceholder(false);
+      }
+      
+      // Update video source to new video (for host or auto-accepted changes)
+      video.src = syncVideoUrl;
+      video.load(); // Force reload of new video
+      
+      // Show sync status for video change
+      setSyncStatus({ 
+        syncing: true, 
+        message: `Switching to new video from ${lastUpdatedByName || 'host'}...` 
+      });
+      
       return;
     }
 
-    // Show sync status
-    setSyncStatus({ 
-      syncing: true, 
-      message: `Syncing with ${lastUpdatedByName || 'host'}...` 
-    });
+    // Debounce sync operations to prevent rapid fire updates
+    if (syncTimeoutRef.current) {
+      clearTimeout(syncTimeoutRef.current);
+    }
+    
+    syncTimeoutRef.current = setTimeout(() => {
+      performVideoSync(video, {
+        isPlaying,
+        syncTime,
+        action,
+        lastUpdatedByName,
+        networkDelay,
+        isInPiP: isNativePiP
+      });
+    }, 50); // 50ms debounce to batch rapid updates
 
-    console.log("🎬 Processing video sync:", {
+  }, [syncedVideoState, user?.uid, movie?.videoUrl, isNativePiP]);
+
+  // Optimized sync function with better logic
+  const performVideoSync = (video, syncData) => {
+    const { isPlaying, syncTime, action, lastUpdatedByName, networkDelay, isInPiP } = syncData;
+    
+    // Show sync status only for significant actions
+    if (action && action !== 'timeupdate') {
+      setSyncStatus({ 
+        syncing: true, 
+        message: `Syncing with ${lastUpdatedByName || 'host'}...` 
+      });
+    }
+
+    console.log("🎬 Processing optimized sync:", {
       action,
       isPlaying,
       syncTime,
       networkDelay: networkDelay + "ms",
-      from: lastUpdatedByName
+      from: lastUpdatedByName,
+      isInPiP,
+      currentVideoTime: video.currentTime.toFixed(2)
     });
 
     // Calculate time difference with network compensation
     const timeDiff = Math.abs(video.currentTime - syncTime);
-    const syncThreshold = 0.5; // More aggressive sync threshold
+    // Use more relaxed thresholds to prevent constant adjustments
+    const syncThreshold = isInPiP ? 1.5 : 2.0; // Increased thresholds for stability
+    const microSyncThreshold = 0.3; // For very small adjustments
 
-    // Handle different sync actions
+    // Handle different sync actions with optimized logic
     switch (action) {
       case 'play':
         if (video.paused && isPlaying) {
-          // Seek first if there's a significant time difference
-          if (timeDiff > syncThreshold) {
+          // Only seek if there's a significant time difference
+          if (timeDiff > microSyncThreshold) {
+            console.log(`🎬 Sync play + seek: ${video.currentTime.toFixed(2)} -> ${syncTime.toFixed(2)} (diff: ${timeDiff.toFixed(2)}s)`);
             video.currentTime = syncTime;
+            setCurrentTime(syncTime);
           }
+          
           video.play().then(() => {
             setIsPlaying(true);
-            setCurrentTime(syncTime);
             setSyncStatus({ syncing: false, message: "" });
+            console.log('🎬 Sync play successful', { isInPiP, finalTime: video.currentTime.toFixed(2) });
           }).catch(err => {
-            console.warn("Play failed:", err);
+            console.warn("Play failed during sync:", err);
             setSyncStatus({ syncing: false, message: "" });
           });
         } else {
@@ -406,6 +575,7 @@ export function VideoPlayer({
 
       case 'pause':
         if (!video.paused && !isPlaying) {
+          console.log(`🎬 Sync pause at: ${syncTime.toFixed(2)}`);
           video.currentTime = syncTime;
           video.pause();
           setIsPlaying(false);
@@ -415,43 +585,124 @@ export function VideoPlayer({
         break;
 
       case 'seek':
-        video.currentTime = syncTime;
-        setCurrentTime(syncTime);
+        if (timeDiff > microSyncThreshold) {
+          console.log(`🎬 Sync seek: ${video.currentTime.toFixed(2)} -> ${syncTime.toFixed(2)} (diff: ${timeDiff.toFixed(2)}s)`);
+          video.currentTime = syncTime;
+          setCurrentTime(syncTime);
+        }
         setSyncStatus({ syncing: false, message: "" });
         break;
 
+      case 'timeupdate':
       default:
-        // General sync - only sync if time difference is significant
+        // Only sync for significant differences to prevent micro-adjustments
         if (timeDiff > syncThreshold) {
+          console.log(`🎬 General time sync: ${video.currentTime.toFixed(2)} -> ${syncTime.toFixed(2)} (diff: ${timeDiff.toFixed(2)}s)`);
           video.currentTime = syncTime;
           setCurrentTime(syncTime);
         }
 
-        // Sync play/pause state
-        if (video.paused !== !isPlaying) {
-          if (isPlaying) {
-            video.play().catch(err => console.warn("Play failed:", err));
-            setIsPlaying(true);
-          } else {
+        // Sync play/pause state only if different
+        const needsPlayStateSync = video.paused === isPlaying;
+        if (needsPlayStateSync) {
+          if (isPlaying && video.paused) {
+            video.play().then(() => {
+              setIsPlaying(true);
+              console.log('🎬 General sync play successful', { isInPiP, time: video.currentTime.toFixed(2) });
+            }).catch(err => console.warn("General play failed:", err));
+          } else if (!isPlaying && !video.paused) {
             video.pause();
             setIsPlaying(false);
+            console.log('🎬 General sync pause successful', { isInPiP, time: video.currentTime.toFixed(2) });
           }
         }
+        
+        // Clear sync status for general updates
         setSyncStatus({ syncing: false, message: "" });
         break;
     }
+  };
 
-    // Clear sync status after a timeout
-    setTimeout(() => setSyncStatus({ syncing: false, message: "" }), 1000);
-  }, [syncedVideoState, user?.uid]);
-
-  // Check for native Picture-in-Picture support
-  useEffect(() => {
-    const video = videoRef.current
-    if (video && 'requestPictureInPicture' in video) {
-      setPipSupported(true)
+  // Handle movie change notification actions
+  const handleAcceptMovieChange = () => {
+    if (movieChangeDetails && videoRef.current) {
+      console.log('✅ User accepted movie change');
+      
+      // Exit PiP mode if currently active
+      if (isNativePiP) {
+        console.log('🎭 Auto-exiting PiP due to accepted video change...');
+        document.exitPictureInPicture().catch(console.error);
+        setIsNativePiP(false);
+        setShowPiPPlaceholder(false);
+      }
+      
+      // Update video source to new video
+      const video = videoRef.current;
+      video.src = movieChangeDetails.newVideoUrl;
+      video.load();
+      
+      // Show sync status
+      setSyncStatus({ 
+        syncing: true, 
+        message: `Switching to new video from ${movieChangeDetails.hostName}...` 
+      });
+      
+      // Clear notification
+      setShowMovieChangeNotification(false);
+      setMovieChangeDetails(null);
     }
-  }, [])
+  };
+
+  const handleDeclineMovieChange = () => {
+    console.log('❌ User declined movie change');
+    setShowMovieChangeNotification(false);
+    setMovieChangeDetails(null);
+  };
+
+  // Auto-dismiss movie change notification after 15 seconds
+  useEffect(() => {
+    if (showMovieChangeNotification) {
+      const timer = setTimeout(() => {
+        console.log('⏰ Movie change notification auto-dismissed');
+        setShowMovieChangeNotification(false);
+        setMovieChangeDetails(null);
+      }, 15000); // 15 seconds
+
+      return () => clearTimeout(timer);
+    }
+  }, [showMovieChangeNotification]);
+
+  // Handle movie changes - exit PiP if movie changes
+  useEffect(() => {
+    // If we're in PiP mode and the movie changes, exit PiP
+    if (isNativePiP && movie?.movieId) {
+      console.log('🎬 Movie changed while in PiP - auto-exiting PiP mode');
+      document.exitPictureInPicture().catch(console.error);
+      setIsNativePiP(false);
+      setShowPiPPlaceholder(false);
+    }
+  }, [movie?.movieId, movie?.videoUrl]);
+
+  // Enhanced PiP support detection and error handling
+  useEffect(() => {
+    const checkPiPSupport = () => {
+      const hasBasicSupport = 'pictureInPictureEnabled' in document;
+      const hasVideoSupport = videoRef.current && 'requestPictureInPicture' in videoRef.current;
+      
+      if (hasBasicSupport && hasVideoSupport) {
+        setPipSupported(true);
+        console.log('🎭 Picture-in-Picture fully supported');
+      } else {
+        setPipSupported(false);
+        console.warn('🎭 Picture-in-Picture not supported:', {
+          basicSupport: hasBasicSupport,
+          videoSupport: hasVideoSupport
+        });
+      }
+    };
+
+    checkPiPSupport();
+  }, [videoRef.current]);
 
   // Handle native PiP events
   useEffect(() => {
@@ -462,6 +713,25 @@ export function VideoPlayer({
       console.log('🎭 ENTERED native PiP mode')
       setIsNativePiP(true)
       setShowPiPPlaceholder(true)
+      
+      // Log current sync state when entering PiP
+      if (syncedVideoState) {
+        console.log('🎭 PiP entered with sync state:', {
+          hostTime: syncedVideoState.currentTime,
+          videoTime: video.currentTime,
+          hostPlaying: syncedVideoState.isPlaying,
+          videoPlaying: !video.paused,
+          isHost: isHost
+        });
+      }
+      
+      // Auto-redirect to home page when entering PiP
+      setTimeout(() => {
+        if (onExitVideo) {
+          console.log('🏠 Auto-redirecting to home page from PiP...')
+          onExitVideo()
+        }
+      }, 100) // Small delay to ensure PiP is fully established
     }
 
     const handleLeavepictureinpicture = () => {
@@ -477,7 +747,7 @@ export function VideoPlayer({
       video.removeEventListener('enterpictureinpicture', handleEnterpictureinpicture)
       video.removeEventListener('leavepictureinpicture', handleLeavepictureinpicture)
     }
-  }, [pipSupported])
+  }, [pipSupported, onExitVideo])
 
   // Native PiP toggle function
   const toggleNativePiP = async () => {
@@ -573,6 +843,23 @@ export function VideoPlayer({
     }
   }, [isDraggingPlaceholder, dragOffset])
 
+  // Handle tab visibility changes to auto-exit PiP when returning to video tab
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      // If the tab becomes visible and we're in PiP mode, exit PiP
+      if (!document.hidden && isNativePiP) {
+        console.log('🎭 Tab became visible while in PiP - auto-exiting PiP mode')
+        document.exitPictureInPicture().catch(console.error)
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [isNativePiP])
+
   // ESC key to exit PiP mode
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -587,6 +874,15 @@ export function VideoPlayer({
       document.removeEventListener('keydown', handleKeyDown)
     }
   }, [isNativePiP])
+
+  // Cleanup function for sync timeout
+  useEffect(() => {
+    return () => {
+      if (syncTimeoutRef.current) {
+        clearTimeout(syncTimeoutRef.current);
+      }
+    };
+  }, []);
 
   if (!isWatching) return null
 
@@ -603,7 +899,7 @@ export function VideoPlayer({
         <video
           ref={videoRef}
           src={movie?.videoUrl}
-          className="w-full h-full object-cover"
+          className={`w-full h-full object-cover ${isNativePiP ? 'opacity-0 pointer-events-none' : ''}`}
           controls={false}
           poster={movie.image}
           onPlay={handlePlay}
@@ -618,6 +914,108 @@ export function VideoPlayer({
         </video>
 
         <FloatingReactions reactions={recentReactions} />
+
+        {/* PiP Mode Overlay */}
+        <AnimatePresence>
+          {isNativePiP && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="absolute inset-0 flex items-center justify-center bg-black z-30"
+            >
+              <div className="text-center text-white">
+                <div className="mb-4">
+                  <PictureInPicture2 className="w-16 h-16 mx-auto text-blue-400" />
+                </div>
+                <h3 className="text-xl font-semibold mb-2">Picture-in-Picture Active</h3>
+                <p className="text-gray-300 mb-6">Video is playing in a floating window</p>
+                
+                <div className="flex flex-col gap-3 items-center">
+                  <motion.button
+                    onClick={toggleNativePiP}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+                  >
+                    Exit Picture-in-Picture
+                  </motion.button>
+                  
+                  <motion.button
+                    onClick={onExitVideo}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="px-6 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 rounded-lg transition-colors flex items-center gap-2"
+                  >
+                    <X className="w-4 h-4" />
+                    Exit Video Completely
+                  </motion.button>
+                </div>
+                
+                <p className="text-gray-400 text-sm mt-4">
+                  Or press ESC to exit Picture-in-Picture
+                </p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Movie Change Notification */}
+        <AnimatePresence>
+          {showMovieChangeNotification && movieChangeDetails && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="fixed inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm z-50"
+            >
+              <motion.div
+                initial={{ y: 50, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: 50, opacity: 0 }}
+                className="bg-gradient-to-br from-gray-900 to-black border border-gray-700 rounded-2xl p-8 max-w-md mx-4 shadow-2xl"
+              >
+                <div className="text-center">
+                  <div className="mb-6">
+                    <div className="w-16 h-16 mx-auto bg-blue-500/20 rounded-full flex items-center justify-center mb-4">
+                      <PictureInPicture2 className="w-8 h-8 text-blue-400" />
+                    </div>
+                    <h3 className="text-xl font-bold text-white mb-2">New Movie Started!</h3>
+                    <p className="text-gray-300 text-sm leading-relaxed">
+                      <span className="font-semibold text-blue-400">{movieChangeDetails.hostName}</span> has started a new movie. 
+                      Would you like to join and watch together? You can also use the "Join" button in the navbar anytime.
+                    </p>
+                  </div>
+                  
+                  <div className="flex flex-col gap-3">
+                    <motion.button
+                      onClick={handleAcceptMovieChange}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="w-full py-3 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
+                    >
+                      <Play className="w-4 h-4" />
+                      Join Movie
+                    </motion.button>
+                    
+                    <motion.button
+                      onClick={handleDeclineMovieChange}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="w-full py-3 bg-gray-700 hover:bg-gray-600 text-gray-300 font-medium rounded-lg transition-colors"
+                    >
+                      Stay Here
+                    </motion.button>
+                  </div>
+                  
+                  <p className="text-gray-500 text-xs mt-4">
+                    This notification will auto-dismiss in 15 seconds
+                  </p>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Sync Status Indicator */}
         <AnimatePresence>
@@ -743,6 +1141,20 @@ export function VideoPlayer({
                     </span>
                   )}
                 </div>
+              )}
+
+              {/* Join Host's Movie Button - Persistent */}
+              {canJoinHostMovie && (
+                <motion.button
+                  onClick={joinHostMovie}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="px-3 py-1 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border border-blue-500/30 rounded-full text-xs font-medium transition-all flex items-center gap-1"
+                  title={`Join ${hostMovieState?.hostName}'s movie`}
+                >
+                  <span>📺</span>
+                  <span>Join {hostMovieState?.hostName}</span>
+                </motion.button>
               )}
             </div>
 

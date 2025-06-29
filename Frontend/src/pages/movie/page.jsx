@@ -642,11 +642,16 @@ const MoviePage = ({ isPiPActive }) => {
           user={user}
           roomStatus={roomStatus}
           roomId={roomId}
+          roomMembers={roomMembers}
           isFullscreen={isFullscreen}
           onCreateRoom={() => setShowCreateDialog(true)}
           onJoinRoom={() => setShowJoinDialog(true)}
           onLeaveRoom={leaveRoom}
           onLogout={handleLogout}
+          hostMovieState={null}
+          onJoinHostMovie={() => {}}
+          isHost={false}
+          currentWatchingMovie={null}
         />
       )}
       <div className="relative w-full h-full min-h-screen bg-gray-950 text-white overflow-x-hidden flex">

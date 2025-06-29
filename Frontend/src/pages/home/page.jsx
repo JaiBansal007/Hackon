@@ -55,6 +55,7 @@ const HomePage = ({ startPictureInPicture, isPiPActive }) => {
   const [videoControlPermission, setVideoControlPermission] = useState(false)
   const [typingUsers, setTypingUsers] = useState([])
   const [syncedVideoState, setSyncedVideoState] = useState(null)
+  const [hostMovieState, setHostMovieState] = useState(null) // Track host's current movie for navbar
 
   // Permission management state
   const [showPermissionManager, setShowPermissionManager] = useState(false)
@@ -286,6 +287,17 @@ const HomePage = ({ startPictureInPicture, isPiPActive }) => {
       if (videoState) {
         setSyncedVideoState(videoState)
         setCurrentVideoTime(videoState.currentTime || 0)
+        
+        // Update host movie state for navbar (if not host and sync has video URL)
+        if (!isHost && videoState.videoUrl && videoState.lastUpdatedByName) {
+          setHostMovieState({
+            videoUrl: videoState.videoUrl,
+            hostName: videoState.lastUpdatedByName,
+            hostUid: videoState.lastUpdatedBy,
+            timestamp: Date.now()
+          });
+        }
+        
         // Just sync the time if user is already watching the same movie
         if (isWatching && currentWatchingMovie?.videoUrl === videoState.videoUrl) {
           setCurrentVideoTime(videoState.currentTime || 0)
@@ -492,6 +504,7 @@ const HomePage = ({ startPictureInPicture, isPiPActive }) => {
       setVideoControlPermission(false)
       setRoomPermissions(null)
       setSyncedVideoState(null)
+      setHostMovieState(null) // Clear host movie state when leaving room
 
       // Clear all persisted state
       localStorage.removeItem("roomState")
@@ -501,6 +514,38 @@ const HomePage = ({ startPictureInPicture, isPiPActive }) => {
       console.error("Error leaving room:", error)
     }
   }
+
+  // Function for guests to join host's movie from navbar
+  const joinHostMovie = () => {
+    if (!hostMovieState?.videoUrl || isHost) return;
+    
+    console.log('🎬 Guest joining host movie from navbar:', {
+      currentVideo: currentWatchingMovie?.videoUrl,
+      hostVideo: hostMovieState.videoUrl,
+      hostName: hostMovieState.hostName,
+      syncedVideoState
+    });
+    
+    // Create a movie object for the host's video
+    const hostMovie = {
+      movieId: `host-movie-${hostMovieState.hostUid}`,
+      title: `${hostMovieState.hostName}'s Movie`,
+      videoUrl: hostMovieState.videoUrl,
+      image: currentWatchingMovie?.image || '/placeholder-movie.jpg'
+    };
+    
+    // Set the movie and start watching with proper sync
+    setCurrentWatchingMovie(hostMovie);
+    setIsWatching(true);
+    
+    // If we have sync state, pass the initial state for proper sync
+    if (syncedVideoState) {
+      console.log('🎬 Starting with sync state:', {
+        currentTime: syncedVideoState.currentTime,
+        isPlaying: syncedVideoState.isPlaying
+      });
+    }
+  };
 
   const toggleFullscreen = () => {
     if (!isFullscreen) {
@@ -918,6 +963,10 @@ const HomePage = ({ startPictureInPicture, isPiPActive }) => {
           onJoinRoom={() => setShowJoinDialog(true)}
           onLeaveRoom={leaveRoom}
           onLogout={handleLogout}
+          hostMovieState={hostMovieState}
+          onJoinHostMovie={joinHostMovie}
+          isHost={isHost}
+          currentWatchingMovie={currentWatchingMovie}
         />
       )}
 

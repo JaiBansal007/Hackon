@@ -286,6 +286,10 @@ const PartyPage = ({ onJoinRoom }) => {
           await authService.signOut()
           navigate("/")
         }}
+        hostMovieState={null}
+        onJoinHostMovie={() => {}}
+        isHost={false}
+        currentWatchingMovie={null}
       />
 
       <div className="pt-16 px-4 pb-8">
