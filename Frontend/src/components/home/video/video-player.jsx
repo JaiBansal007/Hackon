@@ -36,7 +36,6 @@ export function VideoPlayer({
   onToggleChat,
   onToggleReactions,
   onToggleRoomMembers,
-  onTogglePiP,
   onSendReaction,
   showReactions,
   showChat,
@@ -67,6 +66,15 @@ export function VideoPlayer({
   const [showVolumeSlider, setShowVolumeSlider] = useState(false)
   const [hasResumed, setHasResumed] = useState(false)
   const [syncStatus, setSyncStatus] = useState({ syncing: false, message: "" })
+  
+  // Native Picture-in-Picture state
+  const [isNativePiP, setIsNativePiP] = useState(false)
+  const [pipSupported, setPipSupported] = useState(false)
+  const [showPiPPlaceholder, setShowPiPPlaceholder] = useState(false)
+  const [pipPlaceholderPosition, setPipPlaceholderPosition] = useState({ x: 20, y: 20 })
+  const [isDraggingPlaceholder, setIsDraggingPlaceholder] = useState(false)
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
+  const placeholderRef = useRef(null)
 
   const viewingHistoryManager = ViewingHistoryManager.getInstance()
 
@@ -437,6 +445,149 @@ export function VideoPlayer({
     setTimeout(() => setSyncStatus({ syncing: false, message: "" }), 1000);
   }, [syncedVideoState, user?.uid]);
 
+  // Check for native Picture-in-Picture support
+  useEffect(() => {
+    const video = videoRef.current
+    if (video && 'requestPictureInPicture' in video) {
+      setPipSupported(true)
+    }
+  }, [])
+
+  // Handle native PiP events
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video || !pipSupported) return
+
+    const handleEnterpictureinpicture = () => {
+      console.log('🎭 ENTERED native PiP mode')
+      setIsNativePiP(true)
+      setShowPiPPlaceholder(true)
+    }
+
+    const handleLeavepictureinpicture = () => {
+      console.log('🎭 LEFT native PiP mode')
+      setIsNativePiP(false)
+      setShowPiPPlaceholder(false)
+    }
+
+    video.addEventListener('enterpictureinpicture', handleEnterpictureinpicture)
+    video.addEventListener('leavepictureinpicture', handleLeavepictureinpicture)
+
+    return () => {
+      video.removeEventListener('enterpictureinpicture', handleEnterpictureinpicture)
+      video.removeEventListener('leavepictureinpicture', handleLeavepictureinpicture)
+    }
+  }, [pipSupported])
+
+  // Native PiP toggle function
+  const toggleNativePiP = async () => {
+    console.log('🎭 Native PiP toggle called - Current state:', { isNativePiP, pipSupported })
+    
+    const video = videoRef.current
+    if (!video || !pipSupported) {
+      console.warn('Picture-in-Picture is not supported')
+      // You could show a toast notification here
+      return
+    }
+
+    try {
+      if (isNativePiP) {
+        console.log('🎭 Exiting native PiP...')
+        await document.exitPictureInPicture()
+      } else {
+        console.log('🎭 Entering native PiP...')
+        // Ensure video is playing before entering PiP
+        if (video.paused) {
+          await video.play()
+        }
+        await video.requestPictureInPicture()
+      }
+    } catch (error) {
+      console.error('Error toggling Picture-in-Picture:', error)
+      
+      // Handle specific PiP errors
+      if (error.name === 'InvalidStateError') {
+        console.warn('Video is not ready for Picture-in-Picture')
+      } else if (error.name === 'NotSupportedError') {
+        console.warn('Picture-in-Picture is not supported by this browser')
+      } else if (error.name === 'NotAllowedError') {
+        console.warn('Picture-in-Picture was denied by user or browser policy')
+      }
+      
+      // Reset PiP state if there was an error
+      setIsNativePiP(false)
+      setShowPiPPlaceholder(false)
+    }
+  }
+
+  // Draggable placeholder mouse event handlers
+  const handlePlaceholderMouseDown = (e) => {
+    setIsDraggingPlaceholder(true)
+    const rect = placeholderRef.current?.getBoundingClientRect()
+    if (rect) {
+      setDragOffset({
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      })
+    }
+    e.preventDefault()
+  }
+
+  // Double-click to toggle PiP
+  const handlePlaceholderDoubleClick = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    toggleNativePiP()
+  }
+
+  // Global mouse move and up handlers for dragging
+  useEffect(() => {
+    if (!isDraggingPlaceholder) return
+
+    const handleMouseMove = (e) => {
+      const newX = e.clientX - dragOffset.x
+      const newY = e.clientY - dragOffset.y
+      
+      // Constrain within window bounds
+      const windowWidth = window.innerWidth
+      const windowHeight = window.innerHeight
+      const placeholderWidth = 240 // placeholder width
+      const placeholderHeight = 135 // placeholder height
+      
+      const constrainedX = Math.max(0, Math.min(newX, windowWidth - placeholderWidth))
+      const constrainedY = Math.max(0, Math.min(newY, windowHeight - placeholderHeight))
+      
+      setPipPlaceholderPosition({ x: constrainedX, y: constrainedY })
+    }
+
+    const handleMouseUp = () => {
+      setIsDraggingPlaceholder(false)
+    }
+
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [isDraggingPlaceholder, dragOffset])
+
+  // ESC key to exit PiP mode
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && isNativePiP) {
+        e.preventDefault()
+        toggleNativePiP()
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isNativePiP])
+
   if (!isWatching) return null
 
   return (
@@ -638,15 +789,57 @@ export function VideoPlayer({
                 <MessageCircle className="w-4 h-4" />
               </motion.button>
               <motion.button
-                onClick={onTogglePiP}
+                onClick={toggleNativePiP}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="p-2 rounded-full bg-white/20 hover:bg-white/30 text-white border-none backdrop-blur-sm transition-all"
+                className={`p-2 rounded-full ${pipSupported 
+                  ? (isNativePiP 
+                    ? 'bg-blue-500/30 text-blue-400' 
+                    : 'bg-white/20 hover:bg-white/30 text-white'
+                  ) 
+                  : 'bg-gray-500/20 text-gray-500 cursor-not-allowed'
+                } border-none backdrop-blur-sm transition-all`}
+                disabled={!pipSupported}
+                title={pipSupported 
+                  ? (isNativePiP ? 'Exit Picture-in-Picture' : 'Enter Picture-in-Picture')
+                  : 'Picture-in-Picture not supported'
+                }
               >
                 <PictureInPicture2 className="w-4 h-4" />
               </motion.button>
               <motion.button
-                onClick={onToggleFullscreen}
+                onClick={() => {
+                  // Check if we're exiting fullscreen and should restore PiP state
+                  const expandFromPiP = sessionStorage.getItem("expandFromPiP");
+                  if (expandFromPiP && document.fullscreenElement) {
+                    // We're exiting fullscreen from PiP expansion
+                    try {
+                      const pipState = JSON.parse(expandFromPiP);
+                      // Clear the flag
+                      sessionStorage.removeItem("expandFromPiP");
+                      
+                      // Exit fullscreen first, then handle the video state
+                      document.exitFullscreen().then(() => {
+                        // The video should continue playing with the same state
+                        if (videoRef.current) {
+                          videoRef.current.currentTime = pipState.currentTime;
+                          if (pipState.playing) {
+                            videoRef.current.play().catch(console.error);
+                          } else {
+                            videoRef.current.pause();
+                          }
+                        }
+                      }).catch(console.error);
+                      return;
+                    } catch (error) {
+                      console.error("Error parsing PiP expand state:", error);
+                      sessionStorage.removeItem("expandFromPiP");
+                    }
+                  }
+                  
+                  // Normal fullscreen toggle
+                  onToggleFullscreen();
+                }}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className="p-2 rounded-full bg-white/20 hover:bg-white/30 text-white border-none backdrop-blur-sm transition-all"
@@ -673,6 +866,7 @@ export function VideoPlayer({
           </div>
         )}
       </div>
+
     </motion.div>
   )
 }

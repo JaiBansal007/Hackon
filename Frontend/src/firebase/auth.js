@@ -53,13 +53,34 @@ class AuthService {
         try {
             const storedUser = localStorage.getItem("user");
             if (storedUser) {
-                return JSON.parse(storedUser);
+                const userData = JSON.parse(storedUser);
+                // Return a user-like object with essential properties
+                return {
+                    uid: userData.uid,
+                    displayName: userData.name,
+                    email: userData.email,
+                    photoURL: userData.photoURL
+                };
             }
         } catch (error) {
             console.warn("Failed to parse stored user data:", error);
             localStorage.removeItem("user");
         }
         
+        return null;
+    }
+
+    // Fast user check without waiting for Firebase
+    getCachedUser() {
+        try {
+            const storedUser = localStorage.getItem("user");
+            if (storedUser) {
+                return JSON.parse(storedUser);
+            }
+        } catch (error) {
+            console.warn("Failed to parse cached user data:", error);
+            localStorage.removeItem("user");
+        }
         return null;
     }
 

@@ -17,13 +17,15 @@ import { AnimatePresence, motion } from "framer-motion"
 import { GamificationManager } from "@/lib/gamification"
 import { ViewingHistoryManager } from "@/lib/viewing-history"
 import { featuredMovies } from "../../components/home/content/featured-movies"
+import { BeautifulLoader } from "@/components/ui/beautiful-loader"
 import authService from "../../firebase/auth"
 import chatService from "../../firebase/chat"
 import videoSyncService from "../../firebase/videoSync"
 import { WebSocketManager } from "@/lib/websocket"
 
-const HomePage = ({ startPictureInPicture }) => {
+const HomePage = ({ startPictureInPicture, isPiPActive }) => {
   const [user, setUser] = useState(null)
+  const [authLoading, setAuthLoading] = useState(true)
   const [isWatching, setIsWatching] = useState(false)
   const [currentWatchingMovie, setCurrentWatchingMovie] = useState(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -46,12 +48,6 @@ const HomePage = ({ startPictureInPicture }) => {
   const [showJoinDialog, setShowJoinDialog] = useState(false)
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [roomMembers, setRoomMembers] = useState([])
-  const [roomSyncNotification, setRoomSyncNotification] = useState({
-    show: false,
-    movie: null,
-    currentTime: 0,
-    isPlaying: false
-  })
 
   // Firebase-related state
   const [isHost, setIsHost] = useState(false)
@@ -96,6 +92,7 @@ const HomePage = ({ startPictureInPicture }) => {
         }
         setUser(userData)
       }
+      setAuthLoading(false)
     })
 
     return unsubscribe
@@ -289,20 +286,8 @@ const HomePage = ({ startPictureInPicture }) => {
       if (videoState) {
         setSyncedVideoState(videoState)
         setCurrentVideoTime(videoState.currentTime || 0)
-        // If there's a synced video and user is not currently watching anything
-        if (videoState.videoUrl && !isWatching) {
-          const foundMovie = featuredMovies.find(m => m.videoUrl === videoState.videoUrl)
-          if (foundMovie) {
-            // Show notification to join synced video instead of auto-starting
-            setRoomSyncNotification({
-              show: true,
-              movie: foundMovie,
-              currentTime: videoState.currentTime || 0,
-              isPlaying: videoState.isPlaying || false
-            });
-          }
-        } else if (isWatching && currentWatchingMovie?.videoUrl === videoState.videoUrl) {
-          // If user is already watching the same movie, sync the time
+        // Just sync the time if user is already watching the same movie
+        if (isWatching && currentWatchingMovie?.videoUrl === videoState.videoUrl) {
           setCurrentVideoTime(videoState.currentTime || 0)
         }
       }
@@ -449,14 +434,14 @@ const HomePage = ({ startPictureInPicture }) => {
     if (!user || !joinRoomId.trim()) return
 
     try {
-      const result = await chatService.joinRoom(roomIdToJoin, user)
+      const result = await chatService.joinRoom(joinRoomId, user)
       if (result.success) {
-        setRoomId(roomIdToJoin)
+        setRoomId(joinRoomId)
         setRoomStatus("member")
         setIsHost(false)
         setShowJoinDialog(false)
         setJoinRoomId("")
-        console.log("✅ Successfully joined room:", roomIdToJoin)
+        console.log("✅ Successfully joined room:", joinRoomId)
       } else {
         console.error("Failed to join room:", result.error)
       }
@@ -546,6 +531,12 @@ const HomePage = ({ startPictureInPicture }) => {
   }
 
   const startWatching = (movie) => {
+    // Check if PiP is currently active
+    if (isPiPActive) {
+      console.log("🚫 Cannot start new movie while Picture-in-Picture is active");
+      return;
+    }
+
     // Check if user is in a room
     if (roomStatus === "none") {
       // If not in a room, suggest joining/creating a room for sync features
@@ -580,6 +571,12 @@ const HomePage = ({ startPictureInPicture }) => {
 
   // New function for solo watching (without room)
   const startSoloWatching = (movie) => {
+    // Check if PiP is currently active
+    if (isPiPActive) {
+      console.log("🚫 Cannot start new movie while Picture-in-Picture is active");
+      return;
+    }
+
     const movieWithId = {
       ...movie,
       movieId:
@@ -798,10 +795,22 @@ const HomePage = ({ startPictureInPicture }) => {
 
   const togglePictureInPicture = (movie) => {
     if (startPictureInPicture) {
+      // Get current video state to preserve play/pause state
+      const videoElement = document.querySelector("video")
+      const actualCurrentTime = videoElement ? videoElement.currentTime : currentVideoTime
+      const actualIsPlaying = videoElement ? !videoElement.paused : false
+      
+      console.log("🎬 Entering PiP from home with state:", {
+        currentTime: actualCurrentTime,
+        isPlaying: actualIsPlaying,
+        roomStatus,
+        roomId
+      })
+      
       startPictureInPicture(
         movie || currentWatchingMovie,
-        currentVideoTime,
-        false, // Default to paused when entering PiP
+        actualCurrentTime,
+        actualIsPlaying, // Preserve actual playing state 
         roomStatus,
         roomId,
         roomMembers,
@@ -885,20 +894,9 @@ const HomePage = ({ startPictureInPicture }) => {
     syncOnJoin()
   }, [user, roomId, roomStatus, featuredMovies])
 
-  // Handle room sync notification actions
-  const joinSyncedVideo = () => {
-    if (roomSyncNotification.movie) {
-      setCurrentWatchingMovie(roomSyncNotification.movie);
-      setIsWatching(true);
-      setCurrentVideoTime(roomSyncNotification.currentTime);
-      setRoomSyncNotification({ show: false, movie: null, currentTime: 0, isPlaying: false });
-      console.log("🎬 Joined synced video:", roomSyncNotification.movie.title);
-    }
-  };
-
-  const dismissSyncNotification = () => {
-    setRoomSyncNotification({ show: false, movie: null, currentTime: 0, isPlaying: false });
-  };
+  if (authLoading) {
+    return <BeautifulLoader subtitle="Loading your home..." />
+  }
 
   if (!user) return null
 
@@ -1013,55 +1011,23 @@ const HomePage = ({ startPictureInPicture }) => {
           </motion.div>
         )}
 
-        {/* Room Sync Notification */}
-        <AnimatePresence>
-          {roomSyncNotification.show && (
-            <motion.div
-              initial={{ opacity: 0, y: -50 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -50 }}
-              className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 max-w-md w-full mx-4"
-            >
-              <div className="bg-gradient-to-r from-blue-600/95 to-purple-600/95 backdrop-blur-xl border border-blue-400/30 rounded-2xl p-6 shadow-2xl">
-                <div className="flex items-start space-x-4">
-                  <div className="w-16 h-24 rounded-lg overflow-hidden flex-shrink-0">
-                    <img
-                      src={roomSyncNotification.movie?.image}
-                      alt={roomSyncNotification.movie?.title}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-white font-bold text-lg mb-1">
-                      Room is watching
-                    </h3>
-                    <p className="text-blue-100 font-medium mb-2">
-                      {roomSyncNotification.movie?.title}
-                    </p>
-                    <p className="text-blue-200 text-sm mb-4">
-                      Join the synced viewing session?
-                    </p>
-                    <div className="flex space-x-3">
-                      <Button
-                        onClick={joinSyncedVideo}
-                        className="bg-white/20 hover:bg-white/30 text-white border border-white/30 hover:border-white/50 rounded-lg px-4 py-2 text-sm font-medium transition-all"
-                      >
-                        Join Now
-                      </Button>
-                      <Button
-                        onClick={dismissSyncNotification}
-                        variant="ghost"
-                        className="text-white/70 hover:text-white hover:bg-white/10 rounded-lg px-4 py-2 text-sm font-medium transition-all"
-                      >
-                        Maybe Later
-                      </Button>
-                    </div>
-                  </div>
+        {/* PiP Active Indicator */}
+        {isPiPActive && !isWatching && !isFullscreen && (
+          <motion.div
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 max-w-md w-full mx-4"
+          >
+            <div className="bg-gradient-to-r from-orange-600/95 to-red-600/95 backdrop-blur-xl border border-orange-400/30 rounded-2xl p-4 shadow-2xl">
+              <div className="flex items-center space-x-3">
+                <div className="w-2 h-2 bg-orange-400 rounded-full animate-pulse" />
+                <div className="text-white font-medium text-sm">
+                  Picture-in-Picture mode is active. Close PiP to start a new movie.
                 </div>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            </div>
+          </motion.div>
+        )}
 
         {/* Video Player */}
         {isWatching && (
@@ -1098,7 +1064,6 @@ const HomePage = ({ startPictureInPicture }) => {
             isHost={isHost}
             hasVideoPermission={videoControlPermission}
             canControlVideo={isHost || videoControlPermission}
-            onTogglePiP={() => togglePictureInPicture()}
           />
         )}
 

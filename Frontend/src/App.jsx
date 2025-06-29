@@ -14,12 +14,30 @@ import ProfilePage from "./pages/profile/page"
 import MovieInfoPage from "./pages/info/page"
 import PartyPage from "./pages/party/page"
 import ProtectedRoute from "./components/auth/ProtectedRoute"
+import { AuthProvider, useAuth } from "./contexts/AuthContext"
 import { PictureInPicturePlayer } from "./components/home/video/picture-in-picture-player"
 import { BeautifulLoader } from "./components/ui/beautiful-loader"
 import { ToastProvider } from "./components/ui/toast"
 import authService from "./firebase/auth"
 import { ref, set, onValue, off } from "firebase/database"
 import { realtimeDb } from "./firebase/config"
+
+const PiPWrapper = ({ movie, onClose, onExpand, roomStatus, roomId, roomMembers, ...pipProps }) => {
+  const { user } = useAuth();
+  
+  return (
+    <PictureInPicturePlayer
+      movie={movie}
+      onClose={onClose}
+      onExpand={onExpand}
+      roomStatus={roomStatus}
+      roomId={roomId}
+      user={user}
+      roomMembers={roomMembers}
+      {...pipProps}
+    />
+  );
+};
 
 function App() {
   // Global Picture-in-Picture state
@@ -129,8 +147,9 @@ function App() {
         roomMembers: pipRoomMembers,
         timestamp: Date.now(),
       }
-      sessionStorage.setItem("pipState", JSON.stringify(pipData))
+      sessionStorage.setItem("expandFromPiP", JSON.stringify(pipData))
 
+      // Navigate to movie page
       const movieSlug =
         pipMovie.movieId ||
         pipMovie.title
@@ -138,10 +157,10 @@ function App() {
           .replace(/\s+/g, "-")
           .replace(/[^\w-]/g, "")
 
-      // Close PiP and navigate
+      // Close PiP
       setShowPiP(false)
 
-      // Navigate to movie page
+      // Navigate to movie page - the movie page will handle fullscreen
       window.location.href = `/movie/${movieSlug}`
     }
   }
@@ -155,6 +174,7 @@ function App() {
     roomId = "",
     roomMembers = [],
   ) => {
+    console.log('🎬 CUSTOM PiP startPictureInPicture called!', { movie: movie?.title, currentTime, playing })
     setShowPiP(true)
     setPipMovie(movie)
     setPipCurrentTime(currentTime)
@@ -177,8 +197,9 @@ function App() {
   }
 
   return (
-    <ToastProvider>
-      <Router>
+    <AuthProvider>
+      <ToastProvider>
+        <Router>
         <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/signin" element={<SignInPage />} />
@@ -187,7 +208,10 @@ function App() {
           path="/home"
           element={
             <ProtectedRoute>
-              <HomePage startPictureInPicture={startPictureInPicture} />
+              <HomePage 
+                startPictureInPicture={startPictureInPicture} 
+                isPiPActive={showPiP}
+              />
             </ProtectedRoute>
           }
         />
@@ -195,7 +219,9 @@ function App() {
           path="/movie/:movieId" 
           element={
             <ProtectedRoute>
-              <MoviePage startPictureInPicture={startPictureInPicture} />
+              <MoviePage 
+                isPiPActive={showPiP}
+              />
             </ProtectedRoute>
           }
         />
@@ -239,15 +265,18 @@ function App() {
             </ProtectedRoute>
           }
         />
+
       </Routes>
 
       {/* Global Picture-in-Picture Player */}
       {showPiP && pipMovie && (
-        <PictureInPicturePlayer
+        <PiPWrapper
           movie={pipMovie}
           onClose={closePictureInPicture}
           onExpand={expandFromPiP}
           roomStatus={pipRoomStatus}
+          roomId={pipRoomId}
+          roomMembers={pipRoomMembers}
           currentVideoTime={pipCurrentTime}
           playing={pipPlaying}
           onPlay={handlePipPlay}
@@ -261,6 +290,7 @@ function App() {
       )}
       </Router>
     </ToastProvider>
+    </AuthProvider>
   )
 }
 
