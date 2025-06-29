@@ -942,6 +942,9 @@ const HomePage = ({ startPictureInPicture, isPiPActive }) => {
     syncOnJoin()
   }, [user, roomId, roomStatus, featuredMovies])
 
+  // Add this state to fix the ReferenceError
+  const [roomSyncNotification, setRoomSyncNotification] = useState({ show: false, movie: null });
+
   if (authLoading) {
     return <BeautifulLoader subtitle="Loading your home..." />
   }
