@@ -610,9 +610,12 @@ const HomePage = ({ startPictureInPicture }) => {
     }
 
     try {
-      console.log("Voting on poll:", pollId, "option:", optionId)
-      // For now, we'll use the same Firebase message approach
-      // In the future, this could be enhanced to use a dedicated poll voting service
+      // Use Firebase poll voting for real-time updates
+      if (polls[pollId]) {
+        await pollsService.votePoll(roomId, pollId, optionId, user.uid, user.name, user.photoURL)
+        return
+      }
+      // Fallback for legacy polls
       const voteMessage = `POLL_VOTE:${JSON.stringify({ pollId, optionId })}`
       await chatService.sendMessage(roomId, voteMessage, user)
     } catch (error) {
@@ -1029,7 +1032,7 @@ const HomePage = ({ startPictureInPicture }) => {
               exit={{ opacity: 0, y: -50 }}
               className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 max-w-md w-full mx-4"
             >
-              <div className="bg-gradient-to-r from-blue-600/95 to-purple-600/95 backdrop-blur-xl border border-blue-400/30 rounded-2xl p-6 shadow-2xl">
+              {/* <div className="bg-gradient-to-r from-blue-600/95 to-purple-600/95 backdrop-blur-xl border border-blue-400/30 rounded-2xl p-6 shadow-2xl">
                 <div className="flex items-start space-x-4">
                   <div className="w-16 h-24 rounded-lg overflow-hidden flex-shrink-0">
                     <img
@@ -1065,7 +1068,7 @@ const HomePage = ({ startPictureInPicture }) => {
                     </div>
                   </div>
                 </div>
-              </div>
+              </div> */}
             </motion.div>
           )}
         </AnimatePresence>
