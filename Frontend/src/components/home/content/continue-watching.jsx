@@ -73,7 +73,6 @@ export function ContinueWatching({ onStartWatching, user }) {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold text-white">Continue Watching</h2>
           <button className="flex items-center text-gray-400 hover:text-white transition-colors">
-            <span className="text-sm mr-1">See All</span>
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>

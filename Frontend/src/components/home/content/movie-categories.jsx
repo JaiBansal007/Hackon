@@ -43,12 +43,22 @@ export function MovieCategories({ onStartWatching, onStartSoloWatching, user, ro
             >
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-lg font-bold text-white">{category.title}</h2>
-                <button className="flex items-center text-gray-400 hover:text-white transition-colors">
-                  <span className="text-sm mr-1">See All</span>
+                <button
+                  className="flex items-center text-gray-400 hover:text-white transition-colors"
+                  onClick={() => {
+                    // Scroll the movie row to the right
+                    const row = document.getElementById(`movies-row-${categoryIndex}`)
+                    if (row) {
+                      row.scrollBy({ left: 400, behavior: "smooth" })
+                    }
+                  }}
+                >
+                  {/* <span className="text-sm mr-1">See All</span> */}
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
-              <div 
+              <div
+                id={`movies-row-${categoryIndex}`}
                 className="flex space-x-3 overflow-x-auto pb-2 scrollbar-hide"
               >
                 {category.movies.map((movie, movieIndex) => (
