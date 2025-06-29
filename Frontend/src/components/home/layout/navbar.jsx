@@ -15,8 +15,10 @@ import {
   DropdownMenuTrigger,
 } from "../../ui/dropdown-menu"
 import { movieCategories } from "../content/movie-data"
+import { movieNames } from "../content/movie-name"
 import partiesService from "../../../firebase/parties"
 import { useToast } from "../../ui/toast"
+import { ViewingHistoryManager } from "../../../lib/viewing-history"
 
 function UserInitialAvatar({ name }) {
   const initial = name?.charAt(0).toUpperCase() || "U"
@@ -50,6 +52,10 @@ export function Navbar({
   const [joinPartyCode, setJoinPartyCode] = useState("")
   const [enterRoomId, setEnterRoomId] = useState("")
   const [isJoining, setIsJoining] = useState(false)
+  const [moodRecommendations, setMoodRecommendations] = useState([])
+  const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(false)
+  const [showMoodResults, setShowMoodResults] = useState(false)
+  const [recommendationType, setRecommendationType] = useState('mood') // 'mood', 'history', or 'fallback'
   const inputRef = useRef(null)
   const navigate = useNavigate()
   const { showToast } = useToast()
@@ -75,14 +81,145 @@ export function Navbar({
 
   // Flatten all movies from categories
   const allMovies = movieCategories.flatMap((cat) => cat.movies)
-  const filteredMovies = search
-    ? allMovies.filter((m) => m.title.toLowerCase().includes(search.toLowerCase())).slice(0, 6)
-    : []
 
   const handleMovieSelect = (movieId) => {
     setSearch("")
     setShowDropdown(false)
+    setShowMoodResults(false)
     navigate(`/movie/${movieId}`)
+  }
+
+  // Get mood-based recommendations
+  const getMoodRecommendations = async (moodText) => {
+    if (!moodText.trim() || moodText.length < 3) {
+      setMoodRecommendations([])
+      setShowMoodResults(false)
+      return
+    }
+
+    setIsLoadingRecommendations(true)
+    try {
+      // Get viewing history
+      const viewingHistoryManager = ViewingHistoryManager.getInstance()
+      const viewingHistory = viewingHistoryManager.getViewingHistory()
+
+      const response = await fetch('http://localhost:8000/api/recommendations/mood', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          mood: moodText,
+          viewingHistory: viewingHistory 
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
+      console.log('Mood recommendation response:', data) // Debug log
+      
+      if (data.success) {
+        // Check if input was invalid but we have fallback recommendations
+        if (data.isInvalidInput) {
+          showToast(data.message || 'Showing recommendations based on your viewing history and current time.', 'info')
+          setRecommendationType('history')
+        }
+        // Check if no matches found
+        else if (data.noMatches) {
+          showToast(data.message || 'No matches found for your mood, showing personalized recommendations.', 'info')
+          setRecommendationType('fallback')
+        }
+        // Check if it's a fallback response
+        else if (data.isFallback) {
+          showToast(data.message || 'Showing recommendations based on viewing history and time of day.', 'info')
+          setRecommendationType('fallback')
+        }
+        else {
+          setRecommendationType('mood')
+        }
+
+        // Always show recommendations if we have them
+        const recommendedMovies = (data.recommendations || []).map(movieName => {
+          // Find the movie in all categories
+          const foundMovie = allMovies.find(movie => movie.title === movieName)
+          return foundMovie || {
+            title: movieName,
+            movieId: movieName.toLowerCase().replace(/[^\w\s]/gi, '').replace(/\s+/g, '-'),
+            image: '/api/placeholder/300/450', // Fallback image
+            rating: 'N/A',
+            mood: true // Flag to identify mood recommendations
+          }
+        })
+        
+        console.log('Processed recommended movies:', recommendedMovies)
+        setMoodRecommendations(recommendedMovies)
+        setShowMoodResults(true)
+        setShowDropdown(false)
+      } else if (data.success === false) {
+        // Handle explicit failure response
+        console.error('Failed to get recommendations:', data.error)
+        if (data.isInvalidInput) {
+          showToast(data.error || 'Please provide a mood or movie preference for recommendations.', 'info')
+        } else {
+          showToast(data.error || 'Failed to get mood recommendations', 'error')
+        }
+        setMoodRecommendations([])
+        setShowMoodResults(false)
+        setRecommendationType('mood')
+      } else {
+        // Handle unexpected response format
+        console.error('Unexpected response format:', data)
+        showToast('Unexpected response from server', 'error')
+        setMoodRecommendations([])
+        setShowMoodResults(false)
+        setRecommendationType('mood')
+      }
+    } catch (error) {
+      console.error('Error getting mood recommendations:', error)
+      showToast('Error getting recommendations. Please try again.', 'error')
+      setMoodRecommendations([])
+      setShowMoodResults(false)
+      setRecommendationType('mood')
+    } finally {
+      setIsLoadingRecommendations(false)
+    }
+  }
+
+  // Debounced function to call mood recommendations
+  const debouncedMoodSearch = useRef(null)
+  
+  const handleSearchChange = (e) => {
+    const value = e.target.value
+    setSearch(value)
+    
+    // Clear existing timeout
+    if (debouncedMoodSearch.current) {
+      clearTimeout(debouncedMoodSearch.current)
+    }
+    
+    if (value.length === 0) {
+      setShowDropdown(false)
+      setShowMoodResults(false)
+      setMoodRecommendations([])
+      setIsLoadingRecommendations(false)
+      setRecommendationType('mood')
+      return
+    }
+    
+    // Show loading immediately when user types enough characters
+    if (value.length >= 3) {
+      setIsLoadingRecommendations(true)
+      setShowMoodResults(true)
+    }
+    
+    // Always do mood-based search, never show normal search dropdown
+    setShowDropdown(false)
+    debouncedMoodSearch.current = setTimeout(() => {
+      getMoodRecommendations(value)
+    }, 1000) // Wait 1 second after user stops typing
   }
 
   // Join party by code
@@ -223,41 +360,75 @@ export function Navbar({
             <Input
               ref={inputRef}
               value={search}
-              onChange={(e) => {
-                setSearch(e.target.value)
-                setShowDropdown(e.target.value.length > 0)
-              }}
-              placeholder="Search movies, shows..."
+              onChange={handleSearchChange}
+              placeholder="Search movies or describe your mood..."
               className="pl-10 bg-gray-800/50 border-gray-700 text-white placeholder-gray-400 rounded-full h-9 text-sm focus:bg-gray-800"
             />
           </div>
           
-          {/* Search Results */}
+          {/* Mood-based Recommendations */}
           <AnimatePresence>
-            {showDropdown && filteredMovies.length > 0 && (
+            {(showMoodResults || isLoadingRecommendations) && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="absolute top-11 left-0 right-0 bg-gray-900 border border-gray-700 rounded-lg shadow-lg z-50"
+                className="absolute top-11 left-0 right-0 bg-gray-800/95 border border-gray-700 rounded-lg shadow-lg z-50 backdrop-blur-sm"
               >
-                {filteredMovies.map((movie) => (
-                  <button
-                    key={movie.id}
-                    onClick={() => handleMovieSelect(movie.movieId)}
-                    className="w-full flex items-center space-x-3 p-3 hover:bg-gray-800 text-left"
-                  >
-                    <img
-                      src={movie.image}
-                      alt={movie.title}
-                      className="w-8 h-12 object-cover rounded"
-                    />
-                    <div>
-                      <p className="text-white font-medium text-sm">{movie.title}</p>
-                      <p className="text-gray-400 text-xs">Rating: {movie.rating}</p>
+                <div className="p-3 border-b border-gray-700">
+                  <div className="flex items-center space-x-2">
+                    <div className={`w-2 h-2 ${recommendationType === 'mood' ? 'bg-orange-400' : 'bg-blue-400'} rounded-full ${isLoadingRecommendations ? 'animate-pulse' : ''}`}></div>
+                    <p className="text-white text-xs font-medium">
+                      {recommendationType === 'mood' && '🎭 Mood-based recommendations'}
+                      {recommendationType === 'history' && '📚 Based on your viewing history'}
+                      {recommendationType === 'fallback' && '⏰ Personalized recommendations'}
+                      {isLoadingRecommendations && (
+                        <span className="ml-2 text-gray-300 animate-pulse">Finding perfect matches...</span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+                
+                {isLoadingRecommendations ? (
+                  <div className="p-6 text-center">
+                    <div className="relative">
+                      <div className="animate-spin rounded-full h-8 w-8 border-3 border-orange-400 border-t-transparent mx-auto"></div>
+                      <div className="absolute inset-0 rounded-full h-8 w-8 border-3 border-gray-700 mx-auto"></div>
                     </div>
-                  </button>
-                ))}
+                    <p className="text-white text-sm mt-3 animate-pulse">🧠 Analyzing your mood...</p>
+                    <p className="text-gray-400 text-xs mt-1">Considering your viewing history & time of day</p>
+                  </div>
+                ) : (
+                  <>
+                    {moodRecommendations.length > 0 ? (
+                      moodRecommendations.map((movie, index) => (
+                        <button
+                          key={`mood-${movie.movieId || index}`}
+                          onClick={() => handleMovieSelect(movie.movieId)}
+                          className="w-full flex items-center space-x-3 p-3 hover:bg-purple-800/50 text-left transition-colors"
+                        >
+                          <img
+                            src={movie.image || '/api/placeholder/300/450'}
+                            alt={movie.title}
+                            className="w-8 h-12 object-cover rounded border border-purple-400/30"
+                          />
+                          <div className="flex-1">
+                            <p className="text-white font-medium text-sm">{movie.title}</p>
+                            <p className="text-purple-300 text-xs">
+                              {movie.rating !== 'N/A' ? `Rating: ${movie.rating}` : 'Mood match'}
+                              <span className="ml-2">✨</span>
+                            </p>
+                          </div>
+                        </button>
+                      ))
+                    ) : (
+                      <div className="p-4 text-center">
+                        <p className="text-white text-sm">No mood matches found</p>
+                        <p className="text-gray-400 text-xs mt-1">Try describing your feeling differently</p>
+                      </div>
+                    )}
+                  </>
+                )}
               </motion.div>
             )}
           </AnimatePresence>
