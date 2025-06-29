@@ -318,7 +318,10 @@ export function PictureInPicturePlayer({
                 </div>
                 <div className="flex space-x-1">
                   <Button
-                    onClick={onExpand}
+                    onClick={() => {
+                      onExpand();
+                      onClose();
+                    }}
                     size="sm"
                     className="w-6 h-6 p-0 bg-white/20 hover:bg-white/30 text-black border-none backdrop-blur-sm rounded transition-all duration-200 hover:scale-110"
                   >

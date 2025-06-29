@@ -478,13 +478,13 @@ export function ChatSidebar({
     })}`);
     
     // Also call external reaction handler if provided (for video reactions)
-    if (onReactionSend && roomStatus !== "none") {
-      onReactionSend({
-        emoji: reaction.emoji,
-        user: user?.name || "User",
-        id: Date.now()
-      });
-    }
+    // if (onReactionSend && roomStatus !== "none") {
+    //   onReactionSend({
+    //     emoji: reaction.emoji,
+    //     user: user?.name || "User",
+    //     id: Date.now()
+    //   });
+    // }
     
     setShowReactions(false);
   };
