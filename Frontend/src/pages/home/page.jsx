@@ -1152,13 +1152,15 @@ const HomePage = ({ startPictureInPicture, isPiPActive }) => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
               <motion.div
                 initial={{ scale: 0.96, opacity: 0, y: 30 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 exit={{ scale: 0.96, opacity: 0, y: 30 }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className="relative bg-[#181818] border border-neutral-700 rounded-2xl max-w-sm w-full shadow-lg p-0"
+                className="relative bg-[#181818] border border-neutral-700 rounded-2xl max-w-sm w-full shadow-lg p-0 mx-auto"
+                style={{ margin: 'auto' }}
               >
                 <div className="px-7 py-8">
                   <div className="flex items-center space-x-3 mb-6">
@@ -1200,13 +1202,15 @@ const HomePage = ({ startPictureInPicture, isPiPActive }) => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
               <motion.div
                 initial={{ scale: 0.96, opacity: 0, y: 30 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 exit={{ scale: 0.96, opacity: 0, y: 30 }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className="relative bg-[#181818] border border-neutral-700 rounded-2xl max-w-sm w-full shadow-lg p-0"
+                className="relative bg-[#181818] border border-neutral-700 rounded-2xl max-w-sm w-full shadow-lg p-0 mx-auto"
+                style={{ margin: 'auto' }}
               >
                 <div className="px-7 py-8">
                   <div className="flex items-center space-x-3 mb-6">
