@@ -107,7 +107,7 @@ io.on('connection', (socket) => {
   });
 });
 
-const PORT = process.env.PORT || 8000;
+const PORT = process.env.PORT;
 
 server.listen(PORT, () => {
   console.log(`🚀 Movie Watch Party Server running on port ${PORT}`);
