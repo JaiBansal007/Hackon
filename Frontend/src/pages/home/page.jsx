@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useLocation } from "react-router-dom"
 import { Navbar } from "@/components/home/layout/navbar"
 import { Sidebar } from "@/components/home/layout/sidebar"
 import { FeaturedSection } from "@/components/home/content/featured-section"
@@ -17,14 +17,15 @@ import { AnimatePresence, motion } from "framer-motion"
 import { GamificationManager } from "@/lib/gamification"
 import { ViewingHistoryManager } from "@/lib/viewing-history"
 import { featuredMovies } from "../../components/home/content/featured-movies"
+import { BeautifulLoader } from "@/components/ui/beautiful-loader"
 import authService from "../../firebase/auth"
 import chatService from "../../firebase/chat"
 import videoSyncService from "../../firebase/videoSync"
 import { WebSocketManager } from "@/lib/websocket"
 
-const HomePage = ({ startPictureInPicture }) => {
+const HomePage = ({ startPictureInPicture, isPiPActive }) => {
   const [user, setUser] = useState(null)
-  const [authLoading, setAuthLoading] = useState(true) // Add loading state
+  const [authLoading, setAuthLoading] = useState(true)
   const [isWatching, setIsWatching] = useState(false)
   const [currentWatchingMovie, setCurrentWatchingMovie] = useState(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -47,12 +48,6 @@ const HomePage = ({ startPictureInPicture }) => {
   const [showJoinDialog, setShowJoinDialog] = useState(false)
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [roomMembers, setRoomMembers] = useState([])
-  const [roomSyncNotification, setRoomSyncNotification] = useState({
-    show: false,
-    movie: null,
-    currentTime: 0,
-    isPlaying: false
-  })
 
   // Firebase-related state
   const [isHost, setIsHost] = useState(false)
@@ -60,11 +55,13 @@ const HomePage = ({ startPictureInPicture }) => {
   const [videoControlPermission, setVideoControlPermission] = useState(false)
   const [typingUsers, setTypingUsers] = useState([])
   const [syncedVideoState, setSyncedVideoState] = useState(null)
+  const [hostMovieState, setHostMovieState] = useState(null) // Track host's current movie for navbar
 
   // Permission management state
   const [showPermissionManager, setShowPermissionManager] = useState(false)
 
   const navigate = useNavigate()
+  const location = useLocation()
   const chatUnsubscribeRef = useRef(null)
   const membersUnsubscribeRef = useRef(null)
   const videoUnsubscribeRef = useRef(null)
@@ -77,7 +74,7 @@ const HomePage = ({ startPictureInPicture }) => {
 
   const currentFeatured = featuredMovies[Math.floor(Math.random() * featuredMovies.length)]
 
-  // Initialize user with Firebase auth
+  // Initialize user with Firebase auth - simplified since ProtectedRoute handles auth
   useEffect(() => {
     // Check for stored user data first to prevent redirect
     const storedUser = authService.getCurrentUser()
@@ -95,22 +92,12 @@ const HomePage = ({ startPictureInPicture }) => {
           photoURL: firebaseUser.photoURL,
         }
         setUser(userData)
-        setAuthLoading(false)
-      } else {
-        // Only redirect if we're not loading and actually signed out
-        setUser(null)
-        setAuthLoading(false)
-        // Add a small delay to prevent immediate redirect on refresh
-        setTimeout(() => {
-          if (!firebaseUser) {
-            navigate("/signin")
-          }
-        }, 500) // Increased delay to give Firebase more time
       }
+      setAuthLoading(false)
     })
 
     return unsubscribe
-  }, [navigate])
+  }, [])
 
   // Persist and restore room state only (not video state)
   useEffect(() => {
@@ -300,20 +287,19 @@ const HomePage = ({ startPictureInPicture }) => {
       if (videoState) {
         setSyncedVideoState(videoState)
         setCurrentVideoTime(videoState.currentTime || 0)
-        // If there's a synced video and user is not currently watching anything
-        if (videoState.videoUrl && !isWatching) {
-          const foundMovie = featuredMovies.find(m => m.videoUrl === videoState.videoUrl)
-          if (foundMovie) {
-            // Show notification to join synced video instead of auto-starting
-            setRoomSyncNotification({
-              show: true,
-              movie: foundMovie,
-              currentTime: videoState.currentTime || 0,
-              isPlaying: videoState.isPlaying || false
-            });
-          }
-        } else if (isWatching && currentWatchingMovie?.videoUrl === videoState.videoUrl) {
-          // If user is already watching the same movie, sync the time
+        
+        // Update host movie state for navbar (if not host and sync has video URL)
+        if (!isHost && videoState.videoUrl && videoState.lastUpdatedByName) {
+          setHostMovieState({
+            videoUrl: videoState.videoUrl,
+            hostName: videoState.lastUpdatedByName,
+            hostUid: videoState.lastUpdatedBy,
+            timestamp: Date.now()
+          });
+        }
+        
+        // Just sync the time if user is already watching the same movie
+        if (isWatching && currentWatchingMovie?.videoUrl === videoState.videoUrl) {
           setCurrentVideoTime(videoState.currentTime || 0)
         }
       }
@@ -467,6 +453,7 @@ const HomePage = ({ startPictureInPicture }) => {
         setIsHost(false)
         setShowJoinDialog(false)
         setJoinRoomId("")
+        console.log("✅ Successfully joined room:", joinRoomId)
       } else {
         console.error("Failed to join room:", result.error)
       }
@@ -474,6 +461,20 @@ const HomePage = ({ startPictureInPicture }) => {
       console.error("Error joining room:", error)
     }
   }
+
+  // Handle joining room from party page
+  useEffect(() => {
+    if (location.state?.joinRoomId && user) {
+      const roomIdFromParty = location.state.joinRoomId;
+      console.log("🎉 Joining room from party:", roomIdFromParty);
+      
+      // Auto-join the room
+      joinRoom(roomIdFromParty);
+      
+      // Clear the state so it doesn't trigger again
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state, user]);
 
   const leaveRoom = async () => {
     if (!user || !roomId) return
@@ -503,6 +504,7 @@ const HomePage = ({ startPictureInPicture }) => {
       setVideoControlPermission(false)
       setRoomPermissions(null)
       setSyncedVideoState(null)
+      setHostMovieState(null) // Clear host movie state when leaving room
 
       // Clear all persisted state
       localStorage.removeItem("roomState")
@@ -512,6 +514,38 @@ const HomePage = ({ startPictureInPicture }) => {
       console.error("Error leaving room:", error)
     }
   }
+
+  // Function for guests to join host's movie from navbar
+  const joinHostMovie = () => {
+    if (!hostMovieState?.videoUrl || isHost) return;
+    
+    console.log('🎬 Guest joining host movie from navbar:', {
+      currentVideo: currentWatchingMovie?.videoUrl,
+      hostVideo: hostMovieState.videoUrl,
+      hostName: hostMovieState.hostName,
+      syncedVideoState
+    });
+    
+    // Create a movie object for the host's video
+    const hostMovie = {
+      movieId: `host-movie-${hostMovieState.hostUid}`,
+      title: `${hostMovieState.hostName}'s Movie`,
+      videoUrl: hostMovieState.videoUrl,
+      image: currentWatchingMovie?.image || '/placeholder-movie.jpg'
+    };
+    
+    // Set the movie and start watching with proper sync
+    setCurrentWatchingMovie(hostMovie);
+    setIsWatching(true);
+    
+    // If we have sync state, pass the initial state for proper sync
+    if (syncedVideoState) {
+      console.log('🎬 Starting with sync state:', {
+        currentTime: syncedVideoState.currentTime,
+        isPlaying: syncedVideoState.isPlaying
+      });
+    }
+  };
 
   const toggleFullscreen = () => {
     if (!isFullscreen) {
@@ -542,6 +576,12 @@ const HomePage = ({ startPictureInPicture }) => {
   }
 
   const startWatching = (movie) => {
+    // Check if PiP is currently active
+    if (isPiPActive) {
+      console.log("🚫 Cannot start new movie while Picture-in-Picture is active");
+      return;
+    }
+
     // Check if user is in a room
     if (roomStatus === "none") {
       // If not in a room, suggest joining/creating a room for sync features
@@ -576,6 +616,12 @@ const HomePage = ({ startPictureInPicture }) => {
 
   // New function for solo watching (without room)
   const startSoloWatching = (movie) => {
+    // Check if PiP is currently active
+    if (isPiPActive) {
+      console.log("🚫 Cannot start new movie while Picture-in-Picture is active");
+      return;
+    }
+
     const movieWithId = {
       ...movie,
       movieId:
@@ -797,10 +843,22 @@ const HomePage = ({ startPictureInPicture }) => {
 
   const togglePictureInPicture = (movie) => {
     if (startPictureInPicture) {
+      // Get current video state to preserve play/pause state
+      const videoElement = document.querySelector("video")
+      const actualCurrentTime = videoElement ? videoElement.currentTime : currentVideoTime
+      const actualIsPlaying = videoElement ? !videoElement.paused : false
+      
+      console.log("🎬 Entering PiP from home with state:", {
+        currentTime: actualCurrentTime,
+        isPlaying: actualIsPlaying,
+        roomStatus,
+        roomId
+      })
+      
       startPictureInPicture(
         movie || currentWatchingMovie,
-        currentVideoTime,
-        false, // Default to paused when entering PiP
+        actualCurrentTime,
+        actualIsPlaying, // Preserve actual playing state 
         roomStatus,
         roomId,
         roomMembers,
@@ -884,30 +942,11 @@ const HomePage = ({ startPictureInPicture }) => {
     syncOnJoin()
   }, [user, roomId, roomStatus, featuredMovies])
 
-  // Handle room sync notification actions
-  const joinSyncedVideo = () => {
-    if (roomSyncNotification.movie) {
-      setCurrentWatchingMovie(roomSyncNotification.movie);
-      setIsWatching(true);
-      setCurrentVideoTime(roomSyncNotification.currentTime);
-      setRoomSyncNotification({ show: false, movie: null, currentTime: 0, isPlaying: false });
-      console.log("🎬 Joined synced video:", roomSyncNotification.movie.title);
-    }
-  };
-
-  const dismissSyncNotification = () => {
-    setRoomSyncNotification({ show: false, movie: null, currentTime: 0, isPlaying: false });
-  };
+  // Add this state to fix the ReferenceError
+  const [roomSyncNotification, setRoomSyncNotification] = useState({ show: false, movie: null });
 
   if (authLoading) {
-    return (
-      <div className="fixed inset-0 bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto mb-4"></div>
-          <p className="text-white text-lg">Loading...</p>
-        </div>
-      </div>
-    )
+    return <BeautifulLoader subtitle="Loading your home..." />
   }
 
   if (!user) return null
@@ -930,6 +969,10 @@ const HomePage = ({ startPictureInPicture }) => {
           onJoinRoom={() => setShowJoinDialog(true)}
           onLeaveRoom={leaveRoom}
           onLogout={handleLogout}
+          hostMovieState={hostMovieState}
+          onJoinHostMovie={joinHostMovie}
+          isHost={isHost}
+          currentWatchingMovie={currentWatchingMovie}
         />
       )}
 
@@ -1108,7 +1151,6 @@ const HomePage = ({ startPictureInPicture }) => {
             isHost={isHost}
             hasVideoPermission={videoControlPermission}
             canControlVideo={isHost || videoControlPermission}
-            onTogglePiP={() => togglePictureInPicture()}
           />
         )}
 
@@ -1127,6 +1169,13 @@ const HomePage = ({ startPictureInPicture }) => {
           polls={polls}
           roomId={roomId}
           onReactionSend={sendReaction}
+          onJoinRoom={(newRoomId) => {
+            // Handle joining a new room from party
+            setRoomId(newRoomId);
+            setRoomStatus("member");
+            initializeRoom(newRoomId);
+          }}
+          currentMovie={currentWatchingMovie || currentFeatured}
         />
 
         {/* Enhanced Room Members Sidebar */}

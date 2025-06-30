@@ -53,13 +53,34 @@ class AuthService {
         try {
             const storedUser = localStorage.getItem("user");
             if (storedUser) {
-                return JSON.parse(storedUser);
+                const userData = JSON.parse(storedUser);
+                // Return a user-like object with essential properties
+                return {
+                    uid: userData.uid,
+                    displayName: userData.name,
+                    email: userData.email,
+                    photoURL: userData.photoURL
+                };
             }
         } catch (error) {
             console.warn("Failed to parse stored user data:", error);
             localStorage.removeItem("user");
         }
         
+        return null;
+    }
+
+    // Fast user check without waiting for Firebase
+    getCachedUser() {
+        try {
+            const storedUser = localStorage.getItem("user");
+            if (storedUser) {
+                return JSON.parse(storedUser);
+            }
+        } catch (error) {
+            console.warn("Failed to parse cached user data:", error);
+            localStorage.removeItem("user");
+        }
         return null;
     }
 
@@ -135,14 +156,27 @@ class AuthService {
         return this.signOut();
     }
 
-    // Get current user
-    getCurrentUser() {
-        return this.currentUser;
-    }
-
     // Check if user is authenticated
     isAuthenticated() {
         return !!this.currentUser;
+    }
+
+    // Wait for auth to be ready
+    async waitForAuth() {
+        if (this.authReady) {
+            return this.currentUser;
+        }
+        
+        return new Promise((resolve) => {
+            const checkAuth = () => {
+                if (this.authReady) {
+                    resolve(this.currentUser);
+                } else {
+                    setTimeout(checkAuth, 100);
+                }
+            };
+            checkAuth();
+        });
     }
 
     // Subscribe to auth state changes

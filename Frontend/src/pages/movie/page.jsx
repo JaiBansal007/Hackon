@@ -17,7 +17,7 @@ import authService from "../../firebase/auth"
 import { db } from "@/firebase/db"
 import { doc, getDoc } from "firebase/firestore"
 
-const MoviePage = ({ startPictureInPicture }) => {
+const MoviePage = ({ isPiPActive }) => {
   const { movieId } = useParams()
   const navigate = useNavigate()
 
@@ -36,7 +36,7 @@ const MoviePage = ({ startPictureInPicture }) => {
   const currentMovie = movieId ? getMovieFromSlug(movieId) : null
 
   const [user, setUser] = useState(null)
-  const [isWatching, setIsWatching] = useState(true) // Auto start watching
+  const [isWatching, setIsWatching] = useState(!isPiPActive) // Don't auto start if PiP is active
   const [currentWatchingMovie, setCurrentWatchingMovie] = useState(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [chatMessages, setChatMessages] = useState([])
@@ -64,10 +64,62 @@ const MoviePage = ({ startPictureInPicture }) => {
   // Check for returning from PiP
   useEffect(() => {
     const pipState = sessionStorage.getItem("pipState")
-    if (pipState) {
+    const expandFromPiP = sessionStorage.getItem("expandFromPiP")
+    
+    if (expandFromPiP) {
+      // User expanded from PiP - restore video state and enter fullscreen
+      try {
+        const pipData = JSON.parse(expandFromPiP)
+        console.log("🎬 Expanding from PiP:", pipData)
+        
+        // Set video state to continue from where PiP left off
+        setCurrentVideoTime(pipData.currentTime || 0)
+        setIsVideoPlaying(pipData.playing || false)
+        
+        // Restore room state if it exists
+        if (pipData.roomStatus && pipData.roomStatus !== "none") {
+          setRoomStatus(pipData.roomStatus)
+        }
+        
+        // Start watching and set the proper video state
+        setIsWatching(true)
+        
+        // Use setTimeout to ensure video element is ready
+        setTimeout(() => {
+          const videoElement = document.querySelector("video")
+          if (videoElement && pipData.currentTime) {
+            videoElement.currentTime = pipData.currentTime
+            setCurrentTime(pipData.currentTime)
+            
+            // Restore playing state
+            if (pipData.playing) {
+              videoElement.play().catch(console.error)
+              setIsVideoPlaying(true)
+            } else {
+              videoElement.pause()
+              setIsVideoPlaying(false)
+            }
+          }
+          
+          // Enter fullscreen after video state is set
+          if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen().catch(console.error)
+          }
+        }, 200)
+        
+        // Clear the expand flag
+        sessionStorage.removeItem("expandFromPiP")
+      } catch (error) {
+        console.error("Error parsing expand from PiP state:", error)
+        sessionStorage.removeItem("expandFromPiP")
+      }
+    } else if (pipState) {
+      // Normal return from PiP
       try {
         const pipData = JSON.parse(pipState)
         if (pipData.movie && pipData.movie.movieId === movieId) {
+          console.log("🎬 Returning from PiP:", pipData)
+          
           // Restore video state from PiP
           setCurrentVideoTime(pipData.currentTime || 0)
           setIsVideoPlaying(pipData.playing || false)
@@ -88,6 +140,23 @@ const MoviePage = ({ startPictureInPicture }) => {
       }
     }
   }, [movieId])
+
+  // Handle PiP state changes
+  useEffect(() => {
+    // If PiP becomes active, stop watching
+    if (isPiPActive) {
+      setIsWatching(false)
+    }
+    // If PiP becomes inactive and we were previously watching, resume watching
+    else if (!isPiPActive && currentWatchingMovie) {
+      // Only resume if we're not returning from PiP (which is handled by the PiP state restoration)
+      const pipState = sessionStorage.getItem("pipState")
+      const expandFromPiP = sessionStorage.getItem("expandFromPiP")
+      if (!pipState && !expandFromPiP) {
+        setIsWatching(true)
+      }
+    }
+  }, [isPiPActive, currentWatchingMovie])
 
   // Set up movie data with the specific video URL
   useEffect(() => {
@@ -112,9 +181,8 @@ const MoviePage = ({ startPictureInPicture }) => {
     }
   }, [movieId, currentMovie, navigate])
 
-  // Initialize user authentication
+  // Initialize user authentication - simplified since ProtectedRoute handles auth
   useEffect(() => {
-    // Check for stored user data first
     const storedUser = authService.getCurrentUser();
     if (storedUser) {
       const userData = {
@@ -135,13 +203,11 @@ const MoviePage = ({ startPictureInPicture }) => {
           photoURL: firebaseUser.photoURL
         }
         setUser(userData)
-      } else {
-        navigate("/signin")
       }
     })
 
     return unsubscribe
-  }, [navigate])
+  }, [])
 
   // Initialize WebSocket when user is available
   useEffect(() => {
@@ -551,15 +617,6 @@ const MoviePage = ({ startPictureInPicture }) => {
     }
   }
 
-  const togglePictureInPicture = () => {
-    if (currentWatchingMovie && startPictureInPicture) {
-      startPictureInPicture(currentWatchingMovie, currentVideoTime, isVideoPlaying, roomStatus, roomId, roomMembers)
-
-      // Navigate to home
-      navigate("/home")
-    }
-  }
-
   // Poll vote handler
   const handlePollVote = async (pollId, optionId) => {
     if (!wsRef.current || roomStatus === "none") {
@@ -585,11 +642,16 @@ const MoviePage = ({ startPictureInPicture }) => {
           user={user}
           roomStatus={roomStatus}
           roomId={roomId}
+          roomMembers={roomMembers}
           isFullscreen={isFullscreen}
           onCreateRoom={() => setShowCreateDialog(true)}
           onJoinRoom={() => setShowJoinDialog(true)}
           onLeaveRoom={leaveRoom}
           onLogout={handleLogout}
+          hostMovieState={null}
+          onJoinHostMovie={() => {}}
+          isHost={false}
+          currentWatchingMovie={null}
         />
       )}
       <div className="relative w-full h-full min-h-screen bg-gray-950 text-white overflow-x-hidden flex">
@@ -624,7 +686,24 @@ const MoviePage = ({ startPictureInPicture }) => {
         </div>
 
         {/* Video Player */}
-        {isWatching && (
+        {isPiPActive && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+            <div className="bg-gray-900 p-6 rounded-lg shadow-xl max-w-md mx-4 text-center">
+              <div className="text-yellow-400 text-5xl mb-4">⚠️</div>
+              <h3 className="text-xl font-bold text-white mb-2">Picture-in-Picture Active</h3>
+              <p className="text-gray-300 mb-4">
+                Another video is currently playing in Picture-in-Picture mode. Please close it first to start a new movie.
+              </p>
+              <Button
+                onClick={() => navigate('/home')}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                Go Back Home
+              </Button>
+            </div>
+          </div>
+        )}
+        {isWatching && !isPiPActive && (
           <VideoPlayer
             ref={videoPlayerRef}
             key={currentWatchingMovie?.videoUrl || "video-player"}
@@ -658,7 +737,6 @@ const MoviePage = ({ startPictureInPicture }) => {
             onSeek={handleSeek}
             currentVideoTime={syncedVideoState ? syncedVideoState.currentTime : currentVideoTime}
             playing={syncedVideoState ? syncedVideoState.playing : isVideoPlaying}
-            onTogglePiP={togglePictureInPicture}
             initialPlaying={isVideoPlaying}
             initialCurrentTime={currentVideoTime}
           />
@@ -678,6 +756,14 @@ const MoviePage = ({ startPictureInPicture }) => {
           user={user}
           polls={polls}
           roomId={roomId}
+          onReactionSend={() => {}} // Add empty function for now
+          onJoinRoom={(newRoomId) => {
+            // Handle joining a new room from party
+            setRoomId(newRoomId);
+            setRoomStatus("member");
+            // Initialize room connection if needed
+          }}
+          currentMovie={currentWatchingMovie}
         />
 
         {/* Room Members Sidebar */}
