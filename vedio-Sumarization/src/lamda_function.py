@@ -16,31 +16,40 @@ def lambda_handler(event, context):
     filename = key.split("/")[-1]
     local_video = f"/tmp/{filename}"
 
-    # Download original video
     s3.download_file(bucket, key, local_video)
 
-    # Determine mode
     start = event.get("start")
     end = event.get("end")
 
+    # Determine segments
     if start and end:
-        # Manual range
-        segments = [(to_seconds(start), to_seconds(end))]
+        full_start = to_seconds(start)
+        full_end = to_seconds(end)
+        segments = split_into_minute_chunks(full_start, full_end)
     else:
-        # Auto scene detection
         segments = get_shot_segments(bucket, key)
 
     summaries = []
 
-    for idx, (start, end) in enumerate(segments):
-        clip_path = f"/tmp/clip_{idx}.mp4"
-        extract_clip(local_video, clip_path, start, end)
+    for idx, (start_sec, end_sec) in enumerate(segments):
+        s3_key = f"summaries/{filename}_clip_{start_sec}_{end_sec}.json"
 
-        # Read binary for Nova input
+        # Check if summary exists in S3
+        try:
+            response = s3.get_object(Bucket=OUTPUT_BUCKET, Key=s3_key)
+            existing_summary = json.loads(response["Body"].read())
+            summaries.append(existing_summary)
+            continue  # skip to next chunk
+        except s3.exceptions.NoSuchKey:
+            pass  # continue to process
+
+        # Extract the clip
+        clip_path = f"/tmp/clip_{start_sec}_{end_sec}.mp4"
+        extract_clip(local_video, clip_path, start_sec, end_sec)
+
         with open(clip_path, "rb") as f:
             clip_bytes = f.read()
 
-        # Call Bedrock Nova
         body = {
             "inputMedia": {
                 "media": {
@@ -58,21 +67,20 @@ def lambda_handler(event, context):
         )
 
         result = json.loads(response["body"].read())
-        desc = result.get("sceneDescription", f"No description for clip {idx}")
-        summaries.append({
-            "segment": f"{start}-{end}",
+        desc = result.get("sceneDescription", f"No description for {start_sec}-{end_sec}")
+        summary = {
+            "start": start_sec,
+            "end": end_sec,
             "description": desc
-        })
+        }
 
-        # Save to S3 as JSON
+        summaries.append(summary)
+
+        # Save to S3
         s3.put_object(
             Bucket=OUTPUT_BUCKET,
-            Key=f"summaries/{filename}_clip_{idx}.json",
-            Body=json.dumps({
-                "start": start,
-                "end": end,
-                "description": desc
-            }),
+            Key=s3_key,
+            Body=json.dumps(summary),
             ContentType="application/json"
         )
 
@@ -86,4 +94,13 @@ def lambda_handler(event, context):
 
 def to_seconds(time_str):
     parts = list(map(int, time_str.split(":")))
-    return parts[0]*60 + parts[1]
+    return parts[0] * 60 + parts[1]
+
+def split_into_minute_chunks(start_sec, end_sec):
+    chunks = []
+    current = start_sec
+    while current < end_sec:
+        next_min = min(current + 60, end_sec)
+        chunks.append((current, next_min))
+        current = next_min
+    return chunks

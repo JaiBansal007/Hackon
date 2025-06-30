@@ -10,7 +10,7 @@ export const featuredMovies = [
     genre: "Action, Crime, Drama",
     mood: ["intense", "dark", "thrilling"],
     image: "https://image.tmdb.org/t/p/w1280/qJ2tW6WMUDux911r6m7haRef0WH.jpg",
-    videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+    videoUrl: "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
   },
   {
     movieId: "inception",
@@ -21,7 +21,7 @@ export const featuredMovies = [
     genre: "Action, Sci-Fi, Thriller",
     mood: ["mind-bending", "complex", "thrilling"],
     image: "https://musicart.xboxlive.com/7/c96d1100-0000-0000-0000-000000000002/504/image.jpg",
-    videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+    videoUrl: "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
   },
   {
     movieId: "interstellar",
@@ -32,7 +32,7 @@ export const featuredMovies = [
     genre: "Adventure, Drama, Sci-Fi",
     mood: ["thought-provoking", "epic", "emotional"],
     image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSngBJ0B7UDrLUkDlp6DCQLsEYuWR-DiHwbnxFFCniB3HiP3f3NZmR1-lKSC34ge6YXu4LX",
-    videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+    videoUrl: "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
   },
   {
     movieId: "the-matrix",
@@ -44,7 +44,7 @@ export const featuredMovies = [
     genre: "Action, Sci-Fi",
     mood: ["revolutionary", "mind-bending", "action-packed"],
     image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQCWXVvfvZR3oe7PCMM0exwV0dObOTKvLfSM-bjvKpQ1VegKXuCtq6aBrxqbIgUNxMbfavy",
-    videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+    videoUrl: "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
   },
   // {
   //   movieId: "pulp-fiction",
@@ -56,6 +56,6 @@ export const featuredMovies = [
   //   genre: "Crime, Drama",
   //   mood: ["quirky", "violent", "stylish"],
   //   image: "https://image.tmdb.org/t/p/w1280/dM2w364MScsjFf8pfMbaWUcWrR.jpg", // TMDB direct image link
-  //   videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+  //   videoUrl: "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
   // },
 ]

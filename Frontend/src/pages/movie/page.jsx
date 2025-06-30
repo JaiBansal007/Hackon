@@ -175,7 +175,7 @@ const MoviePage = ({ isPiPActive }) => {
         genre: "Action, Drama",
         mood: currentMovie.mood || ["thrilling"],
         image: currentMovie.image || "/placeholder.svg",
-        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+        videoUrl: "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
       }
       setCurrentWatchingMovie(movieWithId)
     }

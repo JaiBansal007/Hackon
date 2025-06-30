@@ -44,7 +44,7 @@ def initialize_agent():
 multimodal_Agent = initialize_agent()
 
 # Video URL
-BIG_BUCK_BUNNY_URL = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+BIG_BUCK_BUNNY_URL = "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4"
 
 # Video cache {video_hash: processed_file}
 processed_video_cache = {}

@@ -18,7 +18,7 @@ yarn-error.log*
 *.avi
 *.mov
 speech.mp3
-BigBuckBunny.mp4
+ElephantsDream.mp4
 
 # AWS credentials and config
 .aws/
