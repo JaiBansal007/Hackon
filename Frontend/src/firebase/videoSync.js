@@ -12,7 +12,7 @@ class VideoSyncService {
     constructor() {
         this.activeListeners = new Map();
         this.lastUpdate = {};
-        this.updateThrottle = 1000; // Minimum time between updates (1 second)
+        this.updateThrottle = 100; // Minimum time between updates (1 second)
     }
 
     // Throttle video updates to prevent spam

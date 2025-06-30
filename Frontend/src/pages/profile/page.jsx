@@ -24,6 +24,7 @@ import {
 import { GamificationManager } from "../../lib/gamification"
 import { ViewingHistoryManager } from "../../lib/viewing-history"
 import { PieChart } from 'react-minimal-pie-chart'
+import ReactDOM from "react-dom"
 
 export default function ProfilePage() {
   const navigate = useNavigate()
@@ -44,13 +45,20 @@ export default function ProfilePage() {
 
     // Load real viewing history
     setViewingHistory(viewingHistoryManager.getViewingHistory())
+
+    // Listen for localStorage changes (cross-tab sync)
+    const handleStorage = (e) => {
+      if (e.key === "firestream_viewing_history") {
+        setViewingHistory(viewingHistoryManager.getViewingHistory())
+      }
+    }
+    window.addEventListener("storage", handleStorage)
+    return () => window.removeEventListener("storage", handleStorage)
   }, [])
 
-  // Refresh viewing history when tab becomes active
+  // Always reload viewing history when tab changes (not just for "viewing" tab)
   useEffect(() => {
-    if (activeTab === "viewing") {
-      setViewingHistory(viewingHistoryManager.getViewingHistory())
-    }
+    setViewingHistory(viewingHistoryManager.getViewingHistory())
   }, [activeTab])
 
   const formatDate = (dateString) => {
@@ -79,69 +87,114 @@ export default function ProfilePage() {
     return Math.min((watched / total) * 100, 100)
   }
 
-  // Generate streak heatmap data for the last year (fixed data)
+  // --- Compute streak and mood data from real viewing history ---
+  // Helper: get local date string (YYYY-MM-DD) from a Date or ISO string
+  const getLocalDateString = (dateInput) => {
+    const d = typeof dateInput === "string" ? new Date(dateInput) : dateInput
+    const year = d.getFullYear()
+    const month = String(d.getMonth() + 1).padStart(2, "0")
+    const day = String(d.getDate()).padStart(2, "0")
+    return `${year}-${month}-${day}`
+  }
+
+  // Helper: group viewing history by local date (YYYY-MM-DD)
+  const getWatchTimeByDate = (history) => {
+    const map = {}
+    history.forEach(item => {
+      const dateStr = getLocalDateString(item.lastWatched)
+      if (!map[dateStr]) map[dateStr] = 0
+      map[dateStr] += (item.watchedDuration || 0) / 3600 // convert to hours
+    })
+    return map
+  }
+
+  // Helper: group moods by local date if available (assume mood info in viewingHistory)
+  const getMoodByDate = (history) => {
+    const map = {}
+    history.forEach(item => {
+      if (item.mood) {
+        const dateStr = getLocalDateString(item.lastWatched)
+        map[dateStr] = { mood: item.mood, intensity: item.moodIntensity || 1 }
+      }
+    })
+    return map
+  }
+
+  // --- Calculate streaks from real data ---
+  const calculateStreaks = (history) => {
+    const watchTimeMap = getWatchTimeByDate(history)
+    const dates = Object.keys(watchTimeMap).filter(date => watchTimeMap[date] > 0).sort()
+    if (dates.length === 0) return { currentStreak: 0, longestStreak: 0 }
+
+    // Convert to Date objects and sort ascending
+    const dateObjs = dates.map(d => new Date(d + "T00:00:00"))
+    dateObjs.sort((a, b) => a - b)
+    let longest = 1
+    let current = 1
+    let max = 1
+
+    for (let i = 1; i < dateObjs.length; i++) {
+      const diff = (dateObjs[i] - dateObjs[i - 1]) / (1000 * 60 * 60 * 24)
+      if (diff === 1) {
+        current += 1
+        if (current > max) max = current
+      } else {
+        current = 1
+      }
+    }
+
+    // Calculate current streak up to today (local)
+    let today = new Date()
+    today.setHours(0,0,0,0)
+    let streak = 0
+    for (let i = dateObjs.length - 1; i >= 0; i--) {
+      const diff = (today - dateObjs[i]) / (1000 * 60 * 60 * 24)
+      if (diff === 0 || diff === streak) {
+        streak += 1
+      } else {
+        break
+      }
+    }
+
+    return { currentStreak: streak, longestStreak: max }
+  }
+
+  // Generate streak heatmap data for the last year from real data
   const generateStreakData = () => {
     const data = []
     const today = new Date()
     const startDate = new Date(today.getFullYear(), today.getMonth() - 11, 1) // Last 12 months
-    
-    // Fixed seed pattern for consistent data
-    const seedPattern = [0, 1, 0, 2, 3, 1, 0, 4, 2, 0, 1, 3, 0, 2, 1, 4, 0, 3, 2, 1, 0, 2, 4, 1, 3, 0, 1, 2, 0, 3]
-    let patternIndex = 0
-    
+    const watchTimeMap = getWatchTimeByDate(viewingHistory)
     for (let d = new Date(startDate); d <= today; d.setDate(d.getDate() + 1)) {
-      const dateStr = d.toISOString().split('T')[0]
-      const dayIndex = Math.floor((d - startDate) / (1000 * 60 * 60 * 24))
-      
-      // Use fixed pattern with some variation based on day of week
-      const baseLevel = seedPattern[dayIndex % seedPattern.length]
-      const dayOfWeek = d.getDay()
-      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6
-      
-      // Weekend boost and weekday patterns
-      let hoursWatched = 0
-      if (baseLevel > 0) {
-        hoursWatched = baseLevel + (isWeekend ? 1 : 0)
-        if (hoursWatched > 4) hoursWatched = 4
-      }
-      
+      const dateStr = getLocalDateString(d)
+      const hoursWatched = watchTimeMap[dateStr] || 0
+      let level = 0
+      if (hoursWatched >= 3) level = 4
+      else if (hoursWatched >= 2) level = 3
+      else if (hoursWatched >= 1) level = 2
+      else if (hoursWatched > 0) level = 1
       data.push({
         date: dateStr,
-        hours: hoursWatched,
-        level: hoursWatched
+        hours: Math.round(hoursWatched * 10) / 10,
+        level
       })
-      patternIndex++
     }
     return data
   }
 
-  // Generate mood-based streak data (fixed data)
+  // Generate mood-based streak data from real data (if available)
   const generateMoodData = () => {
     const data = []
     const today = new Date()
     const startDate = new Date(today.getFullYear(), today.getMonth() - 11, 1)
-    const moods = ['angry', 'happy', 'sad', 'fear', 'surprise', 'disgust']
-    
-    // Fixed mood patterns for consistency
-    const moodPattern = [
-      'happy', null, 'happy', 'sad', 'surprise', 'happy', null, 'angry', 'happy', null,
-      'fear', 'happy', null, 'disgust', 'happy', 'surprise', null, 'sad', 'happy', 'angry',
-      null, 'happy', 'fear', 'happy', 'surprise', null, 'happy', 'sad', null, 'happy'
-    ]
-    
-    const intensityPattern = [2, 0, 3, 1, 2, 3, 0, 1, 2, 0, 1, 3, 0, 2, 3, 1, 0, 2, 3, 1, 0, 3, 1, 2, 3, 0, 2, 1, 0, 3]
-    
+    const moodMap = getMoodByDate(viewingHistory)
     for (let d = new Date(startDate); d <= today; d.setDate(d.getDate() + 1)) {
-      const dateStr = d.toISOString().split('T')[0]
-      const dayIndex = Math.floor((d - startDate) / (1000 * 60 * 60 * 24))
-      
-      const mood = moodPattern[dayIndex % moodPattern.length]
-      const intensity = mood ? intensityPattern[dayIndex % intensityPattern.length] : 0
-      
+      const dateStr = getLocalDateString(d)
+      const moodObj = moodMap[dateStr]
       data.push({
         date: dateStr,
-        mood: mood,
-        intensity: intensity
+        mood: moodObj?.mood || null,
+        intensity: moodObj?.intensity || 0
       })
     }
     return data
@@ -149,6 +202,7 @@ export default function ProfilePage() {
 
   const streakData = generateStreakData()
   const moodData = generateMoodData()
+  const { currentStreak, longestStreak } = calculateStreaks(viewingHistory)
 
   const getHeatmapColor = (level) => {
     switch (level) {
@@ -248,6 +302,70 @@ export default function ProfilePage() {
 
   const [hoveredMoodIdx, setHoveredMoodIdx] = useState(undefined)
 
+  // Add state for selected cell in heatmaps
+  const [selectedStreakCell, setSelectedStreakCell] = useState(null)
+  const [selectedMoodCell, setSelectedMoodCell] = useState(null)
+
+  // Add state for tooltip info box (for heatmap cells)
+  const [tooltip, setTooltip] = useState(null)
+  // tooltip: { x, y, content: JSX }
+
+  // Helper to close info box on outside click
+  useEffect(() => {
+    const handleClick = () => {
+      setSelectedStreakCell(null)
+      setSelectedMoodCell(null)
+      setTooltip(null)
+    }
+    window.addEventListener('click', handleClick)
+    return () => window.removeEventListener('click', handleClick)
+  }, [])
+
+  // Prevent closing when clicking inside info box
+  const stopPropagation = (e) => e.stopPropagation()
+
+  // Helper: group streak/mood data by week for vertical heatmap (column-major, oldest left, newest right, pad left)
+  const groupDataByWeek = (data) => {
+    // data: [{date, ...}]
+    // Pad start so last day is at bottom-right (Saturday)
+    const days = [...data]
+    if (days.length === 0) return []
+    const firstDate = new Date(days[0].date)
+    const lastDate = new Date(days[days.length - 1].date)
+    const lastDayOfWeek = lastDate.getDay() // 0 (Sun) - 6 (Sat)
+    // Pad at start so first column starts with Sunday
+    const padStart = firstDate.getDay()
+    for (let i = 0; i < padStart; i++) {
+      days.unshift(null)
+    }
+    // Pad at end so last column ends with Saturday
+    const padEnd = 6 - lastDayOfWeek
+    for (let i = 0; i < padEnd; i++) {
+      days.push(null)
+    }
+    // Group into columns (weeks)
+    const weeks = []
+    for (let i = 0; i < days.length; i += 7) {
+      weeks.push(days.slice(i, i + 7))
+    }
+    return weeks
+  }
+
+  const streakWeeks = groupDataByWeek(streakData)
+  const moodWeeks = groupDataByWeek(moodData)
+
+  // Helper to show tooltip above cell
+  const showTooltip = (event, content) => {
+    // Get bounding rect of the cell
+    const rect = event.target.getBoundingClientRect()
+    // Position tooltip above the cell, horizontally centered
+    setTooltip({
+      x: rect.left + rect.width / 2,
+      y: rect.top - 8, // 8px above the cell
+      content,
+    })
+  }
+
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white relative overflow-hidden">
       {/* Netflix-style Background with Movie Images */}
@@ -329,7 +447,7 @@ export default function ProfilePage() {
               </div>
               <span className="text-gray-400 text-sm">Current Streak</span>
             </div>
-            <p className="text-2xl font-bold text-white">{userStats.currentStreak}</p>
+            <p className="text-2xl font-bold text-white">{currentStreak}</p>
           </div>
 
           {/* Longest Streak */}
@@ -340,7 +458,7 @@ export default function ProfilePage() {
               </div>
               <span className="text-gray-400 text-sm">Best Streak</span>
             </div>
-            <p className="text-2xl font-bold text-white">{userStats.longestStreak}</p>
+            <p className="text-2xl font-bold text-white">{longestStreak}</p>
           </div>
 
           {/* Movies Watched */}
@@ -469,11 +587,11 @@ export default function ProfilePage() {
                   {/* Streak Stats */}
                   <div className="grid grid-cols-3 gap-4 mb-8">
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-white">{userStats.currentStreak}</div>
+                      <div className="text-2xl font-bold text-white">{currentStreak}</div>
                       <div className="text-gray-400 text-sm">Current Streak</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-white">{userStats.longestStreak}</div>
+                      <div className="text-2xl font-bold text-white">{longestStreak}</div>
                       <div className="text-gray-400 text-sm">Best Streak</div>
                     </div>
                     <div className="text-center">
@@ -500,15 +618,54 @@ export default function ProfilePage() {
                     </div>
 
                     <div className="overflow-x-auto">
-                      <div className="inline-block min-w-full">
-                        <div className="grid grid-cols-53 gap-1">
-                          {streakData.map((day, index) => (
-                            <div
-                              key={index}
-                              title={`${day.date}: ${day.hours} hours watched`}
-                              className={`w-3 h-3 rounded-sm ${getHeatmapColor(day.level)} hover:opacity-80 transition-opacity cursor-pointer`}
-                            />
-                          ))}
+                      <div className="inline-block">
+                        <div className="flex">
+                          {/* Heatmap grid: rows = days, columns = weeks */}
+                          <div className="flex flex-col">
+                            {['S','M','T','W','T','F','S'].map((d, rowIdx) => (
+                              <div key={rowIdx} className="flex items-center">
+                                {/* Row label */}
+                                <div className="w-4 h-4 text-xs text-gray-500 flex items-center justify-center mr-1">{d}</div>
+                                {/* Heatmap cells for this row (day of week) */}
+                                {streakWeeks.map((week, colIdx) => (
+                                  <div
+                                    key={colIdx}
+                                    title={week[rowIdx] ? `${week[rowIdx].date}: ${week[rowIdx].hours} hours watched` : ''}
+                                    className={`w-4 h-4 rounded-sm m-0.5 ${week[rowIdx] ? getHeatmapColor(week[rowIdx].level) : 'bg-gray-900'} hover:opacity-80 transition-opacity cursor-pointer`}
+                                    onClick={e => {
+                                      e.stopPropagation()
+                                      setSelectedStreakCell(
+                                        week[rowIdx]
+                                          ? { ...week[rowIdx], x: colIdx, y: rowIdx }
+                                          : null
+                                      )
+                                      setSelectedMoodCell(null)
+                                      if (week[rowIdx]) {
+                                        showTooltip(e, (
+                                          <div className="font-semibold">{week[rowIdx].date}</div>
+                                        ))
+                                        showTooltip(e, (
+                                          <div>
+                                            <div className="font-semibold">{week[rowIdx].date}</div>
+                                            <div>
+                                              {week[rowIdx].hours > 0
+                                                ? `${week[rowIdx].hours} hour${week[rowIdx].hours > 1 ? 's' : ''} watched`
+                                                : 'No watch activity'}
+                                            </div>
+                                          </div>
+                                        ))
+                                      } else {
+                                        setTooltip(null)
+                                      }
+                                    }}
+                                    style={{ position: 'relative', zIndex: 1 }}
+                                  >
+                                    {/* No inline info box here */}
+                                  </div>
+                                ))}
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -527,7 +684,7 @@ export default function ProfilePage() {
                         
                         return (
                           <div key={i} className="bg-gray-800/40 rounded-lg p-4">
-                            <div className="text-lg font-bold text-white">{totalHours}h</div>
+                            <div className="text-lg font-bold text-white">{totalHours.toFixed(1)}h</div>
                             <div className="text-gray-400 text-sm">{monthName}</div>
                           </div>
                         )
@@ -596,15 +753,55 @@ export default function ProfilePage() {
                     </div>
 
                     <div className="overflow-x-auto">
-                      <div className="inline-block min-w-full">
-                        <div className="grid grid-cols-53 gap-1">
-                          {moodData.map((day, index) => (
-                            <div
-                              key={index}
-                              title={`${day.date}: ${day.mood ? `${getMoodEmoji(day.mood)} ${day.mood}` : 'No mood recorded'}`}
-                              className={`w-3 h-3 rounded-sm ${getMoodColor(day.mood, day.intensity)} hover:opacity-80 transition-opacity cursor-pointer border border-gray-700`}
-                            />
-                          ))}
+                      <div className="inline-block">
+                        <div className="flex">
+                          {/* Heatmap grid: rows = days, columns = weeks */}
+                          <div className="flex flex-col">
+                            {['S','M','T','W','T','F','S'].map((d, rowIdx) => (
+                              <div key={rowIdx} className="flex items-center">
+                                {/* Row label */}
+                                <div className="w-4 h-4 text-xs text-gray-500 flex items-center justify-center mr-1">{d}</div>
+                                {/* Heatmap cells for this row (day of week) */}
+                                {moodWeeks.map((week, colIdx) => (
+                                  <div
+                                    key={colIdx}
+                                    title={week[rowIdx] ? `${week[rowIdx].date}: ${week[rowIdx].mood ? `${getMoodEmoji(week[rowIdx].mood)} ${week[rowIdx].mood}` : 'No mood recorded'}` : ''}
+                                    className={`w-4 h-4 rounded-sm m-0.5 ${week[rowIdx] ? getMoodColor(week[rowIdx].mood, week[rowIdx].intensity) : 'bg-gray-900'} hover:opacity-80 transition-opacity cursor-pointer`}
+                                    onClick={e => {
+                                      e.stopPropagation()
+                                      setSelectedMoodCell(
+                                        week[rowIdx]
+                                          ? { ...week[rowIdx], x: colIdx, y: rowIdx }
+                                          : null
+                                      )
+                                      setSelectedStreakCell(null)
+                                      if (week[rowIdx]) {
+                                        showTooltip(e, (
+                                          <div>
+                                            <div className="font-semibold">{week[rowIdx].date}</div>
+                                            <div>
+                                              {week[rowIdx].mood
+                                                ? <>
+                                                    <span className="mr-1">{getMoodEmoji(week[rowIdx].mood)}</span>
+                                                    <span className="capitalize">{week[rowIdx].mood}</span>
+                                                    <span> (Intensity: {week[rowIdx].intensity})</span>
+                                                  </>
+                                                : 'No mood recorded'}
+                                            </div>
+                                          </div>
+                                        ))
+                                      } else {
+                                        setTooltip(null)
+                                      }
+                                    }}
+                                    style={{ position: 'relative', zIndex: 1 }}
+                                  >
+                                    {/* No inline info box here */}
+                                  </div>
+                                ))}
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -815,6 +1012,32 @@ export default function ProfilePage() {
           )}
         </div>
       </div>
+      {/* Tooltip Portal */}
+      {tooltip &&
+        ReactDOM.createPortal(
+          <div
+            className="z-[9999] fixed pointer-events-none"
+            style={{
+              left: tooltip.x,
+              top: tooltip.y, // <-- FIXED: remove - 40
+              transform: "translate(-50%, -100%)",
+              minWidth: 120,
+              background: "#18181b",
+              color: "#fff",
+              borderRadius: 8,
+              boxShadow: "0 4px 16px rgba(0,0,0,0.4)",
+              padding: "10px 14px",
+              border: "1px solid #27272a",
+              fontSize: 13,
+              pointerEvents: "auto",
+            }}
+            onClick={stopPropagation}
+          >
+            {tooltip.content}
+          </div>,
+          document.body
+        )
+      }
     </div>
   )
 }
