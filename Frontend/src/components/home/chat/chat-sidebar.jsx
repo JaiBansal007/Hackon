@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "../../ui/button";
 import { Input } from "../../ui/input";
-import { X, MessageCircle, Users, Send, Plus, BarChart3, Check, Circle, Clock, TrendingUp, Eye, ChevronRight, Heart, Laugh, ThumbsUp, Angry, Frown, Smile, MessageSquare, List, Settings, Calendar, PartyPopper, ExternalLink } from "lucide-react";
+import { X, MessageCircle, Users, Send, Plus, BarChart3, Check, Circle, Clock, TrendingUp, Eye, ChevronRight, Heart, Laugh, ThumbsUp, Angry, Frown, Smile, MessageSquare, List, Settings } from "lucide-react";
 import pollsService from "../../../firebase/polls";
 import { Dialog } from "@headlessui/react";
 import DatePicker from "react-datepicker";
@@ -16,7 +16,6 @@ export function ChatSidebar({
   onClose,
   messages,
   onSendMessage,
-  onVote,
   onTyping,
   typingUsers,
   roomStatus,
@@ -25,8 +24,6 @@ export function ChatSidebar({
   polls,
   roomId,
   onReactionSend, // Add reaction callback
-  onJoinRoom, // Add room joining callback
-  currentMovie, // Add current movie for party scheduling
 }) {
   const [newMessage, setNewMessage] = useState("");
   const [showMentions, setShowMentions] = useState(false);
@@ -45,7 +42,6 @@ export function ChatSidebar({
   const [isCreatingPoll, setIsCreatingPoll] = useState(false);
   const [showReactions, setShowReactions] = useState(false);
   const [reactionCooldown, setReactionCooldown] = useState(false);
-  const [showPartyManager, setShowPartyManager] = useState(false);
   const [showTreeioPopup, setShowTreeioPopup] = useState(false);
   const [treeioStartTime, setTreeioStartTime] = useState(null);
   const [treeioEndTime, setTreeioEndTime] = useState(null);
@@ -1005,28 +1001,32 @@ export function ChatSidebar({
                 </div>
               )}
 
-              {/* Party Link Section */}
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="px-3 py-2 border-t border-gray-700/20 bg-gradient-to-r from-purple-500/5 to-pink-500/5"
-              >
-                <a
-                  href="/party"
-                  className="flex items-center justify-between p-3 rounded-lg hover:bg-purple-500/10 transition-all group"
+              {/* Live Reactions Summary */}
+              {/* {roomStatus !== "none" && (
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="px-3 py-2 border-t border-gray-700/20 bg-gradient-to-r from-orange-500/5 to-yellow-500/5"
                 >
-                  <div className="flex items-center space-x-2">
-                    <PartyPopper className="w-4 h-4 text-purple-400" />
-                    <div>
-                      <span className="text-sm font-medium text-purple-400 group-hover:text-purple-300">
-                        Watch Parties
-                      </span>
-                      <p className="text-xs text-gray-400">Schedule & join parties</p>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-1">
+                      <Heart className="w-3 h-3 text-orange-400" />
+                      <span className="text-xs text-orange-400 font-medium">Live Reactions</span>
+                    </div>
+                    <div className="flex items-center space-x-0.5">
+                      {reactions.slice(0, 4).map((reaction) => (
+                        <div
+                          key={reaction.name}
+                          className="text-xs transition-transform"
+                          title={`${reaction.emoji} reactions`}
+                        >
+                          {reaction.emoji}
+                        </div>
+                      ))}
                     </div>
                   </div>
-                  <ExternalLink className="w-4 h-4 text-gray-400 group-hover:text-purple-400 transition-colors" />
-                </a>
-              </motion.div>
+                </motion.div>
+              )} */}
 
               <div className="p-2 border-t border-gray-700/20 bg-gray-800/20 relative">
                 {/* Host Settings - Enhanced */}
@@ -1317,34 +1317,6 @@ export function ChatSidebar({
                     </motion.button>
                   )}
 
-                    {/* Party Button - New */}
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => window.open('/party', '_blank')}
-                      className="p-2 rounded-full transition-all shadow-lg text-gray-400 hover:text-purple-400 hover:bg-purple-500/10 hover:shadow-purple-500/10"
-                    >
-                      <PartyPopper className="w-4 h-4" />
-                    </motion.button>
-
-                    {/* Reaction Button */}
-                    {roomStatus !== "none" && (
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => setShowReactions(!showReactions)}
-                        disabled={reactionCooldown}
-                        className={`p-2 rounded-full transition-all shadow-lg ${
-                          showReactions 
-                            ? "bg-orange-500/30 text-orange-300 shadow-orange-500/20" 
-                            : reactionCooldown
-                            ? "text-gray-500 cursor-not-allowed"
-                            : "text-gray-400 hover:text-orange-400 hover:bg-orange-500/10 hover:shadow-orange-500/10"
-                        }`}
-                      >
-                        <Heart className="w-4 h-4" />
-                      </motion.button>
-                    )}
                   {/* Reaction Button - New */}
                   {roomStatus !== "none" && (
                     <motion.button
