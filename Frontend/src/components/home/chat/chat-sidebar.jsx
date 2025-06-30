@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "../../ui/button";
 import { Input } from "../../ui/input";
-import { X, MessageCircle, Users, Send, Plus, BarChart3, Check, Circle, Clock, TrendingUp, Eye, ChevronRight, Heart, Laugh, ThumbsUp, Angry, Frown, Smile, MessageSquare, List, Settings } from "lucide-react";
+import { X, MessageCircle, Users, Send, Plus, BarChart3, Check, Circle, Clock, TrendingUp, Eye, ChevronRight, Heart, Laugh, ThumbsUp, Angry, Frown, Smile, MessageSquare, List, Settings, Calendar, PartyPopper, ExternalLink, MoreVertical } from "lucide-react";
 import pollsService from "../../../firebase/polls";
 import { Dialog } from "@headlessui/react";
 import DatePicker from "react-datepicker";
@@ -16,6 +16,7 @@ export function ChatSidebar({
   onClose,
   messages,
   onSendMessage,
+  onVote,
   onTyping,
   typingUsers,
   roomStatus,
@@ -24,6 +25,8 @@ export function ChatSidebar({
   polls,
   roomId,
   onReactionSend, // Add reaction callback
+  onJoinRoom, // Add room joining callback
+  currentMovie, // Add current movie for party scheduling
 }) {
   const [newMessage, setNewMessage] = useState("");
   const [showMentions, setShowMentions] = useState(false);
@@ -42,12 +45,14 @@ export function ChatSidebar({
   const [isCreatingPoll, setIsCreatingPoll] = useState(false);
   const [showReactions, setShowReactions] = useState(false);
   const [reactionCooldown, setReactionCooldown] = useState(false);
+  const [showPartyManager, setShowPartyManager] = useState(false);
   const [showTreeioPopup, setShowTreeioPopup] = useState(false);
   const [treeioStartTime, setTreeioStartTime] = useState(null);
   const [treeioEndTime, setTreeioEndTime] = useState(null);
   const [treeioPopupPosition, setTreeioPopupPosition] = useState({ left: 0, bottom: 0 });
   const [mentionDropdownPos, setMentionDropdownPos] = useState({ left: 0, bottom: 0, width: 0 });
   const [inputFocused, setInputFocused] = useState(false);
+  const [showMoreActions, setShowMoreActions] = useState(false);
 
   const inputRef = useRef(null);
   const messagesContainerRef = useRef(null);
@@ -327,20 +332,26 @@ export function ChatSidebar({
       onTyping()
     }
 
+    // Only show mentions if the last character typed is '@' or if the cursor is after an '@' with no space in between
     const textBeforeCursor = value.substring(0, position)
     const lastAtIndex = textBeforeCursor.lastIndexOf("@")
-
-    if (lastAtIndex !== -1 && (lastAtIndex === 0 || textBeforeCursor[lastAtIndex - 1] === " ")) {
-      const textAfterAt = textBeforeCursor.substring(lastAtIndex + 1)
+    const afterAt = textBeforeCursor.substring(lastAtIndex + 1)
+    if (
+      lastAtIndex !== -1 &&
+      (lastAtIndex === 0 || textBeforeCursor[lastAtIndex - 1] === " ") &&
+      !afterAt.includes(" ")
+    ) {
       let allSuggestions = [
         { id: "tree", name: "Tree.io", isAI: true },
-        ...roomMembers
+        ...roomMembers.map((member) => ({ id: member.userName, name: member.userName, isAI: false }))
       ]
-      if (textAfterAt.length > 0 && !textAfterAt.includes(" ")) {
-        const searchTerm = textAfterAt.toLowerCase()
+      if (afterAt.length > 0) {
+        const searchTerm = afterAt.toLowerCase()
         allSuggestions = [
           { id: "tree", name: "Tree.io", isAI: true },
-          ...roomMembers.filter((member) => member.userName.toLowerCase().includes(searchTerm)),
+          ...roomMembers
+            .filter((member) => member.userName.toLowerCase().includes(searchTerm))
+            .map((member) => ({ id: member.userName, name: member.userName, isAI: false })),
         ]
       }
       setMentionSuggestions(allSuggestions)
@@ -594,6 +605,18 @@ export function ChatSidebar({
     })
   }
 
+  // Place these before your component return (inside ChatSidebar)
+  const movieStartTime = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, []);
+  const movieEndTime = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 11, 0, 0); // 10 minutes, 56 seconds
+    return d;
+  }, []);
+
   const sendMessage = async () => {
     if (newMessage.trim()) {
       const messageText = newMessage.trim()
@@ -671,6 +694,10 @@ export function ChatSidebar({
       setNewMessage(`@Tree.io Summarize this from ${start} to ${end}`);
       setShowTreeioPopup(false);
       setTimeout(() => inputRef.current?.focus(), 100);
+    } else {
+      setShowTreeioPopup(false);
+      // After cancel, do not show mentions again until @ is typed
+      setShowMentions(false);
     }
   };
 
@@ -702,11 +729,13 @@ export function ChatSidebar({
                 onChange={setTreeioStartTime}
                 showTimeSelect
                 showTimeSelectOnly
-                timeFormat="HH:mm"
-                timeIntervals={5}
-                dateFormat="HH:mm"
+                timeFormat="mm:ss"
+                timeIntervals={0.5}
+                dateFormat="mm:ss"
                 placeholderText="Start time"
                 className="w-full p-2 bg-gray-800/80 border border-blue-700/50 rounded text-white text-xs"
+                minTime={movieStartTime}
+                maxTime={movieEndTime}
               />
             </div>
             <div className="flex-1">
@@ -716,13 +745,13 @@ export function ChatSidebar({
                 onChange={setTreeioEndTime}
                 showTimeSelect
                 showTimeSelectOnly
-                timeFormat="HH:mm"
-                timeIntervals={5}
-                dateFormat="HH:mm"
+                timeFormat="mm:ss"
+                timeIntervals={0.5}
+                dateFormat="mm:ss"
                 placeholderText="End time"
                 className="w-full p-2 bg-gray-800/80 border border-blue-700/50 rounded text-white text-xs"
-                minTime={treeioStartTime}
-                maxTime={treeioStartTime ? (() => { const base = new Date(treeioStartTime); base.setHours(23, 59, 59, 999); return base; })() : undefined}
+                minTime={treeioStartTime || movieStartTime}
+                maxTime={movieEndTime}
                 disabled={!treeioStartTime}
               />
             </div>
@@ -738,8 +767,9 @@ export function ChatSidebar({
           <button
             onClick={async () => {
               if (treeioStartTime && treeioEndTime) {
-                const start = treeioStartTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                const end = treeioEndTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const pad = (n) => n.toString().padStart(2, '0');
+                const start = `${pad(treeioStartTime.getMinutes())}:${pad(treeioStartTime.getSeconds())}`;
+                const end = `${pad(treeioEndTime.getMinutes())}:${pad(treeioEndTime.getSeconds())}`;
                 setShowTreeioPopup(false);
                 setNewMessage("");
                 await onSendMessage(`@Tree.io Summarize this from ${start} to ${end}`);
@@ -781,15 +811,16 @@ export function ChatSidebar({
                   : "bg-blue-500 text-white"
               }`}
             >
-              {suggestion.isAI ? "AI" : suggestion.userName?.charAt(0).toUpperCase()}
+              {suggestion.isAI ? "AI" : suggestion.name?.charAt(0).toUpperCase()}
             </div>
             <div>
               <span className={`font-medium text-xs ${suggestion.isAI ? "text-orange-400" : "text-blue-400"}`}>
-                {suggestion.isAI ? "Tree.io" : suggestion.userName}
+                {suggestion.isAI ? "Tree.io" : suggestion.name}
               </span>
-              <p className="text-xs text-gray-500">
-                {suggestion.isAI ? "AI Assistant" : "Room Member"}
-              </p>
+              {/* No description for room members, only for Tree.io */}
+              {suggestion.isAI && (
+                <p className="text-xs text-gray-500">AI Assistant</p>
+              )}
             </div>
           </div>
         ))}
@@ -1001,79 +1032,8 @@ export function ChatSidebar({
                 </div>
               )}
 
-              {/* Live Reactions Summary */}
-              {/* {roomStatus !== "none" && (
-                <motion.div 
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="px-3 py-2 border-t border-gray-700/20 bg-gradient-to-r from-orange-500/5 to-yellow-500/5"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-1">
-                      <Heart className="w-3 h-3 text-orange-400" />
-                      <span className="text-xs text-orange-400 font-medium">Live Reactions</span>
-                    </div>
-                    <div className="flex items-center space-x-0.5">
-                      {reactions.slice(0, 4).map((reaction) => (
-                        <div
-                          key={reaction.name}
-                          className="text-xs transition-transform"
-                          title={`${reaction.emoji} reactions`}
-                        >
-                          {reaction.emoji}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </motion.div>
-              )} */}
 
               <div className="p-2 border-t border-gray-700/20 bg-gray-800/20 relative">
-                {/* Host Settings - Enhanced */}
-                {roomStatus === "host" && (
-                  <motion.div 
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    className="mb-2 p-2.5 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-lg border border-purple-500/20 backdrop-blur-sm"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-6 h-6 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
-                          <BarChart3 className="w-3 h-3 text-white" />
-                        </div>
-                        <div>
-                          <span className="text-xs font-medium text-white">Poll Permissions</span>
-                          <p className="text-xs text-gray-400">Allow members to create polls</p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={togglePollsEnabled}
-                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 ${
-                          pollsEnabled ? "bg-blue-600 shadow-lg shadow-blue-500/25" : "bg-gray-600"
-                        }`}
-                      >
-                        <span
-                          className={`inline-block h-3 w-3 transform rounded-full bg-white transition-all duration-300 ${
-                            pollsEnabled ? "translate-x-5 scale-110" : "translate-x-1"
-                          }`}
-                        />
-                      </button>
-                    </div>
-                    {pollsEnabled && (
-                      <motion.div 
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="mt-2 pt-2 border-t border-purple-500/20"
-                      >
-                        <div className="flex items-center space-x-1 text-xs text-green-400">
-                          <div className="w-1 h-1 bg-green-400 rounded-full animate-pulse" />
-                          <span>Polls enabled for all members</span>
-                        </div>
-                      </motion.div>
-                    )}
-                  </motion.div>
-                )}
-
                 {showCreatePoll && (roomStatus === "host" || pollsEnabled) && (
                   <motion.div 
                     initial={{ opacity: 0, height: 0 }}
@@ -1209,7 +1169,7 @@ export function ChatSidebar({
                     transition={{ duration: 0.2, ease: "easeOut" }}
                     className="mb-2 overflow-hidden"
                   >
-                    <div className="bg-gradient-to-br from-blue-500/15 via-purple-500/10 to-indigo-500/15 rounded-2xl border border-blue-400/40 backdrop-blur-lg shadow-2xl">
+                    <div className="bg-gradient-to-br from-blue-500/15 via-purple-500/10 to-indigo-500/15 rounded-2xl border border-blue-400/40 backdrop-blur-lg shadow-2xl overflow-hidden">
                       {/* Header */}
                       <div className="bg-gradient-to-r from-blue-600/60 to-purple-600/60 p-3 border-b border-blue-400/20">
                         <div className="flex items-center space-x-2">
@@ -1221,6 +1181,14 @@ export function ChatSidebar({
                           </motion.div>
                           <span className="text-white font-semibold text-sm">Poll Options</span>
                         </div>
+                        {/* Close Button */}
+                        <button
+                          onClick={() => setShowPollOptions(false)}
+                          className="absolute top-2 right-2 text-white/80 hover:text-white p-1 rounded-full transition-colors focus:outline-none"
+                          aria-label="Close"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
                       </div>
                       
                       {/* Create Poll Button - Minimalistic Design */}
@@ -1301,55 +1269,135 @@ export function ChatSidebar({
 
                 {/* Input area - Enhanced WhatsApp style */}
                 <div className="flex space-x-1">
-                  {/* Poll Button - Enhanced */}
-                  {roomStatus !== "none" && (
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => setShowPollOptions(!showPollOptions)}
-                      className={`p-2 rounded-full transition-all shadow-lg ${
-                        showPollOptions 
-                          ? "bg-blue-500/30 text-blue-300 shadow-blue-500/20" 
-                          : "text-gray-400 hover:text-blue-400 hover:bg-blue-500/10 hover:shadow-blue-500/10"
-                      }`}
-                    >
-                      <BarChart3 className="w-4 h-4" />
-                    </motion.button>
-                  )}
+                  {/* More Actions (3-dot vertical) Button */}
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setShowMoreActions((prev) => !prev)}
+                    className="p-2 rounded-full transition-all shadow-lg text-gray-400 hover:text-white hover:bg-gray-700/30"
+                    title="More actions"
+                  >
+                    <MoreVertical className="w-5 h-5" />
+                  </motion.button>
 
-                  {/* Reaction Button - New */}
-                  {roomStatus !== "none" && (
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => setShowReactions(!showReactions)}
-                      disabled={reactionCooldown}
-                      className={`p-2 rounded-full transition-all shadow-lg ${
-                        showReactions 
-                          ? "bg-orange-500/30 text-orange-300 shadow-orange-500/20" 
-                          : reactionCooldown
-                          ? "text-gray-500 cursor-not-allowed"
-                          : "text-gray-400 hover:text-orange-400 hover:bg-orange-500/10 hover:shadow-orange-500/10"
-                      }`}
+                  {/* Popover for 4 action icons with names and poll permission toggle */}
+                  {showMoreActions && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      className="absolute bottom-12 left-0 z-50 bg-gray-900/95 border border-gray-700/50 rounded-xl p-2 flex flex-col shadow-2xl min-w-[260px]"
+                      onMouseLeave={() => setShowMoreActions(false)}
                     >
-                      <Heart className="w-4 h-4" />
-                    </motion.button>
-                  )}
+                      {/* Poll Button - Enhanced */}
+                      <div
+                        className="flex items-center justify-between hover:bg-blue-500/10 rounded-lg px-2 py-1 mb-1 transition-all cursor-pointer select-none"
+                        onClick={e => {
+                          // Prevent toggle click from triggering poll open
+                          if (e.target.closest('.poll-toggle-btn')) return;
+                          setShowPollOptions(!showPollOptions); setShowMoreActions(false);
+                        }}
+                      >
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          tabIndex={-1}
+                          className={`p-2 rounded-full transition-all ${
+                            showPollOptions 
+                              ? "bg-blue-500/30 text-blue-300 shadow-blue-500/20" 
+                              : "text-gray-400 hover:text-blue-400 hover:bg-blue-500/10 hover:shadow-blue-500/10"
+                          }`}
+                          title="Poll"
+                          style={{ pointerEvents: 'none' }}
+                        >
+                          <BarChart3 className="w-4 h-4" />
+                        </motion.button>
+                        <div className="flex items-center space-x-2 flex-1 justify-between ml-3">
+                          <span className="text-sm text-white font-medium">Poll</span>
+                          {/* Poll Permission Toggle (only for host) */}
+                          {roomStatus === "host" && (
+                            <div className="flex items-center space-x-2 ml-2">
+                              <span className="text-xs text-gray-300 whitespace-nowrap">Allow members to create polls</span>
+                              <button
+                                onClick={e => { e.stopPropagation(); togglePollsEnabled(); }}
+                                className={`poll-toggle-btn relative inline-flex h-5 w-9 items-center rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 ${
+                                  pollsEnabled ? "bg-blue-600 shadow-lg shadow-blue-500/25" : "bg-gray-600"
+                                }`}
+                              >
+                                <span
+                                  className={`inline-block h-3 w-3 transform rounded-full bg-white transition-all duration-300 ${
+                                    pollsEnabled ? "translate-x-5 scale-110" : "translate-x-1"
+                                  }`}
+                                />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
 
-                  {/* Record Button - New */}
-                  {roomStatus !== "none" && (
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      // Placeholder onClick for record action
-                      onClick={() => { /* TODO: Add record functionality */ }}
-                      className="p-2 rounded-full transition-all shadow-lg text-gray-400 hover:text-red-400 hover:bg-red-500/10 hover:shadow-red-500/10"
-                      title="Record"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                        <circle cx="12" cy="12" r="6" fill="currentColor" />
-                      </svg>
-                    </motion.button>
+                      {/* Party Button - New */}
+                      <div
+                        className="flex items-center hover:bg-purple-500/10 rounded-lg px-2 py-1 mb-1 transition-all cursor-pointer select-none"
+                        onClick={() => { window.open('/party', '_blank'); setShowMoreActions(false); }}
+                      >
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          tabIndex={-1}
+                          className="p-2 rounded-full transition-all shadow-lg text-gray-400 hover:text-purple-400 hover:bg-purple-500/10 hover:shadow-purple-500/10"
+                          title="Watch Party"
+                          style={{ pointerEvents: 'none' }}
+                        >
+                          <PartyPopper className="w-4 h-4" />
+                        </motion.button>
+                        <span className="ml-3 text-sm text-white font-medium">Watch Party</span>
+                      </div>
+
+                      {/* Reaction Button */}
+                      <div
+                        className="flex items-center hover:bg-orange-500/10 rounded-lg px-2 py-1 mb-1 transition-all cursor-pointer select-none"
+                        onClick={() => { setShowReactions(!showReactions); setShowMoreActions(false); }}
+                      >
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          tabIndex={-1}
+                          disabled={reactionCooldown}
+                          className={`p-2 rounded-full transition-all shadow-lg ${
+                            showReactions 
+                              ? "bg-orange-500/30 text-orange-300 shadow-orange-500/20" 
+                              : reactionCooldown
+                              ? "text-gray-500 cursor-not-allowed"
+                              : "text-gray-400 hover:text-orange-400 hover:bg-orange-500/10 hover:shadow-orange-500/10"
+                          }`}
+                          title="React"
+                          style={{ pointerEvents: 'none' }}
+                        >
+                          <Heart className="w-4 h-4" />
+                        </motion.button>
+                        <span className="ml-3 text-sm text-white font-medium">React</span>
+                      </div>
+
+                      {/* Record Button - New */}
+                      <div
+                        className="flex items-center hover:bg-red-500/10 rounded-lg px-2 py-1 transition-all cursor-pointer select-none"
+                        onClick={() => { /* TODO: Add record functionality */ setShowMoreActions(false); }}
+                      >
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          tabIndex={-1}
+                          className="p-2 rounded-full transition-all shadow-lg text-gray-400 hover:text-red-400 hover:bg-red-500/10 hover:shadow-red-500/10"
+                          title="Record"
+                          style={{ pointerEvents: 'none' }}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                            <circle cx="12" cy="12" r="6" fill="currentColor" />
+                          </svg>
+                        </motion.button>
+                        <span className="ml-3 text-sm text-white font-medium">Record</span>
+                      </div>
+                    </motion.div>
                   )}
 
                   <div className="flex-1 relative">
@@ -1361,12 +1409,13 @@ export function ChatSidebar({
                       onBlur={() => setInputFocused(false)}
                       placeholder={roomStatus !== "none" ? "Type @Tree.io for AI help..." : "Chat with @Tree.io..."}
                       className="bg-gray-800/60 border-gray-600/50 text-white placeholder-gray-500 rounded-xl px-3 py-2 pr-10 focus:border-blue-500/60 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm shadow-lg backdrop-blur-sm"
-                      onKeyPress={(e) => e.key === "Enter" && !showMentions && sendMessage()}
+                      onKeyPress={(e) => {
+                        if (e.key === "Enter" && !showMentions && !showTreeioPopup) sendMessage();
+                      }}
                     />
                     {/* MentionDropdown rendered absolutely above input */}
                     {MentionDropdown}
                   </div>
-                  
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
