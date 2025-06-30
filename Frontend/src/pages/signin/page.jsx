@@ -186,7 +186,7 @@ export default function SignInPage() {
         {/* Row 1 */}
         <div className="absolute top-8 left-8 w-64 h-36 rounded-xl shadow-2xl opacity-80 overflow-hidden">
           <video autoPlay muted loop className="w-full h-full object-cover rounded-xl" style={{filter: 'brightness(0.85) contrast(1.15)'}}>
-            <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4" />
+            <source src="http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4" type="video/mp4" />
           </video>
           <div className="absolute inset-0 bg-black/10 rounded-xl flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
             <Play className="w-12 h-12 text-white" />
@@ -412,7 +412,7 @@ export default function SignInPage() {
             className="w-full h-full object-cover rounded-lg"
             style={{filter: 'brightness(0.72) contrast(1.28)'}}
           >
-            <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4" />
+            <source src="http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4" type="video/mp4" />
           </video>
           <div className="absolute inset-0 bg-black/10 rounded-lg flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
             <Play className="w-6 h-6 text-white" />
@@ -545,7 +545,7 @@ export default function SignInPage() {
             className="w-full h-full object-cover rounded-md"
             style={{filter: 'brightness(0.58) contrast(1.42)'}}
           >
-            <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4" />
+            <source src="http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4" type="video/mp4" />
           </video>
           <div className="absolute inset-0 bg-black/15 rounded-md flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-200">
             <Play className="w-3 h-3 text-white" />

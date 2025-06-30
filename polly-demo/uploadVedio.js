@@ -4,8 +4,8 @@ const axios = require("axios");
 
 const REGION = process.env.AWS_REGION;
 const BUCKET_NAME = process.env.BUCKET_NAME;
-const VIDEO_URL = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
-const S3_KEY = "BigBuckBunny.mp4";
+const VIDEO_URL = "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4";
+const S3_KEY = "ElephantsDream.mp4";
 
 const s3 = new S3Client({
   region: REGION,
