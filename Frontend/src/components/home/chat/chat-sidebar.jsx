@@ -6,6 +6,10 @@ import { Button } from "../../ui/button";
 import { Input } from "../../ui/input";
 import { X, MessageCircle, Users, Send, Plus, BarChart3, Check, Circle, Clock, TrendingUp, Eye, ChevronRight, Heart, Laugh, ThumbsUp, Angry, Frown, Smile, MessageSquare, List, Settings, Calendar, PartyPopper, ExternalLink } from "lucide-react";
 import pollsService from "../../../firebase/polls";
+import { Dialog } from "@headlessui/react";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import ReactDOM from "react-dom";
 
 export function ChatSidebar({
   show,
@@ -42,6 +46,12 @@ export function ChatSidebar({
   const [showReactions, setShowReactions] = useState(false);
   const [reactionCooldown, setReactionCooldown] = useState(false);
   const [showPartyManager, setShowPartyManager] = useState(false);
+  const [showTreeioPopup, setShowTreeioPopup] = useState(false);
+  const [treeioStartTime, setTreeioStartTime] = useState(null);
+  const [treeioEndTime, setTreeioEndTime] = useState(null);
+  const [treeioPopupPosition, setTreeioPopupPosition] = useState({ left: 0, bottom: 0 });
+  const [mentionDropdownPos, setMentionDropdownPos] = useState({ left: 0, bottom: 0, width: 0 });
+  const [inputFocused, setInputFocused] = useState(false);
 
   const inputRef = useRef(null);
   const messagesContainerRef = useRef(null);
@@ -298,11 +308,23 @@ export function ChatSidebar({
     );
   };
 
+  useEffect(() => {
+    if (showMentions && inputRef.current) {
+      const rect = inputRef.current.getBoundingClientRect();
+      setMentionDropdownPos({
+        left: rect.left,
+        bottom: window.innerHeight - rect.top + 8,
+        width: rect.width
+      });
+    }
+  }, [showMentions, newMessage, inputFocused]);
+
   const handleMessageChange = (e) => {
-    const value = e.target.value
-    const position = e.target.selectionStart || 0
-    setNewMessage(value)
+    const value = e.target.value;
+    const position = e.target.selectionStart || 0;
+    setNewMessage(value);
     setCursorPosition(position)
+    if (showTreeioPopup) setShowTreeioPopup(false);
 
     // Trigger typing indicator
     if (onTyping && value.trim() !== newMessage.trim()) {
@@ -314,17 +336,19 @@ export function ChatSidebar({
 
     if (lastAtIndex !== -1 && (lastAtIndex === 0 || textBeforeCursor[lastAtIndex - 1] === " ")) {
       const textAfterAt = textBeforeCursor.substring(lastAtIndex + 1)
-      if (!textAfterAt.includes(" ")) {
+      let allSuggestions = [
+        { id: "tree", name: "Tree.io", isAI: true },
+        ...roomMembers
+      ]
+      if (textAfterAt.length > 0 && !textAfterAt.includes(" ")) {
         const searchTerm = textAfterAt.toLowerCase()
-        const allSuggestions = [
+        allSuggestions = [
           { id: "tree", name: "Tree.io", isAI: true },
           ...roomMembers.filter((member) => member.userName.toLowerCase().includes(searchTerm)),
         ]
-        setMentionSuggestions(allSuggestions)
-        setShowMentions(true)
-      } else {
-        setShowMentions(false)
       }
+      setMentionSuggestions(allSuggestions)
+      setShowMentions(true)
     } else {
       setShowMentions(false)
     }
@@ -372,10 +396,22 @@ export function ChatSidebar({
   };
 
   const insertMention = (mention) => {
+    if (mention.isAI) {
+      setShowMentions(false);
+      setShowTreeioPopup(true);
+      // Insert @Tree.io in input field
+      const lastAtIndex = newMessage.lastIndexOf("@", cursorPosition - 1);
+      const beforeMention = newMessage.substring(0, lastAtIndex);
+      const afterMention = newMessage.substring(cursorPosition);
+      const mentionText = `@Tree.io`;
+      setNewMessage(beforeMention + mentionText + " " + afterMention);
+      setTimeout(() => inputRef.current?.focus(), 100);
+      return;
+    }
     const lastAtIndex = newMessage.lastIndexOf("@", cursorPosition - 1)
     const beforeMention = newMessage.substring(0, lastAtIndex)
     const afterMention = newMessage.substring(cursorPosition)
-    const mentionText = mention.isAI ? "@Tree.io" : `@${mention.userName}`
+    const mentionText = `@${mention.userName}`
 
     setNewMessage(beforeMention + mentionText + " " + afterMention)
     setShowMentions(false)
@@ -631,6 +667,140 @@ export function ChatSidebar({
     return firebasePolls && firebasePolls[pollId];
   };
 
+  // Tree.io Summarize popup apply handler
+  const handleTreeioApply = () => {
+    if (treeioStartTime && treeioEndTime) {
+      const start = treeioStartTime.toLocaleString();
+      const end = treeioEndTime.toLocaleString();
+      setNewMessage(`@Tree.io Summarize this from ${start} to ${end}`);
+      setShowTreeioPopup(false);
+      setTimeout(() => inputRef.current?.focus(), 100);
+    }
+  };
+
+  // Tree.io Summarize Popup as floating centered popup in chat window
+  // Memoized Summarizer Popup to prevent rerendering and blinking
+  const TreeioSummarizePopup = useMemo(() => {
+    if (!showTreeioPopup) return null;
+    // Render absolutely inside the sidebar, horizontally centered above the input
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 10 }}
+        className="absolute left-1/2 bottom-16 transform -translate-x-1/2 z-50 bg-gradient-to-br from-blue-900/95 via-gray-900/95 to-blue-800/90 border border-blue-500/30 rounded-2xl shadow-2xl p-6 flex flex-col items-center max-w-xs w-[90%]"
+        style={{ pointerEvents: 'auto' }}
+      >
+        <div className="flex items-center space-x-2 mb-4">
+          <div className="w-7 h-7 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
+            <span className="text-white font-bold text-sm">AI</span>
+          </div>
+          <span className="text-blue-300 font-semibold text-base">@Tree.io Summarize this from</span>
+        </div>
+        <div className="w-full flex flex-col items-center mb-4">
+          <div className="flex space-x-2 w-full">
+            <div className="flex-1">
+              <label className="block text-xs text-gray-400 mb-1">Start</label>
+              <DatePicker
+                selected={treeioStartTime}
+                onChange={setTreeioStartTime}
+                showTimeSelect
+                showTimeSelectOnly
+                timeFormat="HH:mm"
+                timeIntervals={5}
+                dateFormat="HH:mm"
+                placeholderText="Start time"
+                className="w-full p-2 bg-gray-800/80 border border-blue-700/50 rounded text-white text-xs"
+              />
+            </div>
+            <div className="flex-1">
+              <label className="block text-xs text-gray-400 mb-1">End</label>
+              <DatePicker
+                selected={treeioEndTime}
+                onChange={setTreeioEndTime}
+                showTimeSelect
+                showTimeSelectOnly
+                timeFormat="HH:mm"
+                timeIntervals={5}
+                dateFormat="HH:mm"
+                placeholderText="End time"
+                className="w-full p-2 bg-gray-800/80 border border-blue-700/50 rounded text-white text-xs"
+                minTime={treeioStartTime}
+                maxTime={treeioStartTime ? (() => { const base = new Date(treeioStartTime); base.setHours(23, 59, 59, 999); return base; })() : undefined}
+                disabled={!treeioStartTime}
+              />
+            </div>
+          </div>
+        </div>
+        <div className="flex w-full space-x-2 mt-2">
+          <button
+            onClick={() => setShowTreeioPopup(false)}
+            className="flex-1 bg-gray-800/80 hover:bg-gray-700/90 text-gray-200 py-2 rounded-lg font-medium text-sm border border-blue-700"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={async () => {
+              if (treeioStartTime && treeioEndTime) {
+                const start = treeioStartTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const end = treeioEndTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                setShowTreeioPopup(false);
+                setNewMessage("");
+                await onSendMessage(`@Tree.io Summarize this from ${start} to ${end}`);
+                setTimeout(() => inputRef.current?.focus(), 100);
+              }
+            }}
+            disabled={!treeioStartTime || !treeioEndTime}
+            className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-2 rounded-lg font-medium text-sm disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed"
+          >
+            Apply
+          </button>
+        </div>
+      </motion.div>
+    );
+  }, [showTreeioPopup, treeioStartTime, treeioEndTime, onSendMessage, setShowTreeioPopup, setNewMessage, inputRef]);
+
+  // Mention dropdown portal rendering
+  // Memoized MentionDropdown to prevent double click issue
+  const MentionDropdown = useMemo(() => {
+    if (!showMentions || mentionSuggestions.length === 0) return null;
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 10 }}
+        className="absolute left-0 right-0 bottom-14 z-50 bg-gray-900/95 border border-gray-600/50 rounded-lg max-h-40 overflow-y-auto shadow-2xl"
+        style={{ minWidth: 220 }}
+      >
+        {mentionSuggestions.map((suggestion) => (
+          <div
+            key={`mention-${suggestion.id}`}
+            onMouseDown={e => { e.preventDefault(); insertMention(suggestion); }}
+            className="p-2 cursor-pointer flex items-center space-x-2 hover:bg-gray-700/60 transition-colors"
+          >
+            <div
+              className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${
+                suggestion.isAI
+                  ? "bg-orange-500 text-white"
+                  : "bg-blue-500 text-white"
+              }`}
+            >
+              {suggestion.isAI ? "AI" : suggestion.userName?.charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <span className={`font-medium text-xs ${suggestion.isAI ? "text-orange-400" : "text-blue-400"}`}>
+                {suggestion.isAI ? "Tree.io" : suggestion.userName}
+              </span>
+              <p className="text-xs text-gray-500">
+                {suggestion.isAI ? "AI Assistant" : "Room Member"}
+              </p>
+            </div>
+          </div>
+        ))}
+      </motion.div>
+    );
+  }, [showMentions, mentionSuggestions, insertMention]);
+
   return (
     <AnimatePresence>
       {show && (
@@ -643,35 +813,40 @@ export function ChatSidebar({
             transition={{ duration: 0.2 }}
             className="fixed inset-0 z-40"
             onClick={onClose}
-          />            <motion.div            initial={{ x: 320 }}
+          />
+          <motion.div
+            initial={{ x: 320 }}
             animate={{ x: 0 }}
             exit={{ x: 320 }}
-              className="fixed right-0 top-0 h-full w-80 bg-gradient-to-b from-gray-900/95 to-black/95 backdrop-blur-xl border-l border-gray-700/20 z-50 shadow-2xl"
-            >
-            <div className="flex flex-col h-full">                <div className="p-2 border-b border-gray-700/20 bg-gray-800/30">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-1.5">
-                      <div className="w-1 h-1 bg-green-400 rounded-full"></div>
-                      <h3 className="text-sm font-semibold text-white">
-                        {roomStatus !== "none" ? "Room Chat" : "AI Assistant"}
-                      </h3>
-                    </div>
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={onClose}
-                      className="text-gray-400 hover:text-white p-0.5 rounded-full transition-colors"
-                    >
-                      <X className="w-3 h-3" />
-                    </motion.button>
+            className="fixed right-0 top-0 h-full w-80 bg-gradient-to-b from-gray-900/95 to-black/95 backdrop-blur-xl border-l border-gray-700/20 z-50 shadow-2xl"
+          >
+            <div className="flex flex-col h-full relative">
+              {/* Summarizer Popup (centered above input) */}
+              {TreeioSummarizePopup}
+              <div className="p-2 border-b border-gray-700/20 bg-gray-800/30">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-1.5">
+                    <div className="w-1 h-1 bg-green-400 rounded-full"></div>
+                    <h3 className="text-sm font-semibold text-white">
+                      {roomStatus !== "none" ? "Room Chat" : "AI Assistant"}
+                    </h3>
                   </div>
-                  {roomStatus !== "none" && (
-                    <div className="text-xs text-gray-400 mt-0.5 flex items-center space-x-1">
-                      <Users className="w-2 h-2" />
-                      <span>{roomMembers.length} online</span>
-                    </div>
-                  )}
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={onClose}
+                    className="text-gray-400 hover:text-white p-0.5 rounded-full transition-colors"
+                  >
+                    <X className="w-3 h-3" />
+                  </motion.button>
                 </div>
+                {roomStatus !== "none" && (
+                  <div className="text-xs text-gray-400 mt-0.5 flex items-center space-x-1">
+                    <Users className="w-2 h-2" />
+                    <span>{roomMembers.length} online</span>
+                  </div>
+                )}
+              </div>
 
               <div 
                 ref={messagesContainerRef}
@@ -830,33 +1005,6 @@ export function ChatSidebar({
                 </div>
               )}
 
-              {/* Live Reactions Summary */}
-              {roomStatus !== "none" && (
-                <motion.div 
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="px-3 py-2 border-t border-gray-700/20 bg-gradient-to-r from-orange-500/5 to-yellow-500/5"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-1">
-                      <Heart className="w-3 h-3 text-orange-400" />
-                      <span className="text-xs text-orange-400 font-medium">Live Reactions</span>
-                    </div>
-                    <div className="flex items-center space-x-0.5">
-                      {reactions.slice(0, 4).map((reaction) => (
-                        <div
-                          key={reaction.name}
-                          className="text-xs transition-transform"
-                          title={`${reaction.emoji} reactions`}
-                        >
-                          {reaction.emoji}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-
               {/* Party Link Section */}
               <motion.div 
                 initial={{ opacity: 0 }}
@@ -880,7 +1028,7 @@ export function ChatSidebar({
                 </a>
               </motion.div>
 
-              <div className="p-2 border-t border-gray-700/20 bg-gray-800/20">
+              <div className="p-2 border-t border-gray-700/20 bg-gray-800/20 relative">
                 {/* Host Settings - Enhanced */}
                 {roomStatus === "host" && (
                   <motion.div 
@@ -1033,7 +1181,7 @@ export function ChatSidebar({
                         <button
                           onClick={createPoll}
                           disabled={!pollQuestion.trim() || pollOptions.filter(opt => opt.trim()).length < 2 || isCreatingPoll}
-                          className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-600 disabled:to-gray-600 text-white py-2 px-3 rounded-lg font-medium text-sm flex items-center justify-center space-x-2"
+                          className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed text-white py-2 px-3 rounded-lg font-medium text-sm flex items-center justify-center space-x-2"
                         >
                           {isCreatingPoll ? (
                             <>
@@ -1103,106 +1251,71 @@ export function ChatSidebar({
                   </motion.div>
                 )}
 
-                <div className="relative">
-                  {/* Mention suggestions */}
-                  <AnimatePresence>
-                    {showMentions && mentionSuggestions.length > 0 && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 10 }}
-                        className="absolute bottom-full left-0 right-0 bg-gray-800/95 border border-gray-600/50 rounded-lg mb-1 max-h-32 overflow-y-auto shadow-xl"
-                      >
-                        {mentionSuggestions.map((suggestion) => (
-                          <div
-                            key={`mention-${suggestion.id}`}
-                            onClick={() => insertMention(suggestion)}
-                            className="p-1.5 cursor-pointer flex items-center space-x-1.5 hover:bg-gray-700/50 transition-colors"
+                {/* Mention suggestions dropdown - rendered in portal */}
+                {/* {MentionDropdown} */}
+                {TreeioSummarizePopup}
+
+                {/* Reaction Panel */}
+                <AnimatePresence>
+                  {showReactions && roomStatus !== "none" && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.9 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.9 }}
+                      className="absolute bottom-full left-0 right-0 mb-2 bg-gray-900/95 border border-gray-600/50 rounded-xl p-3 shadow-2xl backdrop-blur-sm"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-medium text-gray-300">Quick Reactions</span>
+                        <button
+                          onClick={() => setShowReactions(false)}
+                          className="text-gray-400 hover:text-gray-300 p-0.5 rounded-full hover:bg-gray-700/50 transition-all"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-6 gap-2">
+                        {reactions.map((reaction, index) => (
+                          <motion.button
+                            key={reaction.name}
+                            onClick={() => handleReactionSend(reaction)}
+                            disabled={reactionCooldown}
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            initial={{ opacity: 0, scale: 0 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: index * 0.05 }}
+                            className={`w-10 h-10 rounded-lg bg-gray-800/80 hover:bg-gray-700/80 text-2xl p-0 border border-transparent hover:border-orange-400/50 transition-all duration-200 ${
+                              reactionCooldown ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-lg hover:shadow-orange-400/25'
+                            }`}
                           >
-                            <div
-                              className={`w-4 h-4 rounded-full flex items-center justify-center text-xs font-bold ${
-                                suggestion.isAI
-                                  ? "bg-orange-500 text-white"
-                                  : "bg-blue-500 text-white"
-                              }`}
-                            >
-                              {suggestion.isAI ? "AI" : suggestion.userName?.charAt(0).toUpperCase()}
-                            </div>
-                            <div>
-                              <span className={`font-medium text-xs ${suggestion.isAI ? "text-orange-400" : "text-blue-400"}`}>
-                                {suggestion.isAI ? "Tree.io" : suggestion.userName}
-                              </span>
-                              <p className="text-xs text-gray-500">
-                                {suggestion.isAI ? "AI Assistant" : "Room Member"}
-                              </p>
-                            </div>
-                          </div>
+                            {reaction.emoji}
+                          </motion.button>
                         ))}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                      </div>
+                      <div className="mt-2 text-xs text-gray-400 text-center">
+                        {reactionCooldown ? "Please wait..." : "React to the current moment"}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
-                  {/* Reaction Panel */}
-                  <AnimatePresence>
-                    {showReactions && roomStatus !== "none" && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 10, scale: 0.9 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 10, scale: 0.9 }}
-                        className="absolute bottom-full left-0 right-0 mb-2 bg-gray-900/95 border border-gray-600/50 rounded-xl p-3 shadow-2xl backdrop-blur-sm"
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs font-medium text-gray-300">Quick Reactions</span>
-                          <button
-                            onClick={() => setShowReactions(false)}
-                            className="text-gray-400 hover:text-gray-300 p-0.5 rounded-full hover:bg-gray-700/50 transition-all"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </div>
-                        <div className="grid grid-cols-6 gap-2">
-                          {reactions.map((reaction, index) => (
-                            <motion.button
-                              key={reaction.name}
-                              onClick={() => handleReactionSend(reaction)}
-                              disabled={reactionCooldown}
-                              whileHover={{ scale: 1.1 }}
-                              whileTap={{ scale: 0.9 }}
-                              initial={{ opacity: 0, scale: 0 }}
-                              animate={{ opacity: 1, scale: 1 }}
-                              transition={{ delay: index * 0.05 }}
-                              className={`w-10 h-10 rounded-lg bg-gray-800/80 hover:bg-gray-700/80 text-2xl p-0 border border-transparent hover:border-orange-400/50 transition-all duration-200 ${
-                                reactionCooldown ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-lg hover:shadow-orange-400/25'
-                              }`}
-                            >
-                              {reaction.emoji}
-                            </motion.button>
-                          ))}
-                        </div>
-                        <div className="mt-2 text-xs text-gray-400 text-center">
-                          {reactionCooldown ? "Please wait..." : "React to the current moment"}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  {/* Input area - Enhanced WhatsApp style */}
-                  <div className="flex space-x-1">
-                    {/* Poll Button - Enhanced */}
-                    {roomStatus !== "none" && (
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => setShowPollOptions(!showPollOptions)}
-                        className={`p-2 rounded-full transition-all shadow-lg ${
-                          showPollOptions 
-                            ? "bg-blue-500/30 text-blue-300 shadow-blue-500/20" 
-                            : "text-gray-400 hover:text-blue-400 hover:bg-blue-500/10 hover:shadow-blue-500/10"
-                        }`}
-                      >
-                        <BarChart3 className="w-4 h-4" />
-                      </motion.button>
-                    )}
+                {/* Input area - Enhanced WhatsApp style */}
+                <div className="flex space-x-1">
+                  {/* Poll Button - Enhanced */}
+                  {roomStatus !== "none" && (
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setShowPollOptions(!showPollOptions)}
+                      className={`p-2 rounded-full transition-all shadow-lg ${
+                        showPollOptions 
+                          ? "bg-blue-500/30 text-blue-300 shadow-blue-500/20" 
+                          : "text-gray-400 hover:text-blue-400 hover:bg-blue-500/10 hover:shadow-blue-500/10"
+                      }`}
+                    >
+                      <BarChart3 className="w-4 h-4" />
+                    </motion.button>
+                  )}
 
                     {/* Party Button - New */}
                     <motion.button
@@ -1232,44 +1345,65 @@ export function ChatSidebar({
                         <Heart className="w-4 h-4" />
                       </motion.button>
                     )}
-
-                    {/* Record Button - New */}
-                    {roomStatus !== "none" && (
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        // Placeholder onClick for record action
-                        onClick={() => { /* TODO: Add record functionality */ }}
-                        className="p-2 rounded-full transition-all shadow-lg text-gray-400 hover:text-red-400 hover:bg-red-500/10 hover:shadow-red-500/10"
-                        title="Record"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                          <circle cx="12" cy="12" r="6" fill="currentColor" />
-                        </svg>
-                      </motion.button>
-                    )}
-
-                    <div className="flex-1 relative">
-                      <Input
-                        ref={inputRef}
-                        value={newMessage}
-                        onChange={handleMessageChange}
-                        placeholder={roomStatus !== "none" ? "Type @Tree.io for AI help..." : "Chat with @Tree.io..."}
-                        className="bg-gray-800/60 border-gray-600/50 text-white placeholder-gray-500 rounded-xl px-3 py-2 pr-10 focus:border-blue-500/60 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm shadow-lg backdrop-blur-sm"
-                        onKeyPress={(e) => e.key === "Enter" && !showMentions && sendMessage()}
-                      />
-                    </div>
-                    
+                  {/* Reaction Button - New */}
+                  {roomStatus !== "none" && (
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      onClick={sendMessage}
-                      disabled={!newMessage.trim()}
-                      className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed text-white rounded-xl p-2 transition-all shadow-lg disabled:shadow-none"
+                      onClick={() => setShowReactions(!showReactions)}
+                      disabled={reactionCooldown}
+                      className={`p-2 rounded-full transition-all shadow-lg ${
+                        showReactions 
+                          ? "bg-orange-500/30 text-orange-300 shadow-orange-500/20" 
+                          : reactionCooldown
+                          ? "text-gray-500 cursor-not-allowed"
+                          : "text-gray-400 hover:text-orange-400 hover:bg-orange-500/10 hover:shadow-orange-500/10"
+                      }`}
                     >
-                      <Send className="w-4 h-4" />
+                      <Heart className="w-4 h-4" />
                     </motion.button>
+                  )}
+
+                  {/* Record Button - New */}
+                  {roomStatus !== "none" && (
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      // Placeholder onClick for record action
+                      onClick={() => { /* TODO: Add record functionality */ }}
+                      className="p-2 rounded-full transition-all shadow-lg text-gray-400 hover:text-red-400 hover:bg-red-500/10 hover:shadow-red-500/10"
+                      title="Record"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                        <circle cx="12" cy="12" r="6" fill="currentColor" />
+                      </svg>
+                    </motion.button>
+                  )}
+
+                  <div className="flex-1 relative">
+                    <Input
+                      ref={inputRef}
+                      value={newMessage}
+                      onChange={handleMessageChange}
+                      onFocus={() => setInputFocused(true)}
+                      onBlur={() => setInputFocused(false)}
+                      placeholder={roomStatus !== "none" ? "Type @Tree.io for AI help..." : "Chat with @Tree.io..."}
+                      className="bg-gray-800/60 border-gray-600/50 text-white placeholder-gray-500 rounded-xl px-3 py-2 pr-10 focus:border-blue-500/60 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm shadow-lg backdrop-blur-sm"
+                      onKeyPress={(e) => e.key === "Enter" && !showMentions && sendMessage()}
+                    />
+                    {/* MentionDropdown rendered absolutely above input */}
+                    {MentionDropdown}
                   </div>
+                  
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={sendMessage}
+                    disabled={!newMessage.trim()}
+                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed text-white rounded-xl p-2 transition-all shadow-lg disabled:shadow-none"
+                  >
+                    <Send className="w-4 h-4" />
+                  </motion.button>
                 </div>
               </div>
             </div>
