@@ -291,7 +291,7 @@ Beautiful, **data-rich user profiles** with complete viewing analytics:
 ---
 
 ### 3. 📊 Mood-Based Recommendation Engine
-![Recommendation Engine](./Docs/architecture.jpeg)
+<!-- ![Recommendation Engine](./Docs/architecture.jpeg) -->
 - Trains on:
   - User behavior
   - OTT item metadata
@@ -322,7 +322,7 @@ Beautiful, **data-rich user profiles** with complete viewing analytics:
 
 ## ⚖️ Scaling Strategy
 
-![Scaling Architecture](./Docs/architecture.jpeg)
+<!-- ![Scaling Architecture](./Docs/architecture.jpeg) -->
 
 | Component            | Scaling Method                                  |
 |----------------------|-------------------------------------------------|
@@ -338,7 +338,7 @@ Beautiful, **data-rich user profiles** with complete viewing analytics:
 
 ## 🔐 Security Considerations
 
-![Security Architecture](./Docs/architecture.jpeg)
+<!-- ![Security Architecture](./Docs/architecture.jpeg) -->
 
 - OAuth2 / JWT-based token validation using **Amazon Cognito**
 - All inter-service calls secured via IAM roles & scoped policies
@@ -379,7 +379,7 @@ Beautiful, **data-rich user profiles** with complete viewing analytics:
 
 ## 🛠 Future Enhancements
 
-![Future Roadmap](./Docs/architecture.jpeg)
+<!-- ![Future Roadmap](./Docs/architecture.jpeg) -->
 
 - 🎥 Replace OTT stubs with real playbook via **MediaConnect / IVS**
 - 📊 Add **real-time analytics dashboard** (Grafana + CloudWatch)
@@ -390,7 +390,7 @@ Beautiful, **data-rich user profiles** with complete viewing analytics:
 
 ## 🏆 Amazon HackOn 2025 Submission
 
-![FireTV Architecture](./Docs/architecture.jpeg)
+<!-- ![FireTV Architecture](./Docs/architecture.jpeg) -->
 
 ### 🎯 **Challenge Statement**
 Building a scalable, cloud-native co-watching platform that can handle **millions of concurrent users** with real-time synchronization, AI-powered recommendations, and gamified user engagement.
