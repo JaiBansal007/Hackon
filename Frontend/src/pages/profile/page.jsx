@@ -207,10 +207,10 @@ export default function ProfilePage() {
   const getHeatmapColor = (level) => {
     switch (level) {
       case 0: return 'bg-gray-800'
-      case 1: return 'bg-green-900'
-      case 2: return 'bg-green-700'
-      case 3: return 'bg-green-500'
-      case 4: return 'bg-green-400'
+      case 1: return 'bg-blue-900'
+      case 2: return 'bg-blue-700'
+      case 3: return 'bg-blue-500'
+      case 4: return 'bg-blue-400'
       default: return 'bg-gray-800'
     }
   }
@@ -256,30 +256,30 @@ export default function ProfilePage() {
   const getActivityIcon = (type) => {
     switch (type) {
       case "daily_watch":
-        return <Flame className="w-5 h-5 text-orange-400" />
+        return <Flame className="w-5 h-5 text-cyan-400" />
       case "quiz":
-        return <Trophy className="w-5 h-5 text-yellow-400" />
+        return <Trophy className="w-5 h-5 text-blue-400" />
       case "streak_bonus":
-        return <TrendingUp className="w-5 h-5 text-green-400" />
+        return <TrendingUp className="w-5 h-5 text-teal-400" />
       case "redemption":
         return <Gift className="w-5 h-5 text-red-400" />
       default:
-        return <Coins className="w-5 h-5 text-yellow-400" />
+        return <Coins className="w-5 h-5 text-blue-400" />
     }
   }
 
   const getActivityColor = (type) => {
     switch (type) {
       case "daily_watch":
-        return "from-orange-400 to-yellow-400"
+        return "from-cyan-400 to-blue-500"
       case "quiz":
-        return "from-yellow-400 to-orange-500"
+        return "from-blue-400 to-cyan-500"
       case "streak_bonus":
-        return "from-green-400 to-emerald-500"
+        return "from-teal-400 to-cyan-500"
       case "redemption":
         return "from-red-400 to-pink-500"
       default:
-        return "from-yellow-400 to-orange-500"
+        return "from-blue-400 to-cyan-500"
     }
   }
 
@@ -420,8 +420,8 @@ export default function ProfilePage() {
           </div>
 
           <div className="flex items-center space-x-3 bg-black/50 backdrop-blur rounded-lg px-4 py-2">
-            <Coins className="w-5 h-5 text-yellow-500" />
-            <span className="text-yellow-500 font-semibold">{userStats.totalPoints.toLocaleString()}</span>
+            <Coins className="w-5 h-5 text-blue-400" />
+            <span className="text-blue-400 font-semibold">{userStats.totalPoints.toLocaleString()}</span>
             <span className="text-gray-400 text-sm">points</span>
           </div>
         </div>
@@ -431,8 +431,8 @@ export default function ProfilePage() {
           {/* Total Points */}
           <div className="bg-gray-900/80 backdrop-blur rounded-lg p-6 border border-gray-800">
             <div className="flex items-center space-x-3 mb-3">
-              <div className="p-2 bg-yellow-500 rounded-lg">
-                <Coins className="w-5 h-5 text-black" />
+              <div className="p-2 bg-blue-500 rounded-lg">
+                <Coins className="w-5 h-5 text-white" />
               </div>
               <span className="text-gray-400 text-sm">Total Points</span>
             </div>
@@ -442,7 +442,7 @@ export default function ProfilePage() {
           {/* Current Streak */}
           <div className="bg-gray-900/80 backdrop-blur rounded-lg p-6 border border-gray-800">
             <div className="flex items-center space-x-3 mb-3">
-              <div className="p-2 bg-orange-500 rounded-lg">
+              <div className="p-2 bg-cyan-500 rounded-lg">
                 <Flame className="w-5 h-5 text-white" />
               </div>
               <span className="text-gray-400 text-sm">Current Streak</span>
@@ -453,7 +453,7 @@ export default function ProfilePage() {
           {/* Longest Streak */}
           <div className="bg-gray-900/80 backdrop-blur rounded-lg p-6 border border-gray-800">
             <div className="flex items-center space-x-3 mb-3">
-              <div className="p-2 bg-green-500 rounded-lg">
+              <div className="p-2 bg-teal-500 rounded-lg">
                 <TrendingUp className="w-5 h-5 text-white" />
               </div>
               <span className="text-gray-400 text-sm">Best Streak</span>
@@ -486,7 +486,7 @@ export default function ProfilePage() {
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
                 activeTab === tab.id
-                  ? "bg-white text-black"
+                  ? "bg-gradient-to-r from-blue-500 to-cyan-500 text-white"
                   : "bg-gray-800/60 text-gray-300 hover:bg-gray-700/60 hover:text-white"
               }`}
             >
@@ -501,7 +501,7 @@ export default function ProfilePage() {
           {activeTab === "activity" ? (
             <div>
               <h2 className="text-xl font-bold text-white mb-6 flex items-center space-x-2">
-                <Coins className="w-5 h-5 text-yellow-500" />
+                <Coins className="w-5 h-5 text-blue-400" />
                 <span>Point Activity</span>
               </h2>
 
@@ -512,7 +512,7 @@ export default function ProfilePage() {
                   <p className="text-gray-500 mb-4">Start watching movies to earn points!</p>
                   <Button
                     onClick={() => navigate("/home")}
-                    className="bg-white text-black px-6 py-2 rounded font-semibold hover:bg-gray-200 transition-colors"
+                    className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-6 py-2 rounded font-semibold hover:from-blue-600 hover:to-cyan-600 transition-all"
                   >
                     Start Earning
                   </Button>
@@ -547,7 +547,7 @@ export default function ProfilePage() {
             <div>
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold text-white flex items-center space-x-2">
-                  <Flame className="w-5 h-5 text-orange-500" />
+                  <Flame className="w-5 h-5 text-cyan-500" />
                   <span>Viewing Streak</span>
                 </h2>
                 
@@ -557,7 +557,7 @@ export default function ProfilePage() {
                     onClick={() => setStreakMode("watchtime")}
                     className={`px-6 py-3 rounded-lg text-sm font-semibold transition-all duration-300 ${
                       streakMode === "watchtime"
-                        ? "bg-white text-black shadow-lg"
+                        ? "bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg"
                         : "text-gray-400 hover:text-white hover:bg-gray-700/50"
                     }`}
                   >
@@ -570,7 +570,7 @@ export default function ProfilePage() {
                     onClick={() => setStreakMode("mood")}
                     className={`px-6 py-3 rounded-lg text-sm font-semibold transition-all duration-300 ${
                       streakMode === "mood"
-                        ? "bg-white text-black shadow-lg"
+                        ? "bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg"
                         : "text-gray-400 hover:text-white hover:bg-gray-700/50"
                     }`}
                   >
@@ -608,10 +608,10 @@ export default function ProfilePage() {
                         <span>Less</span>
                         <div className="flex space-x-1">
                           <div className="w-3 h-3 bg-gray-800 rounded-sm"></div>
-                          <div className="w-3 h-3 bg-green-900 rounded-sm"></div>
-                          <div className="w-3 h-3 bg-green-700 rounded-sm"></div>
-                          <div className="w-3 h-3 bg-green-500 rounded-sm"></div>
-                          <div className="w-3 h-3 bg-green-400 rounded-sm"></div>
+                          <div className="w-3 h-3 bg-blue-900 rounded-sm"></div>
+                          <div className="w-3 h-3 bg-blue-700 rounded-sm"></div>
+                          <div className="w-3 h-3 bg-blue-500 rounded-sm"></div>
+                          <div className="w-3 h-3 bg-blue-400 rounded-sm"></div>
                         </div>
                         <span>More</span>
                       </div>
@@ -684,7 +684,7 @@ export default function ProfilePage() {
                         
                         return (
                           <div key={i} className="bg-gray-800/40 rounded-lg p-4">
-                            <div className="text-lg font-bold text-white">{totalHours.toFixed(1)}h</div>
+                          <div className="text-lg font-bold text-white">{totalHours.toFixed(1)}h</div>
                             <div className="text-gray-400 text-sm">{monthName}</div>
                           </div>
                         )
@@ -874,7 +874,7 @@ export default function ProfilePage() {
             <div>
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold text-white flex items-center space-x-2">
-                  <Eye className="w-5 h-5 text-blue-500" />
+                  <Eye className="w-5 h-5 text-cyan-500" />
                   <span>Viewing History</span>
                 </h2>
                 {viewingHistory.length > 0 && (
@@ -898,7 +898,7 @@ export default function ProfilePage() {
                   <p className="text-gray-500 mb-4">Start watching movies!</p>
                   <Button
                     onClick={() => navigate("/home")}
-                    className="bg-white text-black px-6 py-2 rounded font-semibold hover:bg-gray-200 transition-colors"
+                    className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-6 py-2 rounded font-semibold hover:from-blue-600 hover:to-cyan-600 transition-all"
                   >
                     Browse Movies
                   </Button>
@@ -930,8 +930,8 @@ export default function ProfilePage() {
                           <div
                             className={`h-2 rounded-full transition-all ${
                               movie.completed
-                                ? "bg-green-500"
-                                : "bg-yellow-500"
+                                ? "bg-cyan-500"
+                                : "bg-blue-500"
                             }`}
                             style={{ width: `${getWatchProgress(movie.watchedDuration, movie.totalDuration)}%` }}
                           />
@@ -940,14 +940,14 @@ export default function ProfilePage() {
 
                       <div className="flex space-x-2">
                         {movie.completed ? (
-                          <div className="flex items-center text-green-400 text-sm">
+                          <div className="flex items-center text-cyan-400 text-sm">
                             <Trophy className="w-4 h-4 mr-1" />
                             Complete
                           </div>
                         ) : (
                           <Button
                             onClick={() => handleContinueWatching(movie)}
-                            className="bg-white text-black text-sm px-4 py-2 rounded hover:bg-gray-200 transition-colors"
+                            className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-sm px-4 py-2 rounded hover:from-blue-600 hover:to-cyan-600 transition-all"
                           >
                             <Play className="w-4 h-4 mr-1" />
                             Continue
@@ -969,7 +969,7 @@ export default function ProfilePage() {
           ) : (
             <div>
               <h2 className="text-xl font-bold text-white mb-6 flex items-center space-x-2">
-                <Gift className="w-5 h-5 text-red-500" />
+                <Gift className="w-5 h-5 text-blue-500" />
                 <span>Redemption History</span>
               </h2>
 
@@ -980,7 +980,7 @@ export default function ProfilePage() {
                   <p className="text-gray-500 mb-4">Earn points to unlock rewards!</p>
                   <Button
                     onClick={() => navigate("/redeem")}
-                    className="bg-white text-black px-6 py-2 rounded font-semibold hover:bg-gray-200 transition-colors"
+                    className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-6 py-2 rounded font-semibold hover:from-blue-600 hover:to-cyan-600 transition-all"
                   >
                     View Rewards
                   </Button>
@@ -992,7 +992,7 @@ export default function ProfilePage() {
                       key={redemption.id}
                       className="flex items-center space-x-4 p-4 bg-gray-800/40 rounded-lg"
                     >
-                      <div className="w-10 h-10 rounded-lg bg-red-500 flex items-center justify-center">
+                      <div className="w-10 h-10 rounded-lg bg-blue-500 flex items-center justify-center">
                         <Gift className="w-5 h-5 text-white" />
                       </div>
 
@@ -1002,7 +1002,7 @@ export default function ProfilePage() {
                       </div>
 
                       <div className="text-right">
-                        <div className="text-lg font-bold text-red-400">{redemption.points}</div>
+                        <div className="text-lg font-bold text-blue-400">{redemption.points}</div>
                       </div>
                     </div>
                   ))}

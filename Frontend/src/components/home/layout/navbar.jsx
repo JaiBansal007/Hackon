@@ -23,7 +23,7 @@ import { ViewingHistoryManager } from "../../../lib/viewing-history"
 function UserInitialAvatar({ name }) {
   const initial = name?.charAt(0).toUpperCase() || "U"
   return (
-    <AvatarFallback className="bg-gradient-to-br from-red-500 to-orange-600 text-white font-bold text-sm">
+    <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-600 text-white font-bold text-sm">
       {initial}
     </AvatarFallback>
   )
@@ -103,7 +103,7 @@ export function Navbar({
       const viewingHistoryManager = ViewingHistoryManager.getInstance()
       const viewingHistory = viewingHistoryManager.getViewingHistory()
 
-      const response = await fetch('http://localhost:5000/api/recommendations/mood', {
+      const response = await fetch('http://localhost:5001/api/recommendations/mood', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -379,7 +379,7 @@ export function Navbar({
               >
                 <div className="p-3 border-b border-gray-700">
                   <div className="flex items-center space-x-2">
-                    <div className={`w-2 h-2 ${recommendationType === 'mood' ? 'bg-orange-400' : 'bg-blue-400'} rounded-full ${isLoadingRecommendations ? 'animate-pulse' : ''}`}></div>
+                    <div className={`w-2 h-2 ${recommendationType === 'mood' ? 'bg-blue-400' : 'bg-blue-400'} rounded-full ${isLoadingRecommendations ? 'animate-pulse' : ''}`}></div>
                     <p className="text-white text-xs font-medium">
                       {recommendationType === 'mood' && '🎭 Mood-based recommendations'}
                       {recommendationType === 'history' && '📚 Based on your viewing history'}
@@ -394,7 +394,7 @@ export function Navbar({
                 {isLoadingRecommendations ? (
                   <div className="p-6 text-center">
                     <div className="relative">
-                      <div className="animate-spin rounded-full h-8 w-8 border-3 border-orange-400 border-t-transparent mx-auto"></div>
+                      <div className="animate-spin rounded-full h-8 w-8 border-3 border-blue-400 border-t-transparent mx-auto"></div>
                       <div className="absolute inset-0 rounded-full h-8 w-8 border-3 border-gray-700 mx-auto"></div>
                     </div>
                     <p className="text-white text-sm mt-3 animate-pulse">🧠 Analyzing your mood...</p>
@@ -514,7 +514,7 @@ export function Navbar({
                 onClick={onLeaveRoom}
                 size="sm"
                 variant="outline"
-                className="border-red-500/50 text-red-400 hover:bg-red-500/10 hover:text-red-300 hover:border-red-400 rounded-full px-3 py-1 text-xs h-8 transition-all duration-200"
+                className="border-blue-500/50 text-blue-400 hover:bg-blue-500/10 hover:text-blue-300 hover:border-blue-400 rounded-full px-3 py-1 text-xs h-8 transition-all duration-200"
               >
                 Leave Room
               </Button>
@@ -562,7 +562,7 @@ export function Navbar({
               <DropdownMenuSeparator className="bg-gray-700" />
               <DropdownMenuItem 
                 onClick={onLogout}
-                className="text-red-400 hover:bg-red-600/10 hover:text-red-300 text-sm"
+                className="text-blue-400 hover:bg-blue-600/10 hover:text-blue-300 text-sm"
               >
                 <LogOut className="mr-2 h-3 w-3" />
                 Log out
@@ -588,7 +588,7 @@ export function Navbar({
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.8, opacity: 0, y: 50 }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-black to-gray-900 border border-amber-500/30 rounded-3xl max-w-lg w-full shadow-2xl"
+              className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-black to-gray-900 border border-blue-500/30 rounded-3xl max-w-lg w-full shadow-2xl"
               style={{ margin: 'auto' }}
             >
               {/* Close button */}
@@ -717,7 +717,7 @@ export function Navbar({
                         setShowJoinPartyModal(false)
                         navigate("/party")
                       }}
-                      className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white font-semibold rounded-xl"
+                      className="bg-gradient-to-r from-blue-500 to-blue-500 hover:from-blue-400 hover:to-blue-400 text-white font-semibold rounded-xl"
                     >
                       <PartyPopper className="w-4 h-4 mr-2" />
                       Browse All Parties
@@ -862,7 +862,7 @@ export function Navbar({
                         onCreateRoom()
                       }}
                       variant="outline"
-                      className="flex-1 border-red-500/50 text-red-300 hover:bg-red-500/10 hover:text-red-200 rounded-xl"
+                      className="flex-1 border-blue-500/50 text-blue-300 hover:bg-blue-500/10 hover:text-blue-200 rounded-xl"
                     >
                       <Crown className="w-4 h-4 mr-2" />
                       Create Room

@@ -103,7 +103,7 @@ export default function LandingPage() {
       <div className="fixed inset-0 bg-black">
         <div className="absolute inset-0 bg-gradient-to-b from-gray-900/20 via-transparent to-black/60" />
         {/* Animated background elements */}
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-to-r from-amber-500/10 to-orange-500/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-to-r from-amber-500/10 to-blue-500/10 rounded-full blur-3xl animate-pulse" />
         <div className="absolute top-3/4 right-1/4 w-80 h-80 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
         <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-gradient-to-r from-violet-500/10 to-purple-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '4s' }} />
       </div>
@@ -139,12 +139,12 @@ export default function LandingPage() {
                   className="relative group text-gray-300 hover:text-white transition-colors duration-200 font-medium"
                 >
                   {item}
-                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-orange-400 to-amber-400 group-hover:w-full transition-all duration-300" />
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-400 to-amber-400 group-hover:w-full transition-all duration-300" />
                 </button>
               ))}
               <div className="flex items-center space-x-3 ml-4">
                 <button 
-                  className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-400 hover:to-red-400 text-white px-6 py-2.5 rounded-md font-semibold transition-all duration-300 hover:shadow-lg hover:scale-105 flex items-center space-x-2"
+                  className="bg-gradient-to-r from-blue-500 to-blue-500 hover:from-blue-400 hover:to-blue-400 text-white px-6 py-2.5 rounded-md font-semibold transition-all duration-300 hover:shadow-lg hover:scale-105 flex items-center space-x-2"
                   onClick={() => navigate('/signin')}
                 >
                   <span>Get Started</span>
@@ -170,14 +170,14 @@ export default function LandingPage() {
                   <button
                     key={item}
                     onClick={() => scrollToSection(item.toLowerCase())}
-                    className="text-left text-gray-300 hover:text-orange-400 transition-colors font-medium"
+                    className="text-left text-gray-300 hover:text-blue-400 transition-colors font-medium"
                   >
                     {item}
                   </button>
                 ))}
                 <div className="flex flex-col space-y-2 pt-2">
                   <button
-                    className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-2 rounded-md font-semibold w-fit flex items-center space-x-2"
+                    className="bg-gradient-to-r from-blue-500 to-blue-500 text-white px-4 py-2 rounded-md font-semibold w-fit flex items-center space-x-2"
                     onClick={() => navigate('/signin')}
                   >
                     <span>Get Started</span>
@@ -195,9 +195,9 @@ export default function LandingPage() {
         <section className="min-h-screen flex items-center justify-center px-6 pt-16">
           <div className="text-center max-w-6xl">
             <div className="mb-8">
-              <div className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-500/20 to-red-500/20 border border-orange-500/30 rounded-full px-6 py-3 mb-8">
-                <Sparkles className="w-5 h-5 text-orange-400" />
-                <span className="text-sm font-semibold text-orange-300">Powered by Advanced AI</span>
+              <div className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-500/20 to-blue-500/20 border border-blue-500/30 rounded-full px-6 py-3 mb-8">
+                <Sparkles className="w-5 h-5 text-blue-400" />
+                <span className="text-sm font-semibold text-blue-300">Powered by Advanced AI</span>
               </div>
             </div>
 
@@ -206,20 +206,20 @@ export default function LandingPage() {
                 Transform Your
               </span>
               <br />
-              <span className="bg-gradient-to-r from-orange-400 via-red-500 to-orange-400 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-blue-400 via-blue-500 to-blue-400 bg-clip-text text-transparent">
                 Fire TV Experience
               </span>
             </h1>
 
             <p className="text-lg md:text-xl mb-12 text-gray-400 max-w-4xl mx-auto leading-relaxed">
-              Discover content that matches your <span className="text-orange-400 font-medium">mood</span>, 
+              Discover content that matches your <span className="text-blue-400 font-medium">mood</span>, 
               watch with <span className="text-cyan-400 font-medium">friends anywhere</span>, 
               and never miss a beat with <span className="text-violet-400 font-medium">AI-powered summaries</span>.
             </p>
 
             {/* <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
               <button 
-                className="group bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-400 hover:to-red-400 text-white px-10 py-4 rounded-md font-bold text-lg transition-all duration-300 hover:shadow-lg hover:scale-105 flex items-center justify-center space-x-2"
+                className="group bg-gradient-to-r from-blue-500 to-blue-500 hover:from-blue-400 hover:to-blue-400 text-white px-10 py-4 rounded-md font-bold text-lg transition-all duration-300 hover:shadow-lg hover:scale-105 flex items-center justify-center space-x-2"
                 onClick={() => navigate('/signin')}
               >
                 <Play className="w-5 h-5 fill-current" />
@@ -237,7 +237,7 @@ export default function LandingPage() {
               {stats.map((stat, index) => (
                 <div key={index} className="text-center group">
                   <div className="mb-3">
-                    <stat.icon className="w-8 h-8 mx-auto text-orange-400 group-hover:scale-110 transition-transform" />
+                    <stat.icon className="w-8 h-8 mx-auto text-blue-400 group-hover:scale-110 transition-transform" />
                   </div>
                   <div className="text-2xl md:text-3xl font-bold text-white mb-1">{stat.value}</div>
                   <div className="text-sm text-gray-500">{stat.label}</div>
@@ -252,7 +252,7 @@ export default function LandingPage() {
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-5xl font-bold mb-6">
-                <span className="bg-gradient-to-r from-orange-400 to-red-400 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-blue-400 to-blue-400 bg-clip-text text-transparent">
                   Revolutionary Features
                 </span>
               </h2>
@@ -269,7 +269,7 @@ export default function LandingPage() {
                     key={index}
                     className={`p-6 rounded-xl border transition-all duration-300 cursor-pointer ${
                       activeFeature === index
-                        ? 'bg-gray-800/60 border-orange-500/50 scale-[1.02]'
+                        ? 'bg-gray-800/60 border-blue-500/50 scale-[1.02]'
                         : 'bg-gray-900/30 border-gray-700/30 hover:border-gray-600/50 hover:bg-gray-800/40'
                     }`}
                     onClick={() => setActiveFeature(index)}
@@ -281,7 +281,7 @@ export default function LandingPage() {
                       <div className="flex-1">
                         <div className="flex items-center justify-between mb-2">
                           <h3 className="text-lg font-bold text-white">{feature.title}</h3>
-                          <span className="text-xs font-medium text-orange-400 bg-orange-400/10 px-2 py-1 rounded">{feature.stats}</span>
+                          <span className="text-xs font-medium text-blue-400 bg-blue-400/10 px-2 py-1 rounded">{feature.stats}</span>
                         </div>
                         <p className="text-gray-400 text-sm leading-relaxed">{feature.desc}</p>
                       </div>
@@ -296,16 +296,16 @@ export default function LandingPage() {
                   <div className="aspect-video bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl mb-4 relative overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-pulse" />
                     <div className="absolute top-3 left-3 flex items-center gap-2">
-                      <div className="w-2.5 h-2.5 bg-red-500 rounded-full" />
+                      <div className="w-2.5 h-2.5 bg-blue-500 rounded-full" />
                       <div className="w-2.5 h-2.5 bg-yellow-500 rounded-full" />
                       <div className="w-2.5 h-2.5 bg-green-500 rounded-full" />
                     </div>
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <Tv className="w-12 h-12 text-orange-400" />
+                      <Tv className="w-12 h-12 text-blue-400" />
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <div className="h-2 bg-gradient-to-r from-orange-400 to-transparent rounded-full w-3/4" />
+                    <div className="h-2 bg-gradient-to-r from-blue-400 to-transparent rounded-full w-3/4" />
                     <div className="h-2 bg-gradient-to-r from-cyan-400 to-transparent rounded-full w-1/2" />
                     <div className="h-2 bg-gradient-to-r from-violet-400 to-transparent rounded-full w-2/3" />
                   </div>
@@ -407,8 +407,8 @@ export default function LandingPage() {
         <section className="py-20 px-6 bg-gradient-to-r from-gray-900/30 via-black to-gray-900/30">
           <div className="max-w-4xl mx-auto text-center">
             <div className="mb-8">
-              <div className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-500/20 to-red-500/20 border border-orange-500/30 rounded-full px-6 py-3 mb-8">
-                <Award className="w-5 h-5 text-orange-400" />
+              <div className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-500/20 to-blue-500/20 border border-blue-500/30 rounded-full px-6 py-3 mb-8">
+                <Award className="w-5 h-5 text-blue-400" />
                 <span className="font-medium text-cyan-300">Join 2.5M+ Happy Users</span>
               </div>
             </div>
@@ -424,7 +424,7 @@ export default function LandingPage() {
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button 
-                className="group bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-400 hover:to-red-400 text-white px-10 py-4 rounded-md font-bold text-lg transition-all duration-300 hover:shadow-lg hover:scale-105 flex items-center justify-center space-x-2"
+                className="group bg-gradient-to-r from-blue-500 to-blue-500 hover:from-blue-400 hover:to-blue-400 text-white px-10 py-4 rounded-md font-bold text-lg transition-all duration-300 hover:shadow-lg hover:scale-105 flex items-center justify-center space-x-2"
                 onClick={() => navigate('/signin')}
               >
                 <span>Start Free Trial</span>
@@ -432,7 +432,7 @@ export default function LandingPage() {
               </button>
               <button className="group border-2 border-gray-600 text-gray-300 hover:border-white hover:text-white px-10 py-4 rounded-md font-bold text-lg transition-all duration-300 flex items-center justify-center space-x-2">
                 <MessageCircle className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                <span>Contact Sales</span>
+                <span>Contact Sales</span> 
               </button>
             </div>
           </div>
@@ -473,7 +473,7 @@ export default function LandingPage() {
             <div className="text-center text-gray-500 text-sm border-t border-gray-800 pt-6">
               © 2024 FireTV. Transforming entertainment with AI-powered innovation.
               <br />
-              <span className="text-orange-400">Built with ❤️ for the future of streaming</span>
+              <span className="text-blue-400">Built with ❤️ for the future of streaming</span>
             </div>
           </div>
         </footer>

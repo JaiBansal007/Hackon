@@ -547,8 +547,8 @@ export function PictureInPicturePlayer({
         exit={{ scale: 0, opacity: 0 }}
         className={`fixed bg-black rounded-xl overflow-hidden shadow-2xl border-2 select-none transition-all duration-200 ${
           isDragging 
-            ? "cursor-grabbing scale-105 shadow-3xl border-orange-500/70 ring-4 ring-orange-500/30" 
-            : "cursor-grab hover:shadow-3xl border-orange-500/30 hover:border-orange-500/50"
+            ? "cursor-grabbing scale-105 shadow-3xl border-blue-500/70 ring-4 ring-blue-500/30" 
+            : "cursor-grab hover:shadow-3xl border-blue-500/30 hover:border-blue-500/50"
         }`}
         style={{
           left: position.x,
@@ -597,7 +597,7 @@ export function PictureInPicturePlayer({
         {/* Loading Spinner */}
         {isLoading && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-            <div className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+            <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
           </div>
         )}
 
@@ -654,7 +654,7 @@ export function PictureInPicturePlayer({
                       onClose();
                     }}
                     size="sm"
-                    className="w-6 h-6 p-0 bg-white/20 hover:bg-white/30 text-black border-none backdrop-blur-sm rounded transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:ring-offset-black"
+                    className="w-6 h-6 p-0 bg-white/20 hover:bg-white/30 text-black border-none backdrop-blur-sm rounded transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-black"
                     aria-label="Expand to fullscreen"
                   >
                     <Maximize className="w-3 h-3" />
@@ -676,7 +676,7 @@ export function PictureInPicturePlayer({
                   <Button
                     onClick={togglePlayPause}
                     size="sm"
-                    className="w-8 h-8 p-0 bg-white/20 hover:bg-white/30 text-black border-none backdrop-blur-sm rounded transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:ring-offset-black"
+                    className="w-8 h-8 p-0 bg-white/20 hover:bg-white/30 text-black border-none backdrop-blur-sm rounded transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-black"
                     aria-label={isPlaying ? 'Pause video' : 'Play video'}
                   >
                     {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
@@ -685,7 +685,7 @@ export function PictureInPicturePlayer({
                   <Button
                     onClick={toggleMute}
                     size="sm"
-                    className="w-8 h-8 p-0 bg-white/20 hover:bg-white/30 text-black border-none backdrop-blur-sm rounded transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:ring-offset-black"
+                    className="w-8 h-8 p-0 bg-white/20 hover:bg-white/30 text-black border-none backdrop-blur-sm rounded transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-black"
                     aria-label={isMuted ? 'Unmute video' : 'Mute video'}
                   >
                     {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
@@ -694,7 +694,7 @@ export function PictureInPicturePlayer({
 
                 {roomStatus !== "none" && (
                   <div className="bg-black/70 rounded px-2 py-1">
-                    <span className="text-orange-400 text-xs font-medium">
+                    <span className="text-blue-400 text-xs font-medium">
                       Room {roomStatus === "host" ? "HOST" : "MEMBER"}
                     </span>
                   </div>
@@ -709,10 +709,10 @@ export function PictureInPicturePlayer({
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="absolute inset-0 bg-gradient-to-br from-orange-500/40 via-transparent to-orange-500/40 border-2 border-orange-400 rounded-xl pointer-events-none"
+            className="absolute inset-0 bg-gradient-to-br from-blue-500/40 via-transparent to-blue-500/40 border-2 border-blue-400 rounded-xl pointer-events-none"
           >
-            <div className="absolute inset-2 border border-dashed border-orange-300/70 rounded-lg" />
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-orange-500/90 text-white text-xs px-3 py-2 rounded-lg font-bold shadow-lg">
+            <div className="absolute inset-2 border border-dashed border-blue-300/70 rounded-lg" />
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-blue-500/90 text-white text-xs px-3 py-2 rounded-lg font-bold shadow-lg">
               <div className="flex items-center space-x-2">
                 <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
                 <span>Moving...</span>

@@ -1164,8 +1164,8 @@ const HomePage = ({ startPictureInPicture, isPiPActive }) => {
               >
                 <div className="px-7 py-8">
                   <div className="flex items-center space-x-3 mb-6">
-                    <div className="p-2 rounded-full bg-gradient-to-br from-red-500/20 to-orange-500/20">
-                      <Crown className="w-6 h-6 text-orange-400" />
+                    <div className="p-2 rounded-full bg-gradient-to-br from-blue-500/20 to-blue-500/20">
+                      <Crown className="w-6 h-6 text-blue-400" />
                     </div>
                     <h3 className="text-xl font-bold text-white">Create Room</h3>
                   </div>
@@ -1175,7 +1175,7 @@ const HomePage = ({ startPictureInPicture, isPiPActive }) => {
                   <div className="flex space-x-3">
                     <Button
                       onClick={createRoom}
-                      className="flex-1 h-11 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white font-semibold rounded-lg transition-all duration-200"
+                      className="flex-1 h-11 bg-gradient-to-r from-blue-500 to-blue-500 hover:from-blue-600 hover:to-blue-600 text-white font-semibold rounded-lg transition-all duration-200"
                     >
                       <Crown className="w-5 h-5 mr-2" />
                       Create

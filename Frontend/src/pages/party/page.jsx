@@ -295,7 +295,7 @@ const PartyPage = ({ onJoinRoom }) => {
         currentWatchingMovie={null}
       />
 
-      <div className="relative pt-16 px-4 pb-8">
+      <div className="relative pt-24 px-4 pb-8">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <motion.div
@@ -410,7 +410,7 @@ const PartyPage = ({ onJoinRoom }) => {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     placeholder="Search parties..."
-                    className="pl-10 bg-gray-800/30 border-gray-700/50 text-white placeholder-gray-400 h-10 rounded-lg backdrop-blur-sm focus:border-orange-500 transition-all duration-200 text-sm"
+                    className="pl-10 bg-gray-800/30 border-gray-700/50 text-white placeholder-gray-400 h-10 rounded-lg backdrop-blur-sm focus:border-blue-500 transition-all duration-200 text-sm"
                   />
                 </div>
 
@@ -421,7 +421,7 @@ const PartyPage = ({ onJoinRoom }) => {
                       key={party.firestoreId}
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
-                      className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6 hover:border-orange-500/50 transition-all duration-300 hover:scale-[1.02] shadow-xl"
+                      className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6 hover:border-blue-500/50 transition-all duration-300 hover:scale-[1.02] shadow-xl"
                     >
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex-1">
@@ -595,7 +595,7 @@ const PartyPage = ({ onJoinRoom }) => {
                           value={partyForm.scheduledTime}
                           onChange={(e) => setPartyForm(prev => ({ ...prev, scheduledTime: e.target.value }))}
                           min={new Date().toISOString().slice(0, 16)}
-                          className="mt-2 bg-gray-700/50 border-gray-600 text-white h-12 rounded-xl focus:border-orange-500 transition-all duration-200"
+                          className="mt-2 bg-gray-700/50 border-gray-600 text-white h-12 rounded-xl focus:border-blue-500 transition-all duration-200"
                         />
                       </div>
 
@@ -607,7 +607,7 @@ const PartyPage = ({ onJoinRoom }) => {
                           onChange={(e) => setPartyForm(prev => ({ ...prev, maxAttendees: parseInt(e.target.value) }))}
                           min="2"
                           max="50"
-                          className="mt-2 bg-gray-700/50 border-gray-600 text-white h-12 rounded-xl focus:border-orange-500 transition-all duration-200"
+                          className="mt-2 bg-gray-700/50 border-gray-600 text-white h-12 rounded-xl focus:border-blue-500 transition-all duration-200"
                         />
                       </div>
                     </div>
@@ -618,7 +618,7 @@ const PartyPage = ({ onJoinRoom }) => {
                         id="isPublic"
                         checked={partyForm.isPublic}
                         onChange={(e) => setPartyForm(prev => ({ ...prev, isPublic: e.target.checked }))}
-                        className="w-5 h-5 text-orange-500 bg-gray-700 border-gray-600 rounded focus:ring-orange-500 focus:ring-2"
+                        className="w-5 h-5 text-blue-500 bg-gray-700 border-gray-600 rounded focus:ring-blue-500 focus:ring-2"
                       />
                       <Label htmlFor="isPublic" className="text-white font-medium">
                         <div className="flex items-center space-x-2">
@@ -664,7 +664,7 @@ const PartyPage = ({ onJoinRoom }) => {
                       key={party.firestoreId}
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
-                      className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6 hover:border-orange-500/50 transition-all duration-300 hover:scale-[1.02] shadow-xl"
+                      className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6 hover:border-blue-500/50 transition-all duration-300 hover:scale-[1.02] shadow-xl"
                     >
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex-1">
@@ -674,7 +674,7 @@ const PartyPage = ({ onJoinRoom }) => {
                           {/* Party Code - Host Edition with FireStream styling */}
                           <div className="flex items-center space-x-2 mb-3">
                             <span className="text-xs text-gray-400 font-medium">Share Code:</span>
-                            <code className="px-3 py-1.5 bg-gradient-to-r from-red-500/20 to-orange-500/20 rounded-lg text-sm font-mono text-orange-300 border border-orange-500/30">
+                            <code className="px-3 py-1.5 bg-gradient-to-r from-red-500/20 to-blue-500/20 rounded-lg text-sm font-mono text-blue-300 border border-blue-500/30">
                               {party.firestoreId.slice(-8).toUpperCase()}
                             </code>
                             <button
@@ -683,7 +683,7 @@ const PartyPage = ({ onJoinRoom }) => {
                                 navigator.clipboard.writeText(shortCode)
                                 showToast(`Share code "${shortCode}" copied!`, "success")
                               }}
-                              className="text-gray-400 hover:text-orange-400 transition-colors p-1 hover:bg-orange-500/10 rounded"
+                              className="text-gray-400 hover:text-blue-400 transition-colors p-1 hover:bg-blue-500/10 rounded"
                               title="Copy party code to share"
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -697,7 +697,7 @@ const PartyPage = ({ onJoinRoom }) => {
                             {party.status}
                           </span>
                           {party.hostId === user.uid && (
-                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-red-500/20 to-orange-500/20 text-orange-400 border border-orange-500/30">
+                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-red-500/20 to-blue-500/20 text-blue-400 border border-blue-500/30">
                               Host
                             </span>
                           )}
@@ -706,16 +706,16 @@ const PartyPage = ({ onJoinRoom }) => {
 
                       <div className="space-y-2 mb-4">
                         <div className="flex items-center text-gray-300 text-sm">
-                          <Clock className="w-4 h-4 mr-2 text-orange-400" />
+                          <Clock className="w-4 h-4 mr-2 text-blue-400" />
                           {formatTime(party.scheduledTime)}
                         </div>
                         <div className="flex items-center text-gray-300 text-sm">
-                          <Users className="w-4 h-4 mr-2 text-orange-400" />
+                          <Users className="w-4 h-4 mr-2 text-blue-400" />
                           {party.attendees?.length || 0} / {party.maxAttendees} attendees
                         </div>
                         {party.movie && (
                           <div className="flex items-center text-gray-300 text-sm">
-                            <Film className="w-4 h-4 mr-2 text-orange-400" />
+                            <Film className="w-4 h-4 mr-2 text-blue-400" />
                             {party.movie.title}
                           </div>
                         )}
@@ -734,7 +734,7 @@ const PartyPage = ({ onJoinRoom }) => {
                       {party.status === 'active' && party.roomId && (
                         <Button
                           onClick={() => navigate("/", { state: { joinRoomId: party.roomId } })}
-                          className="w-full bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white font-medium h-9 rounded-lg transition-all duration-200 text-sm"
+                          className="w-full bg-blue-500  text-white font-medium h-9 rounded-lg transition-all duration-200 text-sm"
                         >
                           <Play className="w-4 h-4 mr-1.5" />
                           Join Room
@@ -746,14 +746,14 @@ const PartyPage = ({ onJoinRoom }) => {
 
                 {userParties.length === 0 && (
                   <div className="text-center py-16">
-                    <div className="w-20 h-20 bg-gradient-to-br from-red-500/20 to-orange-500/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                      <Calendar className="w-10 h-10 text-orange-400" />
+                    <div className="w-20 h-20 bg-gradient-to-br from-red-500/20 to-blue-500/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                      <Calendar className="w-10 h-10 text-blue-400" />
                     </div>
                     <h3 className="text-2xl font-bold text-white mb-2">No parties yet</h3>
                     <p className="text-gray-400 mb-6">Create your first party to get started!</p>
                     <Button
                       onClick={() => setActiveTab('create')}
-                      className="bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white font-medium px-4 py-2 rounded-lg transition-all duration-200 text-sm"
+                      className="bg-gradient-to-r from-red-500 to-blue-500 hover:from-red-600 hover:to-blue-600 text-white font-medium px-4 py-2 rounded-lg transition-all duration-200 text-sm"
                     >
                       <Plus className="w-4 h-4 mr-1.5" />
                       Create Party

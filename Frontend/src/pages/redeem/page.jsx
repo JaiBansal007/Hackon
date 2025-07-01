@@ -103,7 +103,7 @@ export default function RedeemPage() {
                   onClick={() => setSelectedCategory(category.id)}
                   className={`flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
                     isActive
-                      ? "bg-white text-black"
+                      ? "bg-blue-500 text-white"
                       : "bg-gray-800/60 text-gray-300 hover:bg-gray-700/60 hover:text-white"
                   }`}
                 >

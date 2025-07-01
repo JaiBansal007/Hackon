@@ -353,7 +353,7 @@ export function PartyManager({ user, onJoinRoom, currentMovie }) {
                   <Button
                     onClick={handleCreateParty}
                     disabled={!partyForm.title.trim() || !partyForm.scheduledTime || isCreating}
-                    className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                    className="flex-1 bg-gradient-to-r from-blue-600 to-blue-600 hover:from-blue-700 hover:to-blue-700"
                   >
                     {isCreating ? "Creating..." : "Create Party"}
                   </Button>
