@@ -16,9 +16,14 @@
 - Python
 - AWS Lambda
 - Machine Learning libraries
-- Video analysis tools
+- Video ana### ✂️ Video Summarization
+*AI-powered summarization detailed in System Modules section*
 
-## � Quick Start Guide
+---
+
+## 🧠 System Modules
+
+### 1. 🔄 Co-Watching & Sync Engine� Quick Start Guide
 
 ### Prerequisites
 - Node.js 18+
@@ -238,27 +243,22 @@ Beautiful, **data-rich user profiles** with complete viewing analytics:
 
 ---
 
-## 📱 Screenshots & Features
+## 📱 Feature Overview
 
 ### 🏠 Home Dashboard
-![Platform Features](./Docs/sync.jpeg)
-*Personalized movie recommendations with mood-based filtering and synchronized watching*
+*Features detailed in the Key Platform Features section above*
 
 ### 🎬 Watch Party Interface
-![Watch Party](./Docs/vediosync.jpeg)
-*Real-time synchronized video playback with integrated chat and participant list*
+*Advanced synchronization capabilities shown in System Modules below*
 
 ### 🎮 Gamification & Quiz System
-![Quiz Interface](./Docs/quiz.jpeg)
-*Interactive quiz system with real-time scoring and leaderboards*
+*Interactive features detailed in Key Platform Features section*
 
 ### 👤 User Profile & Analytics
-![User Profile](./Docs/profile.jpeg)
-*Comprehensive viewing history, statistics, and personal achievements with beautiful blue theme*
+*Comprehensive analytics shown in Key Platform Features section*
 
 ### ✂️ Video Summarization
-![Video Summarizer](./Docs/summarizer.jpeg)
-*AI-powered video summarization using Amazon Transcribe and LLM processing*
+*AI-powered summarization detailed in System Modules section*
 
 ### � Real-Time Video Synchronization
 ![Video Sync](./Docs/sync.jpeg)
