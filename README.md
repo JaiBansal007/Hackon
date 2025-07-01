@@ -22,7 +22,7 @@
 
 ### 1. Clone the repository
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/JaiBansal007/Hackon.git
 cd Hackon
 ```
 
