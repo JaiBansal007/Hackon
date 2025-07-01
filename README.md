@@ -119,7 +119,7 @@ Beautiful, **data-rich user profiles** with complete viewing analytics:
 - Node.js 18+
 - Python 3.8+ (for video processing)
 - Redis server (optional, for production)
-- AWS Account (for production deployment)
+- AWS Account
 
 ### 🛠️ Local Development Setup
 
