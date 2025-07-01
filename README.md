@@ -1,6 +1,6 @@
-# 🔥 FireStream
+# 🔥 FireTV
 
-**FireStream** is a cutting-edge video streaming platform that blends AI-driven features like mood-based video recommendations, real-time WebSocket-based sync, video summarization, and collaborative group watching.
+**FireTV** is a cutting-edge video streaming platform that blends AI-driven features like mood-based video recommendations, real-time WebSocket-based sync, video summarization, and collaborative group watching.
 
 Built with ⚡️ **Vite** for blazing-fast performance.
 

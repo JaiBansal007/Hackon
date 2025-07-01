@@ -140,10 +140,10 @@ export function ChatSidebar({
         animate={{ opacity: 1, scale: 1 }}
         className="w-full max-w-sm mx-auto"
       >
-        <div className="bg-gradient-to-br from-purple-500/10 via-blue-500/5 to-indigo-500/10 border border-purple-500/30 rounded-xl p-4 backdrop-blur-sm">
+        <div className="bg-gradient-to-br from-cyan-500/10 via-blue-500/5 to-teal-500/10 border border-cyan-500/30 rounded-xl p-4 backdrop-blur-sm">
           <div className="flex items-start justify-between mb-3 min-h-[2.5rem]">
             <div className="flex items-center space-x-2 flex-1">
-              <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-lg flex items-center justify-center flex-shrink-0">
+              <div className="w-8 h-8 bg-gradient-to-r from-cyan-500 to-teal-500 rounded-lg flex items-center justify-center flex-shrink-0">
                 <BarChart3 className="w-4 h-4 text-white" />
               </div>
               <div className="flex-1 min-w-0">
@@ -196,7 +196,7 @@ export function ChatSidebar({
                       transition={{ duration: 0.6, ease: "easeOut" }}
                       className={`absolute inset-y-0 left-0 rounded-lg ${
                         hasVoted
-                          ? "bg-gradient-to-r from-blue-500/30 to-purple-500/20"
+                          ? "bg-gradient-to-r from-blue-500/30 to-cyan-500/20"
                           : "bg-gradient-to-r from-gray-600/20 to-gray-700/10"
                       }`}
                     />
@@ -572,7 +572,7 @@ export function ChatSidebar({
           <div className="flex items-center space-x-2 bg-gradient-to-r from-orange-500/10 to-yellow-500/10 border border-orange-500/20 rounded-lg p-2">
             <span className="text-2xl">{reaction.emoji}</span>
             <div>
-              <span className="text-orange-400 font-medium text-xs">
+              <span className="text-cyan-400 font-medium text-xs">
                 {reaction.user} reacted
               </span>
               <p className="text-gray-400 text-xs">
@@ -596,7 +596,7 @@ export function ChatSidebar({
       if (part.startsWith("@")) {
         const isTreeIO = part === "@Tree.io"
         return (
-          <span key={index} className={`font-semibold ${isTreeIO ? "text-orange-400" : "text-blue-400"}`}>
+          <span key={index} className={`font-semibold ${isTreeIO ? "text-cyan-400" : "text-blue-400"}`}>
             {part}
           </span>
         )
@@ -804,7 +804,7 @@ export function ChatSidebar({
           <button
             onClick={handleTreeioApply}
             disabled={!treeioStartTime || !treeioEndTime}
-            className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-2 rounded-lg font-medium text-sm disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed"
+            className="flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white py-2 rounded-lg font-medium text-sm disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed"
           >
             Apply
           </button>
@@ -841,7 +841,7 @@ export function ChatSidebar({
               {suggestion.isAI ? "AI" : suggestion.name?.charAt(0).toUpperCase()}
             </div>
             <div>
-              <span className={`font-medium text-xs ${suggestion.isAI ? "text-orange-400" : "text-blue-400"}`}>
+              <span className={`font-medium text-xs ${suggestion.isAI ? "text-cyan-400" : "text-blue-400"}`}>
                 {suggestion.isAI ? "Tree.io" : suggestion.name}
               </span>
               {/* No description for room members, only for Tree.io */}
@@ -1190,7 +1190,7 @@ export function ChatSidebar({
                         <button
                           onClick={createPoll}
                           disabled={!pollQuestion.trim() || pollOptions.filter(opt => opt.trim()).length < 2 || isCreatingPoll}
-                          className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed text-white py-2 px-3 rounded-lg font-medium text-sm flex items-center justify-center space-x-2"
+                          className="flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed text-white py-2 px-3 rounded-lg font-medium text-sm flex items-center justify-center space-x-2"
                         >
                           {isCreatingPoll ? (
                             <>
@@ -1470,7 +1470,7 @@ export function ChatSidebar({
                     whileTap={{ scale: 0.95 }}
                     onClick={sendMessage}
                     disabled={!newMessage.trim()}
-                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed text-white rounded-xl p-2 transition-all shadow-lg disabled:shadow-none"
+                    className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed text-white rounded-xl p-2 transition-all shadow-lg disabled:shadow-none"
                   >
                     <Send className="w-4 h-4" />
                   </motion.button>

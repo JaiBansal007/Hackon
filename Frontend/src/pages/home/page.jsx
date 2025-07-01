@@ -1004,7 +1004,7 @@ const HomePage = ({ startPictureInPicture, isPiPActive }) => {
               >
                 <Button
                   onClick={() => setShowChat(!showChat)}
-                  className="rounded-full p-3 bg-red-500 hover:bg-amber-600 text-white shadow-lg transition-all duration-300 hover:scale-110"
+                  className="rounded-full p-3 bg-blue-500 hover:bg-cyan-600 text-white shadow-lg transition-all duration-300 hover:scale-110"
                 >
                   <MessageSquareIcon className="w-5 h-5" />
                 </Button>

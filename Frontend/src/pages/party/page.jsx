@@ -246,7 +246,7 @@ const PartyPage = ({ onJoinRoom }) => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'scheduled': return 'text-orange-400 bg-orange-500/20 border border-orange-500/30'
+      case 'scheduled': return 'text-cyan-400 bg-cyan-500/20 border border-cyan-500/30'
       case 'active': return 'text-green-400 bg-green-500/20 border border-green-500/30'
       case 'ended': return 'text-gray-400 bg-gray-500/20 border border-gray-500/30'
       default: return 'text-gray-400 bg-gray-500/20 border border-gray-500/30'
@@ -263,7 +263,7 @@ const PartyPage = ({ onJoinRoom }) => {
     return (
       <div className="fixed inset-0 bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto mb-3"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-500 mx-auto mb-3"></div>
           <p className="text-white text-sm">Loading...</p>
         </div>
       </div>
@@ -314,12 +314,12 @@ const PartyPage = ({ onJoinRoom }) => {
                 </Button>
                 <div>
                   <div className="flex items-center space-x-4 mb-2">
-                    <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-orange-600 rounded-xl flex items-center justify-center shadow-xl">
+                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center shadow-xl">
                       <PartyPopper className="w-6 h-6 text-white" />
                     </div>
                     <h1 className="text-4xl font-black text-white">
                       Fire
-                      <span className="text-transparent bg-gradient-to-r from-red-400 to-orange-500 bg-clip-text">Party</span>
+                      <span className="text-transparent bg-gradient-to-r from-blue-400 to-cyan-500 bg-clip-text">Party</span>
                     </h1>
                   </div>
                   <p className="text-gray-400 text-lg">Schedule, join, and enjoy movies together</p>
@@ -327,7 +327,7 @@ const PartyPage = ({ onJoinRoom }) => {
               </div>
             </div>
 
-            {/* Enhanced Tabs with FireStream styling */}
+            {/* Enhanced Tabs with FireTV styling */}
             <div className="flex space-x-1 bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-xl p-1 shadow-xl">
               {[
                 { id: 'browse', label: 'Browse', icon: Search },
@@ -339,7 +339,7 @@ const PartyPage = ({ onJoinRoom }) => {
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex-1 flex items-center justify-center space-x-1.5 px-4 py-2.5 rounded-lg font-medium transition-all duration-300 text-sm ${
                     activeTab === tab.id
-                      ? 'bg-gradient-to-r from-red-500 to-orange-500 text-white'
+                      ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white'
                       : 'text-gray-400 hover:text-white hover:bg-gray-700/30'
                   }`}
                 >
@@ -355,37 +355,37 @@ const PartyPage = ({ onJoinRoom }) => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="bg-gradient-to-r from-red-500/10 via-orange-500/10 to-red-500/10 border border-red-500/20 rounded-xl p-4 mb-8 backdrop-blur-sm"
+            className="bg-gradient-to-r from-blue-500/10 via-cyan-500/10 to-teal-500/10 border border-cyan-500/20 rounded-xl p-6 mb-8 backdrop-blur-sm shadow-lg"
           >
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 rounded-lg bg-gradient-to-br from-red-500/20 to-orange-500/20">
-                  <UserPlus className="w-4 h-4 text-orange-400" />
+              <div className="flex items-center space-x-4">
+                <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-cyan-500/30">
+                  <UserPlus className="w-5 h-5 text-cyan-400" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-white">Quick Join</h3>
-                  <p className="text-gray-400 text-sm">Enter a party code to join instantly</p>
+                  <h3 className="text-xl font-bold text-white mb-1">Quick Join</h3>
+                  <p className="text-gray-300 text-sm">Enter a party code to join instantly and start watching together</p>
                 </div>
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-3">
                 <Input
                   value={quickJoinCode}
                   onChange={(e) => setQuickJoinCode(e.target.value.toUpperCase())}
-                  placeholder="Enter code..."
-                  className="w-40 bg-gray-800/50 border-gray-600 text-white text-center font-mono tracking-wider rounded-lg h-9 text-sm focus:border-orange-500 transition-all duration-200"
+                  placeholder="PARTY CODE"
+                  className="w-44 bg-gray-800/50 border-gray-600 text-white text-center font-mono tracking-wider rounded-lg h-11 text-sm focus:border-cyan-500 transition-all duration-200 placeholder-gray-500"
                   maxLength={20}
                 />
                 <Button
                   onClick={handleQuickJoin}
                   disabled={!quickJoinCode.trim() || isJoining}
-                  className="bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white font-medium px-4 h-9 rounded-lg transition-all duration-200 text-sm"
+                  className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-semibold px-6 h-11 rounded-lg transition-all duration-200 text-sm shadow-lg"
                 >
                   {isJoining ? (
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   ) : (
                     <>
-                      <UserPlus className="w-4 h-4 mr-1.5" />
-                      Join
+                      <UserPlus className="w-4 h-4 mr-2" />
+                      Join Party
                     </>
                   )}
                 </Button>
@@ -431,7 +431,7 @@ const PartyPage = ({ onJoinRoom }) => {
                           {/* Party Code */}
                           <div className="flex items-center space-x-2 mb-3">
                             <span className="text-xs text-gray-400 font-medium">Join Code:</span>
-                            <code className="px-3 py-1.5 bg-gray-700/50 rounded-lg text-sm font-mono text-orange-300 border border-gray-600/50">
+                            <code className="px-3 py-1.5 bg-gray-700/50 rounded-lg text-sm font-mono text-cyan-300 border border-gray-600/50">
                               {party.firestoreId.slice(-8).toUpperCase()}
                             </code>
                             <button
@@ -440,7 +440,7 @@ const PartyPage = ({ onJoinRoom }) => {
                                 navigator.clipboard.writeText(shortCode)
                                 showToast(`Party code "${shortCode}" copied to clipboard!`, "success")
                               }}
-                              className="text-gray-400 hover:text-orange-400 transition-colors p-1"
+                              className="text-gray-400 hover:text-cyan-400 transition-colors p-1 hover:bg-cyan-500/10 rounded"
                               title="Copy party code"
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -455,30 +455,36 @@ const PartyPage = ({ onJoinRoom }) => {
                       </div>
 
                       {party.movie && (
-                        <div className="flex items-center space-x-3 mb-4 p-3 bg-gray-700/30 rounded-xl border border-gray-600/30">
+                        <div className="flex items-center space-x-3 mb-4 p-3 bg-gradient-to-r from-gray-700/30 to-gray-800/30 rounded-xl border border-gray-600/30">
                           <img
                             src={party.movie.image}
                             alt={party.movie.title}
-                            className="w-12 h-16 object-cover rounded-lg border border-gray-600/30"
+                            className="w-12 h-16 object-cover rounded-lg border border-gray-600/30 shadow-lg"
                           />
                           <div>
                             <p className="text-white font-semibold">{party.movie.title}</p>
-                            <p className="text-orange-400 text-sm font-medium">Featured Movie</p>
+                            <p className="text-cyan-400 text-sm font-medium flex items-center">
+                              <Film className="w-3 h-3 mr-1" />
+                              Featured Movie
+                            </p>
                           </div>
                         </div>
                       )}
 
-                      <div className="space-y-3 mb-5">
+                      <div className="space-y-3 mb-6">
                         <div className="flex items-center text-gray-300 text-sm">
-                          <Clock className="w-4 h-4 mr-3 text-orange-400" />
+                          <Clock className="w-4 h-4 mr-3 text-cyan-400" />
                           <span className="font-medium">{formatTime(party.scheduledTime)}</span>
                         </div>
                         <div className="flex items-center text-gray-300 text-sm">
-                          <Users className="w-4 h-4 mr-3 text-orange-400" />
+                          <Users className="w-4 h-4 mr-3 text-blue-400" />
                           <span className="font-medium">{party.attendees?.length || 0} / {party.maxAttendees} attendees</span>
+                          {party.attendees?.length >= party.maxAttendees && (
+                            <span className="ml-2 px-2 py-1 bg-red-500/20 text-red-400 text-xs rounded-full">Full</span>
+                          )}
                         </div>
                         <div className="flex items-center text-gray-300 text-sm">
-                          <Globe className="w-4 h-4 mr-3 text-orange-400" />
+                          <Globe className="w-4 h-4 mr-3 text-cyan-400" />
                           <span className="font-medium">Public Party</span>
                         </div>
                       </div>
@@ -486,7 +492,7 @@ const PartyPage = ({ onJoinRoom }) => {
                       <Button
                         onClick={() => handleJoinParty(party)}
                         disabled={party.attendees?.length >= party.maxAttendees}
-                        className="w-full bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 disabled:from-gray-600 disabled:to-gray-600 text-white font-medium h-9 rounded-lg transition-all duration-200 text-sm"
+                        className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 disabled:from-gray-600 disabled:to-gray-600 text-white font-semibold h-10 rounded-lg transition-all duration-200 text-sm shadow-lg"
                       >
                         {party.attendees?.some(a => a.id === user.uid) ? (
                           <>
@@ -506,11 +512,18 @@ const PartyPage = ({ onJoinRoom }) => {
 
                 {filteredPublicParties.length === 0 && (
                   <div className="text-center py-16">
-                    <div className="w-20 h-20 bg-gradient-to-br from-red-500/20 to-orange-500/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                      <PartyPopper className="w-10 h-10 text-orange-400" />
+                    <div className="w-24 h-24 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-cyan-500/20">
+                      <PartyPopper className="w-12 h-12 text-cyan-400" />
                     </div>
                     <h3 className="text-2xl font-bold text-white mb-2">No parties found</h3>
-                    <p className="text-gray-500">Try adjusting your search or create a new party!</p>
+                    <p className="text-gray-400 mb-4">Try adjusting your search or create a new party!</p>
+                    <Button 
+                      onClick={() => setActiveTab('create')}
+                      className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-semibold px-6 py-2 rounded-lg"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Create Party
+                    </Button>
                   </div>
                 )}
               </motion.div>
@@ -524,46 +537,46 @@ const PartyPage = ({ onJoinRoom }) => {
                 exit={{ opacity: 0, x: -20 }}
                 className="max-w-2xl mx-auto"
               >
-                <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-8 shadow-xl">
+                <div className="bg-gradient-to-br from-gray-800/40 to-gray-900/40 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-8 shadow-xl">
                   <div className="flex items-center space-x-3 mb-8">
-                    <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-orange-600 rounded-xl flex items-center justify-center">
+                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center shadow-lg">
                       <Plus className="w-6 h-6 text-white" />
                     </div>
                     <h2 className="text-3xl font-bold text-white">Create New 
-                      <span className="text-transparent bg-gradient-to-r from-red-400 to-orange-500 bg-clip-text ml-2">Party</span>
+                      <span className="text-transparent bg-gradient-to-r from-blue-400 to-cyan-500 bg-clip-text ml-2">Party</span>
                     </h2>
                   </div>
                   
                   <div className="space-y-6">
                     <div>
-                      <Label className="text-white font-semibold">Party Title</Label>
+                      <Label className="text-white font-semibold mb-2 block">Party Title</Label>
                       <Input
                         value={partyForm.title}
                         onChange={(e) => setPartyForm(prev => ({ ...prev, title: e.target.value }))}
                         placeholder="e.g., Friday Night Movie Marathon"
-                        className="mt-2 bg-gray-700/50 border-gray-600 text-white h-12 rounded-xl focus:border-orange-500 transition-all duration-200"
+                        className="bg-gray-700/50 border-gray-600 text-white h-12 rounded-xl focus:border-cyan-500 transition-all duration-200 focus:ring-cyan-500/20"
                       />
                     </div>
 
                     <div>
-                      <Label className="text-white font-semibold">Description</Label>
+                      <Label className="text-white font-semibold mb-2 block">Description</Label>
                       <textarea
                         value={partyForm.description}
                         onChange={(e) => setPartyForm(prev => ({ ...prev, description: e.target.value }))}
                         placeholder="Tell people what to expect..."
-                        className="mt-2 w-full p-4 bg-gray-700/50 border border-gray-600 rounded-xl text-white placeholder-gray-400 h-28 resize-none focus:border-orange-500 transition-all duration-200"
+                        className="w-full p-4 bg-gray-700/50 border border-gray-600 rounded-xl text-white placeholder-gray-400 h-28 resize-none focus:border-cyan-500 transition-all duration-200 focus:ring-cyan-500/20"
                       />
                     </div>
 
                     <div>
-                      <Label className="text-white font-semibold">Movie (Optional)</Label>
+                      <Label className="text-white font-semibold mb-2 block">Movie (Optional)</Label>
                       <select
                         value={partyForm.movie?.title || ""}
                         onChange={(e) => {
                           const movie = featuredMovies.find(m => m.title === e.target.value)
                           setPartyForm(prev => ({ ...prev, movie }))
                         }}
-                        className="mt-2 w-full p-3 bg-gray-700/50 border border-gray-600 rounded-xl text-white h-12 focus:border-orange-500 transition-all duration-200"
+                        className="w-full p-3 bg-gray-700/50 border border-gray-600 rounded-xl text-white h-12 focus:border-cyan-500 transition-all duration-200 focus:ring-cyan-500/20"
                       >
                         <option value="">Select a movie</option>
                         {featuredMovies.map((movie) => (
@@ -609,7 +622,7 @@ const PartyPage = ({ onJoinRoom }) => {
                       />
                       <Label htmlFor="isPublic" className="text-white font-medium">
                         <div className="flex items-center space-x-2">
-                          <Globe className="w-4 h-4 text-orange-400" />
+                          <Globe className="w-4 h-4 text-cyan-400" />
                           <span>Make this party public (others can discover and join)</span>
                         </div>
                       </Label>
@@ -618,7 +631,7 @@ const PartyPage = ({ onJoinRoom }) => {
                     <Button
                       onClick={handleCreateParty}
                       disabled={!partyForm.title.trim() || !partyForm.scheduledTime || isCreating}
-                      className="w-full h-10 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 disabled:from-gray-600 disabled:to-gray-600 text-white font-medium rounded-lg transition-all duration-200"
+                      className="w-full h-12 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 disabled:from-gray-600 disabled:to-gray-600 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg"
                     >
                       {isCreating ? (
                         <div className="flex items-center space-x-2">
