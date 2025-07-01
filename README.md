@@ -242,32 +242,6 @@ Beautiful, **data-rich user profiles** with complete viewing analytics:
 - 📱 **Cross-platform compatibility** (web, mobile, smart TV)
 - 🛡️ **Security features** with role-based permissions
 
----
-
-## 📱 Feature Overview
-
-### 🏠 Home Dashboard
-*Features detailed in the Key Platform Features section above*
-
-### 🎬 Watch Party Interface
-*Advanced synchronization capabilities shown in System Modules below*
-
-### 🎮 Gamification & Quiz System
-*Interactive features detailed in Key Platform Features section*
-
-### 👤 User Profile & Analytics
-*Comprehensive analytics shown in Key Platform Features section*
-
-### ✂️ Video Summarization
-*AI-powered summarization detailed in System Modules section*
-
-### � Real-Time Video Synchronization
-![Video Sync](./Docs/sync.jpeg)
-*Perfect synchronization across multiple users with real-time state management*
-
-### 📺 Advanced Video Sync Features
-![Advanced Sync](./Docs/vediosync.jpeg)
-*Advanced video synchronization with chat integration and user presence indicators*
 
 ---
 
@@ -362,7 +336,7 @@ Beautiful, **data-rich user profiles** with complete viewing analytics:
 
 ## 🧪 Test Scenarios
 
-![Testing Framework](./Docs/vediosync.jpeg)
+<!-- ![Testing Framework](./Docs/vediosync.jpeg) -->
 
 | Use Case                     | Expected Behavior                             |
 |------------------------------|-----------------------------------------------|
