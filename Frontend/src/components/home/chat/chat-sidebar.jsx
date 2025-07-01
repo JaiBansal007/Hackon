@@ -343,15 +343,15 @@ export function ChatSidebar({
     ) {
       let allSuggestions = [
         { id: "tree", name: "Tree.io", isAI: true },
-        ...roomMembers.map((member) => ({ id: member.userName, name: member.userName, isAI: false }))
+        ...roomMembers.map((member) => ({ id: member.uid || member.userName, name: member.name || member.userName, isAI: false }))
       ]
       if (afterAt.length > 0) {
         const searchTerm = afterAt.toLowerCase()
         allSuggestions = [
           { id: "tree", name: "Tree.io", isAI: true },
           ...roomMembers
-            .filter((member) => member.userName.toLowerCase().includes(searchTerm))
-            .map((member) => ({ id: member.userName, name: member.userName, isAI: false })),
+            .filter((member) => (member.name || member.userName || "").toLowerCase().includes(searchTerm))
+            .map((member) => ({ id: member.uid || member.userName, name: member.name || member.userName, isAI: false })),
         ]
       }
       setMentionSuggestions(allSuggestions)
@@ -418,7 +418,7 @@ export function ChatSidebar({
     const lastAtIndex = newMessage.lastIndexOf("@", cursorPosition - 1)
     const beforeMention = newMessage.substring(0, lastAtIndex)
     const afterMention = newMessage.substring(cursorPosition)
-    const mentionText = `@${mention.userName}`
+    const mentionText = `@${mention.name}`
 
     setNewMessage(beforeMention + mentionText + " " + afterMention)
     setShowMentions(false)
@@ -666,11 +666,11 @@ export function ChatSidebar({
         } catch (error) {
           console.error("Error calling Tree.io API:", error)
 
-          setTimeout(() => {
-            onSendMessage("Tree.io: Sorry, I'm currently unavailable. Please try again later.")
-            // Auto-scroll for error message
-            setTimeout(() => scrollToBottom(), 100);
-          }, 1500)
+          // setTimeout(() => {
+          //   onSendMessage("Tree.io: Sorry, I'm currently unavailable. Please try again later.")
+          //   // Auto-scroll for error message
+          //   setTimeout(() => scrollToBottom(), 100);
+          // }, 1500)
         }
       }
 
@@ -687,16 +687,53 @@ export function ChatSidebar({
   };
 
   // Tree.io Summarize popup apply handler
-  const handleTreeioApply = () => {
+  const handleTreeioApply = async () => {
     if (treeioStartTime && treeioEndTime) {
-      const start = treeioStartTime.toLocaleString();
-      const end = treeioEndTime.toLocaleString();
-      setNewMessage(`@Tree.io Summarize this from ${start} to ${end}`);
+      const pad = (n) => n.toString().padStart(2, '0');
+      const start = `${pad(treeioStartTime.getMinutes())}:${pad(treeioStartTime.getSeconds())}`;
+      const end = `${pad(treeioEndTime.getMinutes())}:${pad(treeioEndTime.getSeconds())}`;
       setShowTreeioPopup(false);
-      setTimeout(() => inputRef.current?.focus(), 100);
+      setNewMessage("");
+      // 1. Send the summarize message
+      const summarizeMsg = `@Tree.io Summarize this from ${start} to ${end}`;
+      onSendMessage(summarizeMsg);
+      setTimeout(() => scrollToBottom(), 100);
+      // 2. Show 'Tree.io is thinking...'
+      setTimeout(() => {
+        onSendMessage("Tree.io is thinking...");
+        setTimeout(() => scrollToBottom(), 100);
+      }, 200);
+      // 3. Call API as in sendMessage
+      try {
+        const response = await fetch("http://localhost:8000/api/chat/tree-io", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message: `Summarize this from ${start} to ${end}`,
+            movie_title: "Current Movie",
+            movie_context: "Movie context if available",
+          }),
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setTimeout(() => {
+            onSendMessage(`Tree.io: ${data.response}`);
+            setTimeout(() => scrollToBottom(), 100);
+          }, 1500);
+        } else {
+          setTimeout(() => {
+            onSendMessage("Tree.io: Sorry, I'm having trouble processing your request right now. Please try again later.");
+            setTimeout(() => scrollToBottom(), 100);
+          }, 1500);
+        }
+      } catch (error) {
+        // setTimeout(() => {
+        //   onSendMessage("Tree.io: Sorry, I'm currently unavailable. Please try again later.");
+        //   setTimeout(() => scrollToBottom(), 100);
+        // }, 1500);
+      }
     } else {
       setShowTreeioPopup(false);
-      // After cancel, do not show mentions again until @ is typed
       setShowMentions(false);
     }
   };
@@ -765,17 +802,7 @@ export function ChatSidebar({
             Cancel
           </button>
           <button
-            onClick={async () => {
-              if (treeioStartTime && treeioEndTime) {
-                const pad = (n) => n.toString().padStart(2, '0');
-                const start = `${pad(treeioStartTime.getMinutes())}:${pad(treeioStartTime.getSeconds())}`;
-                const end = `${pad(treeioEndTime.getMinutes())}:${pad(treeioEndTime.getSeconds())}`;
-                setShowTreeioPopup(false);
-                setNewMessage("");
-                await onSendMessage(`@Tree.io Summarize this from ${start} to ${end}`);
-                setTimeout(() => inputRef.current?.focus(), 100);
-              }
-            }}
+            onClick={handleTreeioApply}
             disabled={!treeioStartTime || !treeioEndTime}
             className="flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white py-2 rounded-lg font-medium text-sm disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed"
           >
@@ -784,7 +811,7 @@ export function ChatSidebar({
         </div>
       </motion.div>
     );
-  }, [showTreeioPopup, treeioStartTime, treeioEndTime, onSendMessage, setShowTreeioPopup, setNewMessage, inputRef]);
+  }, [showTreeioPopup, treeioStartTime, treeioEndTime, handleTreeioApply, setShowTreeioPopup, setNewMessage, inputRef]);
 
   // Mention dropdown portal rendering
   // Memoized MentionDropdown to prevent double click issue
@@ -825,8 +852,18 @@ export function ChatSidebar({
           </div>
         ))}
       </motion.div>
-    );
-  }, [showMentions, mentionSuggestions, insertMention]);
+      );
+    }, [showMentions, mentionSuggestions, insertMention]);
+
+  // 1. Add TTS Speaker Button
+  const speakText = (text) => {
+    if ('speechSynthesis' in window) {
+      const utterance = new window.SpeechSynthesisUtterance(text);
+      utterance.rate = 1;
+      utterance.pitch = 1;
+      window.speechSynthesis.speak(utterance);
+    }
+  };
 
   return (
     <AnimatePresence>
@@ -1007,11 +1044,23 @@ export function ChatSidebar({
                                 </div>
                                 
                                 {/* Message Content - Enhanced */}
-                                <div className="ml-5 text-gray-100 text-xs leading-relaxed bg-gray-800/20 rounded-lg p-2 border border-gray-700/20">
+                                <div className="ml-5 text-gray-100 text-xs leading-relaxed bg-gray-800/20 rounded-lg px-2 pt-2 pb-6 border border-gray-700/20 relative">
                                   {renderMessageWithMentions(
                                     message.text.startsWith("Tree.io:") ? message.text.substring(8) : message.text,
                                     message
                                   )}
+                                  {/* Speaker button at bottom right */}
+                                  <button
+                                    onClick={() => speakText(message.text.startsWith("Tree.io:") ? message.text.substring(8) : message.text)}
+                                    className="absolute bottom-1 right-1 bg-gray-700/80 hover:bg-blue-600/80 text-white rounded-full p-1 shadow-md focus:outline-none"
+                                    title="Speak"
+                                    style={{ zIndex: 2 }}
+                                  >
+                                    {/* Speaker icon */}
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 9v6h4l5 5V4l-5 5H9z" />
+                                    </svg>
+                                  </button>
                                 </div>
                               </div>
                             )}
