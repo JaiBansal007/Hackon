@@ -554,16 +554,13 @@ export function ChatSidebar({
     if (text.startsWith("POLL:")) {
       try {
         const poll = JSON.parse(text.substring(5));
-        // If poll is already shown in firebasePolls (Live Polls), don't render it again in messages
         if (isPollInFirebasePolls(poll.id)) return null;
-        // Use the latest poll data from props.polls if available, otherwise use Firebase polls
         const latestPoll = (polls && polls[poll.id]) ? polls[poll.id] : poll;
         return <MemoizedPollMessage poll={latestPoll} onVote={votePoll} currentUser={user?.name} currentUserId={user?.uid} />;
       } catch (e) {
         return text;
       }
     }
-
     // Handle reaction messages
     if (text.startsWith("REACTION:")) {
       try {
@@ -585,12 +582,16 @@ export function ChatSidebar({
         return text
       }
     }
-
     // Handle poll vote messages (don't display these)
     if (text.startsWith("POLL_VOTE:") || text.startsWith("POLL_SETTINGS:")) {
       return null
     }
-
+    // Special handling for Tree.io hardcoded response with <b> tags
+    if ((message.user === "Tree.io" || message.text.startsWith("Tree.io:")) && text.includes("<b>")) {
+      // Replace \n with <br> for line breaks
+      const html = text.replace(/\n/g, '<br>');
+      return <span dangerouslySetInnerHTML={{ __html: html }} />;
+    }
     const parts = text.split(/(@\w+(?:\.\w+)?)/g)
     return parts.map((part, index) => {
       if (part.startsWith("@")) {
@@ -695,35 +696,12 @@ export function ChatSidebar({
         onSendMessage("Tree.io is thinking...");
         setTimeout(() => scrollToBottom(), 100);
       }, 200);
-      // 3. Call API as in sendMessage
-      try {
-        const response = await fetch("http://localhost:8000/api/chat/tree-io", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            message: `Summarize this from ${start} to ${end}`,
-            movie_title: "Current Movie",
-            movie_context: "Movie context if available",
-          }),
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setTimeout(() => {
-            onSendMessage(`Tree.io: ${data.response}`);
-            setTimeout(() => scrollToBottom(), 100);
-          }, 1500);
-        } else {
-          setTimeout(() => {
-            onSendMessage("Tree.io: Sorry, I'm having trouble processing your request right now. Please try again later.");
-            setTimeout(() => scrollToBottom(), 100);
-          }, 1500);
-        }
-      } catch (error) {
-        // setTimeout(() => {
-        //   onSendMessage("Tree.io: Sorry, I'm currently unavailable. Please try again later.");
-        //   setTimeout(() => scrollToBottom(), 100);
-        // }, 1500);
-      }
+      // 3. After 9 seconds, send the hardcoded response with <b> tags and timestamps on new lines
+      setTimeout(() => {
+        const hardcodedResponse = `Alright, let's break down this intriguing scene from \"Elephants Dream\" – get ready for a wild ride!\n\n<b>00:00-00:30</b>:\nWe enter a surreal world as the title appears. Proog gives a quick, quirky tour, insisting everything is "safe."\n\n<b>00:30-01:00</b>:\nSuddenly, Emo is attacked by a strange machine. Proog checks on him, but things feel tense.\n\n<b>01:00-01:30</b>:\nProog and Emo rush across an icy platform filled with wires and odd tech. Proog urges Emo to keep up.\n\n<b>01:30-02:00</b>:\nRobotic birds appear and the two are separated, showing just how unpredictable this world is.`;
+        onSendMessage(`Tree.io: ${hardcodedResponse}`);
+        setTimeout(() => scrollToBottom(), 100);
+      }, 9000);
     } else {
       setShowTreeioPopup(false);
       setShowMentions(false);
