@@ -1,5 +1,5 @@
 # Amazon Hackon Season-5
-# 🎥 FireTV - Co-Watching Platform with Real-Time Sync, Mood-Based Recommendation & Gamification
+# 🎥 FireTV - Co-Watching Platform with Real-Time Sync, Mood-Based Recommendation, Smart Summarization & Gamification
 
 
 
