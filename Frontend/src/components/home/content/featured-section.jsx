@@ -297,7 +297,7 @@ export function FeaturedSection({ movie, onStartWatching, onStartSoloWatching, o
                   <Button
                     onClick={() => handleMoreInfo(currentMovie)}
                     variant="ghost"
-                    className="text-white hover:bg-white/10 px-6 py-3 rounded-md flex items-center space-x-2"
+                    className="text-white px-6 py-3 rounded-md flex items-center space-x-2"
                   >
                     <Info className="w-5 h-5" />
                     <span>More Info</span>

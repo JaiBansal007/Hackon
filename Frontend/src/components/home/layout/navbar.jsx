@@ -562,7 +562,7 @@ export function Navbar({
               <DropdownMenuSeparator className="bg-gray-700" />
               <DropdownMenuItem 
                 onClick={onLogout}
-                className="text-blue-400 hover:bg-blue-600/10 hover:text-blue-300 text-sm"
+                className="text-red-400 hover:bg-blue-600/10 hover:text-red-300 text-sm"
               >
                 <LogOut className="mr-2 h-3 w-3" />
                 Log out

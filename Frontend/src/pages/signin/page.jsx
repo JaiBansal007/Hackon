@@ -574,11 +574,13 @@ export default function SignInPage() {
     {/* Brand Logo */}
     <div className="absolute top-6 right-6 z-30">
       <div className="flex items-center space-x-3">
-        <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-orange-600 rounded-xl flex items-center justify-center shadow-xl">
-          <Play className="w-5 h-5 text-white fill-white" />
-        </div>
+        <img 
+            src="/logo.jpg" 
+            alt="FireTV" 
+            className="w-10 h-10 rounded-xl shadow-xl object-cover"
+          />
         <span className="text-2xl font-black text-white">
-          Fire<span className="text-transparent bg-gradient-to-r from-red-400 to-orange-500 bg-clip-text">Stream</span>
+          Fire<span className="text-transparent bg-gradient-to-r from-blue-400 to-cyan-500 bg-clip-text">TV</span>
         </span>
       </div>
     </div>

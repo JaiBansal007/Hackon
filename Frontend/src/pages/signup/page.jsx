@@ -161,11 +161,13 @@ export default function SignUpPage() {
           {/* Mobile logo */}
           <div className="text-center mb-8 lg:hidden">
             <div className="flex items-center justify-center space-x-3 mb-6">
-              <div className="w-10 h-10 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-xl flex items-center justify-center shadow-lg">
-                <Play className="w-5 h-5 text-black" />
-              </div>
+              <img 
+            src="/logo.jpg" 
+            alt="FireTV" 
+            className="w-10 h-10 rounded-xl shadow-xl object-cover"
+          />
               <span className="text-2xl font-bold text-black">
-                Fire<span className="text-orange-500">Stream</span>
+                Fire<span className="text-transparent bg-gradient-to-r from-blue-400 to-cyan-500 bg-clip-text">TV</span>
               </span>
             </div>
           </div>
