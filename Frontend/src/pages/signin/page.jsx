@@ -332,7 +332,7 @@ export default function SignInPage() {
           {/* Feature hint overlay */}
           <div className="absolute bottom-1 left-1 right-1">
             <div className="bg-black/80 backdrop-blur-sm rounded-md px-2 py-1 flex items-center space-x-1">
-              <FileText className="w-3 h-3 text-orange-400" />
+              <FileText className="w-3 h-3 text-blue-400" />
               <span className="text-xs text-white font-medium">Reviews</span>
             </div>
           </div>
@@ -849,7 +849,7 @@ export default function SignInPage() {
                       </label>
                       <Link
                         to="#"
-                        className="text-sm text-red-400 hover:text-red-300 font-semibold transition-colors duration-300"
+                        className="text-sm text-blue-400 hover:text-blue-300 font-semibold transition-colors duration-300"
                       >
                         Forgot password?
                       </Link>
@@ -869,7 +869,7 @@ export default function SignInPage() {
                   <Button
                     type="submit"
                     disabled={isLoading || !email || !password || (isSignUp && (!displayName.trim() || (passwordValidation && !passwordValidation.isValid)))}
-                    className="w-full h-12 bg-gradient-to-r from-red-600 via-red-500 to-orange-500 text-white hover:from-red-700 hover:via-red-600 hover:to-orange-600 font-bold rounded-xl shadow-xl hover:shadow-2xl transform hover:scale-[1.02] transition-all duration-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                    className="w-full h-12 bg-gradient-to-r from-blue-400 via-cyan-500 to-cyan-500 text-white hover:from-blue-500 hover:via-cyan-600 hover:to-cyan-600 font-bold rounded-xl shadow-xl hover:shadow-2xl transform hover:scale-[1.02] transition-all duration-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                   >
                     {isLoading ? (
                       <div className="flex items-center space-x-2">
@@ -888,11 +888,11 @@ export default function SignInPage() {
             <div className="text-center text-white/40 leading-relaxed">
               <p className="text-sm">
                 By continuing, you agree to our{" "}
-                <Link to="#" className="text-red-400 hover:text-red-300 transition-colors duration-300 font-semibold">
+                <Link to="#" className="text-blue-400 hover:text-cyan-300 transition-colors duration-300 font-semibold">
                   Terms of Service
                 </Link>{" "}
                 and{" "}
-                <Link to="#" className="text-red-400 hover:text-red-300 transition-colors duration-300 font-semibold">
+                <Link to="#" className="text-blue-400 hover:text-cyan-300 transition-colors duration-300 font-semibold">
                   Privacy Policy
                 </Link>
               </p>

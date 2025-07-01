@@ -873,7 +873,7 @@ const HomePage = ({ startPictureInPicture, isPiPActive }) => {
 
   useEffect(() => {
     // Check quiz lock status on mount and when user changes
-    setQuizLocked(!GamificationManager.getInstance().canAttemptQuiz())
+    setQuizLocked(GamificationManager.getInstance().canAttemptQuiz())
   }, [user])
 
   // Typing indicator function

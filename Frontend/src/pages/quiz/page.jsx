@@ -88,14 +88,15 @@ export default function QuizPage() {
     return `${mins}:${secs.toString().padStart(2, "0")}`
   }
 
+  if (!quiz) {
+    return null
+  }
+
+  // All code below this line is safe to access quiz properties
   const currentQ = quiz.questions[currentQuestion]
   const isAnswered = selectedAnswers[currentQuestion] !== undefined
   const isLastQuestion = currentQuestion === quiz.questions.length - 1
   const progressPercentage = ((currentQuestion + 1) / quiz.questions.length) * 100
-
-  if (!quiz) {
-    return null
-  }
 
   if (showResults) {
     const percentage = Math.round((score / quiz.questions.length) * 100)

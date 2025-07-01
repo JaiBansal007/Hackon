@@ -103,7 +103,7 @@ export function Navbar({
       const viewingHistoryManager = ViewingHistoryManager.getInstance()
       const viewingHistory = viewingHistoryManager.getViewingHistory()
 
-      const response = await fetch('http://localhost:5001/api/recommendations/mood', {
+      const response = await fetch('http://localhost:5000/api/recommendations/mood', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

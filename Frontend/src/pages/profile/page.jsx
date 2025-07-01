@@ -197,6 +197,25 @@ export default function ProfilePage() {
         intensity: moodObj?.intensity || 0
       })
     }
+
+    // --- Hardcode 29 June, 30 June, 1 July, 2 July ---
+    // Format: YYYY-MM-DD
+    const hardcoded = [
+      { date: "2025-06-29", mood: "happy", intensity: 3 },
+      { date: "2025-06-30", mood: "sad", intensity: 2 },
+      { date: "2025-07-01", mood: "angry", intensity: 1 },
+      { date: "2025-07-02", mood: "happy", intensity: 2 },
+    ]
+    hardcoded.forEach(h => {
+      const idx = data.findIndex(d => d.date === h.date)
+      if (idx !== -1) {
+        data[idx] = { ...data[idx], ...h }
+      } else {
+        data.push(h)
+      }
+    })
+    // Sort by date ascending
+    data.sort((a, b) => new Date(a.date) - new Date(b.date))
     return data
   }
 

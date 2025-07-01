@@ -1088,7 +1088,7 @@ export function ChatSidebar({
                           className="w-full p-2 bg-gray-700/50 border border-gray-600/50 rounded-lg text-white placeholder-gray-400 focus:border-blue-400/50 text-sm"
                         />
                         <div className="flex gap-1 mt-1">
-                          {["Favorite genre?", "Rate this scene", "What's next?"].map((t, i) => (
+                          {["Favorite genre?", "Rate this scene", "Which Movie?"].map((t, i) => (
                             <button
                               key={i}
                               onClick={() => setPollQuestion(t)}
