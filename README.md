@@ -16,12 +16,7 @@
 - Python
 - AWS Lambda
 - Machine Learning libraries
-- Video ana#### ✂️ Video Summarization
-*AI-powered summarization detailed in System Modules section*
-
----
-
-## 🧠 System Modulesmmarization
+- Video analysis ✂️ Video Summarization
 *AI-powered summarization detailed in System Modules section*
 
 ---
@@ -106,23 +101,119 @@ python app/main.py
 ## 📁 Project Structure
 
 ```
-Hackon/
-├── Frontend/                 # React frontend application
-│   ├── src/
-│   ├── public/
-│   ├── package.json
-│   └── vite.config.js
-├── server/                   # Express.js backend
-│   ├── routes/
-│   ├── controllers/
-│   ├── middleware/
-│   ├── package.json
-│   └── server.js
-├── vedio-Sumarization/       # Video processing service
-│   ├── src/
-│   ├── requirements.txt
-│   └── template.yaml
-└── README.md
+📁 Hackon/
+├── 📁 Frontend/                          # React 18+ Frontend Application
+│   ├── 📁 public/                        # Static Assets
+│   │   ├── 🖼️ logo.jpg                   # FireTV Brand Logo
+│   │   └── 📄 index.html                 # HTML Entry Point
+│   ├── 📁 src/                           # Source Code
+│   │   ├── 📁 components/                # Reusable Components
+│   │   │   ├── 📁 auth/                  # Authentication Components
+│   │   │   │   └── 🔐 ProtectedRoute.jsx # Route Protection
+│   │   │   ├── 📁 home/                  # Home Page Components
+│   │   │   │   ├── 📁 chat/              # Real-time Chat System
+│   │   │   │   │   └── 💬 chat-sidebar.jsx # Chat UI with polls & AI
+│   │   │   │   ├── 📁 content/           # Content Management
+│   │   │   │   │   ├── 🎬 featured-section.jsx # Hero Content
+│   │   │   │   │   ├── 📚 movie-categories.jsx # Content Grid
+│   │   │   │   │   ├── 🎥 movie-data.js  # Movie Database
+│   │   │   │   │   └── 📝 movie-name.js  # Movie Names List
+│   │   │   │   ├── 📁 layout/            # Layout Components
+│   │   │   │   │   ├── 🧭 navbar.jsx     # Navigation with Search
+│   │   │   │   │   └── 📋 sidebar.jsx    # App Sidebar
+│   │   │   │   ├── 📁 party/             # Watch Party System
+│   │   │   │   │   └── 🎉 party-manager.jsx # Party Management
+│   │   │   │   ├── 📁 room/              # Room Management
+│   │   │   │   │   ├── 👥 room-members-sidebar.jsx # Members UI
+│   │   │   │   │   └── 🛡️ permission-manager.jsx # Permissions
+│   │   │   │   └── 📁 video/             # Video Player System
+│   │   │   │       ├── 🎮 video-player.jsx # Main Video Player
+│   │   │   │       ├── 📺 picture-in-picture-player.jsx # PiP Mode
+│   │   │   │       ├── 😊 floating-reactions.jsx # Live Reactions
+│   │   │   │       └── 🎭 reactions-panel.jsx # Reaction Controls
+│   │   │   └── 📁 ui/                    # UI Components Library
+│   │   │       ├── 🎨 beautiful-loader.jsx # Loading States
+│   │   │       ├── 🔘 button.jsx         # Button Component
+│   │   │       ├── 📝 input.jsx          # Input Fields
+│   │   │       ├── 📊 toast.jsx          # Notifications
+│   │   │       └── 🧩 [other-ui-components] # Additional UI
+│   │   ├── 📁 contexts/                  # React Contexts
+│   │   │   └── 🔑 AuthContext.js         # Authentication State
+│   │   ├── 📁 firebase/                  # Firebase Integration
+│   │   │   ├── 🔧 config.js              # Firebase Configuration
+│   │   │   ├── 🔐 auth.js                # Authentication Service
+│   │   │   ├── 💬 chat.js                # Chat Service
+│   │   │   ├── 🎬 movies.js              # Movie Data Service
+│   │   │   ├── 🗳️ polls.js               # Polling Service
+│   │   │   ├── 🎉 parties.js             # Party Service
+│   │   │   └── 🎥 videoSync.js           # Video Synchronization
+│   │   ├── 📁 lib/                       # Utility Libraries
+│   │   │   ├── 🎮 gamification.js        # Points & Achievements
+│   │   │   ├── 📊 viewing-history.js     # History Tracking
+│   │   │   ├── 🔌 websocket.js           # WebSocket Manager
+│   │   │   └── 🛠️ utils.jsx              # Helper Functions
+│   │   ├── 📁 pages/                     # Application Pages
+│   │   │   ├── 🏠 home/                  # Home Dashboard
+│   │   │   │   └── 📄 page.jsx           # Main Home Page
+│   │   │   ├── 🎬 movie/                 # Movie Details
+│   │   │   │   └── 📄 page.jsx           # Movie Page
+│   │   │   ├── 🎉 party/                 # Party Management
+│   │   │   │   └── 📄 page.jsx           # Party Dashboard
+│   │   │   ├── 👤 profile/               # User Profile
+│   │   │   │   └── 📄 page.jsx           # Profile & Analytics
+│   │   │   ├── 🎮 quiz/                  # Interactive Quizzes
+│   │   │   │   └── 📄 page.jsx           # Quiz Interface
+│   │   │   ├── 💰 redeem/                # Rewards System
+│   │   │   │   └── 📄 page.jsx           # Redemption Center
+│   │   │   ├── 🔐 signin/                # Authentication
+│   │   │   │   └── 📄 page.jsx           # Sign In Page
+│   │   │   ├── 📝 signup/                # User Registration
+│   │   │   │   └── 📄 page.jsx           # Sign Up Page
+│   │   │   └── 📄 page.jsx               # Landing Page
+│   │   ├── 📄 App.jsx                    # Main App Component
+│   │   ├── 📄 main.jsx                   # React Entry Point
+│   │   ├── 🎨 index.css                  # Global Styles
+│   │   └── 🎨 App.css                    # App-specific Styles
+│   ├── 📄 package.json                   # Dependencies & Scripts
+│   ├── ⚙️ vite.config.js                # Vite Configuration
+│   ├── 🎨 tailwind.config.js            # Tailwind CSS Config
+│   ├── 📋 eslint.config.js               # ESLint Rules
+│   └── 📖 README.md                      # Frontend Documentation
+│
+├── 📁 server/                            # Express.js Backend Server
+│   ├── 📁 temp/                          # Temporary Processing
+│   │   └── 📄 index.js                   # Mood Recommendations API
+│   ├── 📄 server.js                      # Main Server Entry Point
+│   ├── 📄 package.json                   # Backend Dependencies
+│   ├── ⚙️ .env                           # Environment Variables
+│   └── 📄 .env.example                   # Environment Template
+│
+├── 📁 vedio-Sumarization/                # AI Video Processing Service
+│   ├── 📁 src/                           # Source Code
+│   ├── 📄 requirements.txt               # Python Dependencies
+│   ├── ☁️ template.yaml                  # AWS Lambda Template
+│   └── 📖 README.md                      # Service Documentation
+│
+├── 📁 polly-demo/                        # Amazon Polly Integration
+│   └── 📁 dum/                           # Mood Analyzer Service
+│       ├── 📁 app/                       # Application Code
+│       │   └── 📄 main.py                # Main Processing Script
+│       ├── 📄 requirements.txt           # Python Dependencies
+│       └── ⚙️ .env.example               # Environment Template
+│
+├── 📁 Docs/                              # Documentation Assets
+│   ├── 🖼️ architecture.jpeg             # System Architecture
+│   ├── 🖼️ profile.jpeg                  # User Profile Interface
+│   ├── 🖼️ quiz.jpeg                     # Quiz System Demo
+│   ├── 🖼️ summarizer.jpeg               # AI Summarization
+│   ├── 🖼️ sync.jpeg                     # Video Synchronization
+│   ├── 🖼️ vediosync.jpeg                # Advanced Sync Interface
+│   └── 📁 images/                        # Additional Assets
+│       └── 📖 README.md                  # Image Documentation
+│
+├── 📖 README.md                          # Main Project Documentation
+└── 📄 .gitignore                         # Git Ignore Rules
+
 ```
 
 ## 🚀 Deployment
