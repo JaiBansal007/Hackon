@@ -343,14 +343,16 @@ export function Navbar({
       className="fixed top-0 left-0 right-0 z-40 bg-black/95 backdrop-blur-sm border-b border-gray-800"
     >
       <div className="flex items-center justify-between px-4 py-3 ml-2">
-        {/* FireStream Logo */}
+        {/* FireTV Logo */}
         <div className="flex items-center space-x-3 mr-6">
-          <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-orange-600 rounded-xl flex items-center justify-center shadow-xl">
-            <Play className="w-5 h-5 text-white fill-white" />
-          </div>
+          <img 
+            src="/logo.jpg" 
+            alt="FireTV" 
+            className="w-10 h-10 rounded-xl shadow-xl object-cover"
+          />
           <span className="text-2xl font-black text-white">
             Fire
-            <span className="text-transparent bg-gradient-to-r from-red-400 to-orange-500 bg-clip-text">Stream</span>
+            <span className="text-transparent bg-gradient-to-r from-blue-400 to-cyan-500 bg-clip-text">TV</span>
           </span>
         </div>
         {/* Search */}
@@ -442,8 +444,8 @@ export function Navbar({
               <Button
                 onClick={onCreateRoom}
                 size="sm"
-                // Updated to FireStream logo color scheme
-                className="bg-gradient-to-r from-red-500 via-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white rounded-full px-3 py-1 text-xs h-8 font-bold shadow-md transition-all duration-300"
+                // Updated to FireTV logo color scheme
+                className="bg-gradient-to-r from-blue-500 via-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white rounded-full px-3 py-1 text-xs h-8 font-bold shadow-md transition-all duration-300"
               >
                 <Crown className="w-3 h-3 mr-1" />
                 Create Room
@@ -466,7 +468,7 @@ export function Navbar({
                 onClick={handleJoinRoomOrParty}
                 size="sm"
                 variant="outline"
-                className="border-gray-600 text-gray-600 hover:bg-gray-300 hover:text-white rounded-full px-3 py-1 text-xs h-8"
+                className="border-cyan-600 text-cyan-600 hover:bg-cyan-600 hover:text-white rounded-full px-3 py-1 text-xs h-8 transition-all duration-200"
               >
                 <Users className="w-3 h-3 mr-1" />
                 Join Party
@@ -500,7 +502,7 @@ export function Navbar({
                   onClick={onJoinHostMovie}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="px-3 py-1 bg-gradient-to-r from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30 text-blue-400 border border-blue-500/30 rounded-full text-xs font-medium transition-all flex items-center gap-2 shadow-lg"
+                  className="px-3 py-1 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 hover:from-blue-500/30 hover:to-cyan-500/30 text-blue-400 border border-blue-500/30 rounded-full text-xs font-medium transition-all flex items-center gap-2 shadow-lg"
                   title={`Join ${hostMovieState?.hostName}'s movie`}
                 >
                   <span>📺</span>
@@ -577,7 +579,8 @@ export function Navbar({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 p-4"
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             onClick={(e) => e.target === e.currentTarget && setShowJoinPartyModal(false)}
           >
             <motion.div
@@ -586,11 +589,15 @@ export function Navbar({
               exit={{ scale: 0.8, opacity: 0, y: 50 }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
               className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-black to-gray-900 border border-amber-500/30 rounded-3xl max-w-lg w-full shadow-2xl"
+              style={{ margin: 'auto' }}
             >
               {/* Close button */}
               <button
-                onClick={() => setShowJoinPartyModal(false)}
-                className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setShowJoinPartyModal(false)
+                }}
+                className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors z-10"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -758,7 +765,8 @@ export function Navbar({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 p-4"
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             onClick={(e) => e.target === e.currentTarget && setShowEnterRoomModal(false)}
           >
             <motion.div
@@ -767,11 +775,15 @@ export function Navbar({
               exit={{ scale: 0.8, opacity: 0, y: 50 }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
               className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-black to-gray-900 border border-blue-500/30 rounded-3xl max-w-md w-full shadow-2xl"
+              style={{ margin: 'auto' }}
             >
               {/* Close button */}
               <button
-                onClick={() => setShowEnterRoomModal(false)}
-                className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setShowEnterRoomModal(false)
+                }}
+                className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors z-10"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -862,6 +874,7 @@ export function Navbar({
           </motion.div>
         )}
       </AnimatePresence>
+      
     </motion.nav>
   )
 }

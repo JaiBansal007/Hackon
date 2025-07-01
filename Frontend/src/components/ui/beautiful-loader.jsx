@@ -2,7 +2,7 @@ import React from "react";
 import { Play, Users, MessageCircle, BarChart3, Sparkles } from "lucide-react";
 
 export function BeautifulLoader({ 
-  title = "FireStream", 
+  title = "FireTV", 
   subtitle = "Loading your experience...", 
   showFeatures = false,
   size = "large" 
@@ -23,7 +23,7 @@ export function BeautifulLoader({
   return (
     <div className="fixed inset-0 z-50 bg-black">
       {/* Animated background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-red-600/20 via-orange-500/10 to-purple-600/20 animate-pulse" />
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 via-cyan-500/10 to-teal-600/20 animate-pulse" />
       
       {/* Floating particles */}
       <div className="absolute inset-0 overflow-hidden">
@@ -45,13 +45,15 @@ export function BeautifulLoader({
       <div className="relative z-10 min-h-screen flex flex-col items-center justify-center p-8">
         {/* Logo section */}
         <div className="mb-8 text-center">
-          <div className={`${logoSize} bg-gradient-to-br from-red-500 to-orange-600 rounded-3xl flex items-center justify-center shadow-2xl mb-6 mx-auto animate-pulse`}>
-            <Play className={`${iconSize} text-white fill-white`} />
-          </div>
+          <img 
+            src="/logo.jpg" 
+            alt="FireTV" 
+            className={`${logoSize} rounded-3xl shadow-2xl mb-6 mx-auto animate-pulse object-cover`}
+          />
           <h1 className={`${titleSize} font-black text-white mb-2 tracking-tight`}>
             {title.includes("Fire") ? (
               <>
-                Fire<span className="text-transparent bg-gradient-to-r from-red-400 to-orange-500 bg-clip-text">Stream</span>
+                Fire<span className="text-transparent bg-gradient-to-r from-blue-400 to-cyan-500 bg-clip-text">TV</span>
               </>
             ) : (
               title
@@ -63,16 +65,16 @@ export function BeautifulLoader({
         {/* Advanced loading spinner */}
         <div className="relative mb-8">
           {/* Outer rotating ring */}
-          <div className={`${spinnerSize} border-4 border-red-500/20 border-t-red-500 rounded-full animate-spin`}></div>
+          <div className={`${spinnerSize} border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin`}></div>
           
           {/* Inner rotating ring - counter rotation */}
           <div 
-            className={`absolute ${innerSpinnerSize} border-4 border-orange-500/30 border-b-orange-500 rounded-full animate-spin`} 
+            className={`absolute ${innerSpinnerSize} border-4 border-cyan-500/30 border-b-cyan-500 rounded-full animate-spin`} 
             style={{animationDirection: 'reverse', animationDuration: '1.5s'}}
           ></div>
           
           {/* Center dot */}
-          <div className="absolute inset-1/2 w-2 h-2 bg-gradient-to-r from-red-500 to-orange-500 rounded-full transform -translate-x-1/2 -translate-y-1/2 animate-pulse"></div>
+          <div className="absolute inset-1/2 w-2 h-2 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full transform -translate-x-1/2 -translate-y-1/2 animate-pulse"></div>
         </div>
 
         {/* Loading features preview */}
@@ -99,7 +101,7 @@ export function BeautifulLoader({
         {showFeatures && (
           <div className="w-full max-w-xs">
             <div className="h-1 bg-white/10 rounded-full overflow-hidden">
-              <div className="h-full bg-gradient-to-r from-red-500 to-orange-500 rounded-full animate-pulse w-3/4"></div>
+              <div className="h-full bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full animate-pulse w-3/4"></div>
             </div>
             <p className="text-xs text-white/50 text-center mt-2 font-medium">Setting up your experience...</p>
           </div>

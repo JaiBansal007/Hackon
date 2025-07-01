@@ -119,7 +119,7 @@ export default function SignInPage() {
       
       if (result.success) {
         console.log(`✅ Email ${isSignUp ? 'sign-up' : 'sign-in'} successful`)
-        setSuccess(`${isSignUp ? 'Welcome to FireStream!' : 'Welcome back!'} Loading your experience...`)
+        setSuccess(`${isSignUp ? 'Welcome to FireTV!' : 'Welcome back!'} Loading your experience...`)
         // Keep loading state active and let the auth state change handle navigation
       } else {
         setError(result.error || `Failed to ${isSignUp ? 'create account' : 'sign in'}`)
@@ -170,7 +170,7 @@ export default function SignInPage() {
       {/* Beautiful themed loading screen */}
       {(authLoading || (isLoading && success)) && (
         <BeautifulLoader 
-          title="FireStream"
+          title="FireTV"
           subtitle={authLoading ? "Checking authentication..." : success}
           showFeatures={true}
           size="large"
@@ -592,7 +592,7 @@ export default function SignInPage() {
           {/* Header */}
           <div className="text-center mb-10">
             <h1 className="text-5xl font-black text-white mb-4 tracking-tight">
-              {isSignUp ? "Join FireStream" : "Sign In"}
+              {isSignUp ? "Join FireTV" : "Sign In"}
             </h1>
             <p className="text-white/70 text-lg font-light mb-6">
               {isSignUp ? "Your cinematic journey begins now" : "Welcome back to the experience"}

@@ -62,7 +62,7 @@ export function Sidebar({ isFullscreen, isWatching }) {
                 transition={{ duration: 0.3, ease: "easeOut" }}
                 className="text-lg font-bold text-white"
               >
-                Fire Stream
+                Fire TV
               </motion.span>
             )}
           </AnimatePresence> */}

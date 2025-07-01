@@ -1048,7 +1048,7 @@ export function VideoPlayer({
                 roomStatus !== "none" && !canControlVideo ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:h-1.5"
               }`}
               style={{
-                background: `linear-gradient(to right, #f97316 0%, #f97316 ${
+                background: `linear-gradient(to right, #06b6d4 0%, #06b6d4 ${
                   videoDuration ? (currentTime / videoDuration) * 100 : 0
                 }%, #374151 ${videoDuration ? (currentTime / videoDuration) * 100 : 0}%, #374151 100%)`,
               }}
@@ -1107,7 +1107,7 @@ export function VideoPlayer({
                         onChange={handleVolumeChange}
                         className="w-16 h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer"
                         style={{
-                          background: `linear-gradient(to right, #f97316 0%, #f97316 ${
+                          background: `linear-gradient(to right, #06b6d4 0%, #06b6d4 ${
                             (isMuted ? 0 : volume) * 100
                           }%, #4b5563 ${(isMuted ? 0 : volume) * 100}%, #4b5563 100%)`,
                         }}

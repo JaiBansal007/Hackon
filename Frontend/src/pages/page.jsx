@@ -36,8 +36,8 @@ export default function LandingPage() {
       icon: Target,
       title: "AI-Powered Mood Detection",
       desc: "Advanced algorithms analyze your viewing patterns, time of day, and preferences to suggest perfect content for your current mood.",
-      color: "from-amber-400 to-orange-500",
-      bgColor: "from-amber-500/20 to-orange-500/20",
+      color: "from-cyan-400 to-blue-500",
+      bgColor: "from-cyan-500/20 to-blue-500/20",
       stats: "95% accuracy"
     },
     {
@@ -52,16 +52,16 @@ export default function LandingPage() {
       icon: Zap,
       title: "Intelligent Summarization",
       desc: "Miss an episode? Our AI creates personalized summaries so you never lose track of your favorite shows.",
-      color: "from-violet-400 to-purple-500",
-      bgColor: "from-violet-500/20 to-purple-500/20",
+      color: "from-teal-400 to-cyan-500",
+      bgColor: "from-teal-500/20 to-cyan-500/20",
       stats: "30 languages"
     },
     {
       icon: Star,
       title: "Gamified Experience",
       desc: "Earn badges, complete challenges, and unlock exclusive content. Turn watching into an adventure.",
-      color: "from-emerald-400 to-green-500",
-      bgColor: "from-emerald-500/20 to-green-500/20",
+      color: "from-blue-400 to-indigo-500",
+      bgColor: "from-blue-500/20 to-indigo-500/20",
       stats: "50+ rewards"
     },
   ];
@@ -71,7 +71,7 @@ export default function LandingPage() {
       name: "Sarah Chen",
       role: "Content Creator",
       avatar: "👩‍💻",
-      text: "FireStream completely changed how I discover content. The mood-based recommendations are eerily accurate!",
+      text: "FireTV completely changed how I discover content. The mood-based recommendations are eerily accurate!",
       rating: 5
     },
     {
@@ -115,16 +115,18 @@ export default function LandingPage() {
             <div className="flex items-center space-x-3">
               <div className="relative">
                 {/* Updated logo style to match sign-in page */}
-                <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-orange-600 rounded-xl flex items-center justify-center shadow-xl">
-                  <Play className="w-5 h-5 text-white fill-white" />
-                </div>
+                <img 
+                  src="/logo.jpg" 
+                  alt="FireTV" 
+                  className="w-10 h-10 rounded-xl shadow-xl object-cover"
+                />
               </div>
               <div>
                 <span className="text-2xl font-black text-white">
                   Fire
-                  <span className="text-transparent bg-gradient-to-r from-red-400 to-orange-500 bg-clip-text">Stream</span>
+                  <span className="text-transparent bg-gradient-to-r from-blue-400 to-cyan-500 bg-clip-text">TV</span>
                 </span>
-                <div className="text-xs text-orange-400 font-medium">AI-POWERED</div>
+                <div className="text-xs text-cyan-400 font-medium">AI-POWERED</div>
               </div>
             </div>
 
@@ -360,7 +362,7 @@ export default function LandingPage() {
                 </span>
               </h2>
               <p className="text-lg text-gray-400 max-w-3xl mx-auto">
-                Whether you're a casual viewer or entertainment enthusiast, FireStream adapts to your unique style
+                Whether you're a casual viewer or entertainment enthusiast, FireTV adapts to your unique style
               </p>
             </div>
 
@@ -370,15 +372,15 @@ export default function LandingPage() {
                   title: "Casual Viewers",
                   desc: "Just want to unwind after a long day? Our mood detection finds the perfect comfort content for your relaxation time.",
                   icon: "🛋️",
-                  color: "from-emerald-500/20 to-green-500/20",
-                  border: "border-emerald-500/30"
+                  color: "from-cyan-500/20 to-blue-500/20",
+                  border: "border-cyan-500/30"
                 },
                 {
                   title: "Busy Binge-Watchers", 
                   desc: "Juggling multiple shows? Smart summaries and personalized queues keep you organized and up-to-date.",
                   icon: "⚡",
-                  color: "from-amber-500/20 to-orange-500/20",
-                  border: "border-amber-500/30"
+                  color: "from-blue-500/20 to-indigo-500/20",
+                  border: "border-blue-500/30"
                 },
                 {
                   title: "Social Enthusiasts",
@@ -407,17 +409,17 @@ export default function LandingPage() {
             <div className="mb-8">
               <div className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-500/20 to-red-500/20 border border-orange-500/30 rounded-full px-6 py-3 mb-8">
                 <Award className="w-5 h-5 text-orange-400" />
-                <span className="font-medium text-orange-300">Join 2.5M+ Happy Users</span>
+                <span className="font-medium text-cyan-300">Join 2.5M+ Happy Users</span>
               </div>
             </div>
 
             <h2 className="text-3xl md:text-5xl font-bold mb-8">
-              Ready to <span className="bg-gradient-to-r from-orange-400 to-red-400 bg-clip-text text-transparent">Revolutionize</span>
+              Ready to <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">Revolutionize</span>
               <br />
               Your Entertainment?
             </h2>
             <p className="text-lg text-gray-400 mb-12 max-w-2xl mx-auto">
-              Start your free trial today and discover why millions choose FireStream for their entertainment needs.
+              Start your free trial today and discover why millions choose FireTV for their entertainment needs.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -442,15 +444,17 @@ export default function LandingPage() {
             <div className="flex flex-col md:flex-row items-center justify-between mb-6">
               <div className="flex items-center space-x-3 mb-4 md:mb-0">
                 {/* Updated logo style to match sign-in page */}
-                <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-orange-600 rounded-xl flex items-center justify-center shadow-xl">
-                  <Play className="w-5 h-5 text-white fill-white" />
-                </div>
+                <img 
+                  src="/logo.jpg" 
+                  alt="FireTV" 
+                  className="w-10 h-10 rounded-xl shadow-xl object-cover"
+                />
                 <div>
                   <span className="text-xl font-black text-white">
                     Fire
-                    <span className="text-transparent bg-gradient-to-r from-red-400 to-orange-500 bg-clip-text">Stream</span>
+                    <span className="text-transparent bg-gradient-to-r from-blue-400 to-cyan-500 bg-clip-text">TV</span>
                   </span>
-                  <div className="text-xs text-orange-400 font-medium">AI-POWERED</div>
+                  <div className="text-xs text-cyan-400 font-medium">AI-POWERED</div>
                 </div>
               </div>
               
@@ -467,7 +471,7 @@ export default function LandingPage() {
             </div>
             
             <div className="text-center text-gray-500 text-sm border-t border-gray-800 pt-6">
-              © 2024 FireStream. Transforming entertainment with AI-powered innovation.
+              © 2024 FireTV. Transforming entertainment with AI-powered innovation.
               <br />
               <span className="text-orange-400">Built with ❤️ for the future of streaming</span>
             </div>

@@ -65,7 +65,7 @@ export default function SignUpPage() {
       {/* Beautiful themed loading screen */}
       {isLoading && (
         <BeautifulLoader 
-          title="FireStream"
+          title="FireTV"
           subtitle="Creating your account..."
           showFeatures={true}
           size="large"
@@ -105,8 +105,8 @@ export default function SignUpPage() {
           <div className="mb-6">
             <h1 className="text-5xl font-bold mb-6 text-white leading-tight">
               Join{" "}
-              <span className="bg-gradient-to-r from-yellow-400 via-orange-500 to-orange-600 bg-clip-text text-transparent">
-                FireStream
+              <span className="bg-gradient-to-r from-blue-400 via-cyan-500 to-teal-600 bg-clip-text text-transparent">
+                FireTV
               </span>
             </h1>
             <p className="text-xl text-gray-300 leading-relaxed">Start your personalized streaming journey today</p>
@@ -114,11 +114,11 @@ export default function SignUpPage() {
 
           <div className="space-y-4">
             <div className="group flex items-start space-x-4 p-4 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/10 transition-all duration-300">
-              <div className="w-10 h-10 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300">
-                <CheckCircle className="w-5 h-5 text-black" />
+              <div className="w-10 h-10 bg-gradient-to-r from-blue-400 to-cyan-500 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300">
+                <CheckCircle className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-orange-400 mb-2">Free to Start</h3>
+                <h3 className="text-lg font-semibold text-cyan-400 mb-2">Free to Start</h3>
                 <p className="text-gray-300 text-sm leading-relaxed">
                   Begin with our free tier and upgrade anytime for premium features.
                 </p>
@@ -344,7 +344,7 @@ export default function SignUpPage() {
                     <span>Creating Account...</span>
                   </div>
                 ) : (
-                  authMethod === "phone" ? "Create Account with Phone" : "Create FireStream Account"
+                  authMethod === "phone" ? "Create Account with Phone" : "Create FireTV Account"
                 )}
               </Button>
             </form>
