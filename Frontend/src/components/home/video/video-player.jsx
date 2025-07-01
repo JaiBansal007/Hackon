@@ -18,6 +18,7 @@ import {
 import { FloatingReactions } from "./floating-reactions"
 import { ReactionsPanel } from "./reactions-panel"
 import { ViewingHistoryManager } from "../../../lib/viewing-history"
+import { getDatabase, ref as dbRef, push, onChildAdded, off } from "firebase/database"
 
 export function VideoPlayer({
   movie,
@@ -884,6 +885,52 @@ export function VideoPlayer({
     };
   }, []);
 
+  // --- Reaction Sync State ---
+  const [roomReactions, setRoomReactions] = useState([])
+  const reactionsListenerRef = useRef(null)
+
+  // --- Reaction Sync: Listen for reactions in the room ---
+  useEffect(() => {
+    if (roomStatus === "none" || !roomId) return;
+    const db = getDatabase();
+    const reactionsRef = dbRef(db, `rooms/${roomId}/reactions`);
+    setRoomReactions([]); // Reset on room change
+    // Listen for new reactions
+    const handleNewReaction = (snapshot) => {
+      const data = snapshot.val();
+      setRoomReactions((prev) => [
+        ...prev,
+        {
+          ...data,
+          id: snapshot.key || Math.random().toString(36).slice(2),
+        },
+      ].slice(-15)); // Keep only last 15
+    };
+    onChildAdded(reactionsRef, handleNewReaction);
+    reactionsListenerRef.current = reactionsRef;
+    return () => {
+      if (reactionsListenerRef.current) {
+        off(reactionsListenerRef.current);
+      }
+    };
+  }, [roomId, roomStatus]);
+
+  // --- Reaction Sync: Send reaction to room ---
+  const handleSendReaction = (reaction) => {
+    if (roomStatus !== "none" && roomId) {
+      const db = getDatabase();
+      const reactionsRef = dbRef(db, `rooms/${roomId}/reactions`);
+      // Use user.displayName, user.name, or fallback to "Anonymous"
+      const displayName = user?.displayName || user?.name || "Anonymous";
+      push(reactionsRef, {
+        emoji: reaction.emoji,
+        user: displayName,
+        timestamp: Date.now(),
+      });
+    }
+    if (onSendReaction) onSendReaction(reaction);
+  };
+
   if (!isWatching) return null
 
   return (
@@ -913,7 +960,8 @@ export function VideoPlayer({
           Your browser does not support the video tag.
         </video>
 
-        <FloatingReactions reactions={recentReactions} />
+        {/* Floating Reactions - use roomReactions if in room, else recentReactions */}
+        <FloatingReactions reactions={roomStatus !== "none" ? roomReactions : recentReactions} />
 
         {/* PiP Mode Overlay */}
         <AnimatePresence>
@@ -1032,7 +1080,7 @@ export function VideoPlayer({
           )}
         </AnimatePresence>
 
-        <ReactionsPanel show={showReactions} onReactionSelect={onSendReaction} />
+        <ReactionsPanel show={showReactions} onReactionSelect={handleSendReaction} />
 
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent">
           {/* Progress Bar */}
