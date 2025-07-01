@@ -382,7 +382,7 @@ Connect with us on LinkedIn:
 
 - [Nayan Jindal](https://www.linkedin.com/in/nayan-jindal)
 - [Tushar Sachdeva](https://www.linkedin.com/in/tushar-sachdeva-573891287/)
-- [Jai Bansal](https://www.linkedin.com/in/jaibansal007/)
-- [Rohan Jhanwar](https://www.linkedin.com/in/rohan-jhanwar/)
+- [Jai Bansal](https://www.linkedin.com/in/jai-bansal-423a73280/)
+- [Rohan Jhanwar](https://www.linkedin.com/in/rohan-jhanwar-15a866315/)
 
 > **Built with ❤️ for Amazon HackOn 2025**
