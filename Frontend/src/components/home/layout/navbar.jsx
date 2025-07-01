@@ -734,7 +734,7 @@ export function Navbar({
                         onJoinRoom()
                       }}
                       variant="outline"
-                      className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white rounded-xl"
+                      className="flex-1 bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-400 hover:to-blue-500 text-white rounded-xl"
                     >
                       <Users className="w-4 h-4 mr-2" />
                       Join Room Instead
@@ -745,7 +745,7 @@ export function Navbar({
                         navigate("/party")
                       }}
                       variant="outline"
-                      className="flex-1 border-purple-500/50 text-purple-300 hover:bg-purple-500/10 hover:text-purple-200 rounded-xl"
+                      className="flex-1 border-purple-500/50 text-purple-700 hover:bg-purple-500/10 hover:text-purple-200 rounded-xl"
                     >
                       <PartyPopper className="w-4 h-4 mr-2" />
                       Manage Parties

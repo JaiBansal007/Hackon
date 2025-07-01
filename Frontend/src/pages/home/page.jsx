@@ -1183,7 +1183,7 @@ const HomePage = ({ startPictureInPicture, isPiPActive }) => {
                     <Button
                       onClick={() => setShowCreateDialog(false)}
                       variant="outline"
-                      className="flex-1 h-11 border border-neutral-700 text-black rounded-lg hover:bg-neutral-800 transition-all duration-200"
+                      className="flex-1 h-11 border border-neutral-700 text-black rounded-lg hover:bg-neutral-800 transition-all duration-200 hover:text-white"
                     >
                       Cancel
                     </Button>
@@ -1281,7 +1281,7 @@ const HomePage = ({ startPictureInPicture, isPiPActive }) => {
                           setShowJoinPartyModal(true)
                         }}
                         variant="outline"
-                        className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white rounded-xl"
+                        className="flex-1 bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-400 hover:to-cyan-500 text-white rounded-xl"
                       >
                         <MessageSquareIcon className="w-4 h-4 mr-2" />
                         Join Party Instead
@@ -1292,7 +1292,7 @@ const HomePage = ({ startPictureInPicture, isPiPActive }) => {
                           setShowCreateDialog(true)
                         }}
                         variant="outline"
-                        className="flex-1 border-red-500/50 text-red-300 hover:bg-red-500/10 hover:text-red-200 rounded-xl"
+                        className="flex-1 border-red-500/50 text-red-700 hover:bg-red-500/10 hover:text-red-200 rounded-xl"
                       >
                         <Crown className="w-4 h-4 mr-2" />
                         Create Room
