@@ -65,11 +65,22 @@ cd server && npm run dev
 # Terminal 2: Start Frontend Server  
 cd Frontend && npm run dev
 ```
+**4 .Mood Anaylyser**
+# 1. Setup virtualenv
+```pip install -r requirements.txt```
 
-**4. Access the Application**
+# 2. Create a .env from example
+```cp .env.example .env  # Fill real values```
+
+# 3. Run app
+```python app/main.py```
+
+
+**5. Access the Application**
 - 🌐 **Frontend**: http://localhost:5174
 - 🔧 **Backend API**: http://localhost:5001
 - 📊 **Health Check**: http://localhost:5001/health
+
 
 ### 🎯 Try These Features:
 1. **🎬 Create Watch Party**: Start synchronized viewing
@@ -139,7 +150,7 @@ sam deploy --guided
 
 # 🎥 FireTV - Co-Watching Platform with Real-Time Sync, Mood-Based Recommendation & Gamification
 
-![FireTV Banner](./docs/Amazon%20Final.pdf)
+![FireTV Banner](./Docs/Amazon%20Final.pdf)
 
 Welcome to **FireTV** — a scalable, cloud-native co-watching platform built for **Amazon HackOn 2025**. This system enables **millions of users** to watch videos together in real time, interact through chat, get personalized content suggestions, and engage with gamified trivia — all in a **serverless and distributed architecture**.
 
@@ -147,7 +158,7 @@ Welcome to **FireTV** — a scalable, cloud-native co-watching platform built fo
 
 ## 🏗️ System Architecture
 
-![System Architecture](./docs/architecture.png)
+![System Architecture](./Docs/architecture.png)
 
 *The above diagram illustrates our scalable, cloud-native architecture designed to handle millions of concurrent users with real-time synchronization, mood-based recommendations, and gamification features.*
 
@@ -177,7 +188,7 @@ Our platform follows a **microservices architecture** with the following key com
 ## 🌟 Key Platform Features
 
 ### Real-Time Video Synchronization
-![Video Synchronization](./docs/sync.jpeg)
+![Video Synchronization](./Docs/sync.jpeg)
 
 Our platform provides **millisecond-precise synchronization** across all connected users, ensuring everyone experiences the content at exactly the same moment. Features include:
 - ⚡ **Sub-100ms latency** for play/pause/seek operations
@@ -186,7 +197,7 @@ Our platform provides **millisecond-precise synchronization** across all connect
 - 🎯 **Smart buffering** to prevent desync issues
 
 ### Interactive Gamification System
-![Quiz & Gamification](./docs/quiz.jpeg)
+![Quiz & Gamification](./Docs/quiz.jpeg)
 
 Engage users with **context-aware quizzes** and achievement systems:
 - 🎮 **Real-time trivia** based on video content
@@ -196,7 +207,7 @@ Engage users with **context-aware quizzes** and achievement systems:
 - 💎 **Reward redemption** system with virtual currency
 
 ### AI-Powered Video Summarization
-![Video Summarizer](./docs/summarizer.jpeg)
+![Video Summarizer](./Docs/summarizer.jpeg)
 
 Transform any video content into **intelligent summaries**:
 - 🎙️ **Speech-to-text** conversion using Amazon Transcribe
@@ -206,7 +217,7 @@ Transform any video content into **intelligent summaries**:
 - 🎯 **Context-aware** summaries based on user preferences
 
 ### Comprehensive User Analytics
-![User Profile](./docs/profile.jpeg)
+![User Profile](./Docs/profile.jpeg)
 
 Beautiful, **data-rich user profiles** with complete viewing analytics:
 - 📊 **Viewing history** with progress tracking
@@ -216,7 +227,7 @@ Beautiful, **data-rich user profiles** with complete viewing analytics:
 - 🏅 **Achievement showcase** and progress tracking
 
 ### Advanced Video Sync Interface
-![Advanced Sync](./docs/vediosync.jpeg)
+![Advanced Sync](./Docs/vediosync.jpeg)
 
 **Production-ready synchronization** with enterprise-grade features:
 - 👥 **Multi-user rooms** supporting thousands of concurrent viewers
@@ -230,31 +241,31 @@ Beautiful, **data-rich user profiles** with complete viewing analytics:
 ## 📱 Screenshots & Features
 
 ### 🏠 Home Dashboard
-![Platform Features](./docs/sync.jpeg)
+![Platform Features](./Docs/sync.jpeg)
 *Personalized movie recommendations with mood-based filtering and synchronized watching*
 
 ### 🎬 Watch Party Interface
-![Watch Party](./docs/vediosync.jpeg)
+![Watch Party](./Docs/vediosync.jpeg)
 *Real-time synchronized video playback with integrated chat and participant list*
 
 ### 🎮 Gamification & Quiz System
-![Quiz Interface](./docs/quiz.jpeg)
+![Quiz Interface](./Docs/quiz.jpeg)
 *Interactive quiz system with real-time scoring and leaderboards*
 
 ### 👤 User Profile & Analytics
-![User Profile](./docs/profile.jpeg)
+![User Profile](./Docs/profile.jpeg)
 *Comprehensive viewing history, statistics, and personal achievements with beautiful blue theme*
 
 ### ✂️ Video Summarization
-![Video Summarizer](./docs/summarizer.jpeg)
+![Video Summarizer](./Docs/summarizer.jpeg)
 *AI-powered video summarization using Amazon Transcribe and LLM processing*
 
 ### � Real-Time Video Synchronization
-![Video Sync](./docs/sync.jpeg)
+![Video Sync](./Docs/sync.jpeg)
 *Perfect synchronization across multiple users with real-time state management*
 
 ### 📺 Advanced Video Sync Features
-![Advanced Sync](./docs/vediosync.jpeg)
+![Advanced Sync](./Docs/vediosync.jpeg)
 *Advanced video synchronization with chat integration and user presence indicators*
 
 ---
@@ -262,7 +273,7 @@ Beautiful, **data-rich user profiles** with complete viewing analytics:
 ## 🧠 System Modules
 
 ### 1. 🔄 Co-Watching & Sync Engine
-![Co-Watching Engine](./docs/sync.jpeg)
+![Co-Watching Engine](./Docs/sync.jpeg)
 - Real-time **WebSocket servers** (`ws-1` to `ws-n`)
 - `room state manager` to sync play/pause/seek across users
 - `chat handler` pushing and receiving messages through **Redis**
@@ -271,7 +282,7 @@ Beautiful, **data-rich user profiles** with complete viewing analytics:
 ---
 
 ### 2. 🧼 Video Summarizer
-![Video Summarizer](./docs/summarizer.jpeg)
+![Video Summarizer](./Docs/summarizer.jpeg)
 - Uses **Amazon Transcribe** to convert video speech to text
 - Queries **DynamoDB** for pre-summarized content
 - LLM prompt construction via custom Phrase Pro Module
@@ -280,7 +291,7 @@ Beautiful, **data-rich user profiles** with complete viewing analytics:
 ---
 
 ### 3. 📊 Mood-Based Recommendation Engine
-![Recommendation Engine](./docs/architecture.png)
+![Recommendation Engine](./Docs/architecture.png)
 - Trains on:
   - User behavior
   - OTT item metadata
@@ -292,7 +303,7 @@ Beautiful, **data-rich user profiles** with complete viewing analytics:
 ---
 
 ### 4. 🎮 Gamification Layer
-![Gamification System](./docs/quiz.jpeg)
+![Gamification System](./Docs/quiz.jpeg)
 - **Question Engine** triggers context-aware questions
 - **Rule Evaluator** manages engagement criteria
 - **Leaderboard Engine** tracks user rank in real time
@@ -302,7 +313,7 @@ Beautiful, **data-rich user profiles** with complete viewing analytics:
 ---
 
 ### 5. 👤 User Management
-![User Management](./docs/profile.jpeg)
+![User Management](./Docs/profile.jpeg)
 - Authenticated via **Amazon Cognito + JWT**
 - **Secrets Manager** securely stores and rotates keys
 - `Profile Manager`, `Preferences Manager`, and `Viewing History Logger` track user state
@@ -311,7 +322,7 @@ Beautiful, **data-rich user profiles** with complete viewing analytics:
 
 ## ⚖️ Scaling Strategy
 
-![Scaling Architecture](./docs/architecture.png)
+![Scaling Architecture](./Docs/architecture.png)
 
 | Component            | Scaling Method                                  |
 |----------------------|-------------------------------------------------|
@@ -327,7 +338,7 @@ Beautiful, **data-rich user profiles** with complete viewing analytics:
 
 ## 🔐 Security Considerations
 
-![Security Architecture](./docs/architecture.png)
+![Security Architecture](./Docs/architecture.png)
 
 - OAuth2 / JWT-based token validation using **Amazon Cognito**
 - All inter-service calls secured via IAM roles & scoped policies
@@ -354,7 +365,7 @@ Beautiful, **data-rich user profiles** with complete viewing analytics:
 
 ## 🧪 Test Scenarios
 
-![Testing Framework](./docs/vediosync.jpeg)
+![Testing Framework](./Docs/vediosync.jpeg)
 
 | Use Case                     | Expected Behavior                             |
 |------------------------------|-----------------------------------------------|
@@ -368,7 +379,7 @@ Beautiful, **data-rich user profiles** with complete viewing analytics:
 
 ## 🛠 Future Enhancements
 
-![Future Roadmap](./docs/architecture.png)
+![Future Roadmap](./Docs/architecture.png)
 
 - 🎥 Replace OTT stubs with real playbook via **MediaConnect / IVS**
 - 📊 Add **real-time analytics dashboard** (Grafana + CloudWatch)
@@ -379,7 +390,7 @@ Beautiful, **data-rich user profiles** with complete viewing analytics:
 
 ## 🏆 Amazon HackOn 2025 Submission
 
-![FireTV Architecture](./docs/architecture.png)
+![FireTV Architecture](./Docs/architecture.png)
 
 ### 🎯 **Challenge Statement**
 Building a scalable, cloud-native co-watching platform that can handle **millions of concurrent users** with real-time synchronization, AI-powered recommendations, and gamified user engagement.
