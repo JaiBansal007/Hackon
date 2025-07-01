@@ -16,7 +16,12 @@
 - Python
 - AWS Lambda
 - Machine Learning libraries
-- Video ana### ✂️ Video Summarization
+- Video ana#### ✂️ Video Summarization
+*AI-powered summarization detailed in System Modules section*
+
+---
+
+## 🧠 System Modulesmmarization
 *AI-powered summarization detailed in System Modules section*
 
 ---
@@ -70,16 +75,20 @@ cd server && npm run dev
 # Terminal 2: Start Frontend Server  
 cd Frontend && npm run dev
 ```
-**4 .Mood Anaylyser**
-# 1. Setup virtualenv
-```pip install -r requirements.txt```
+**4. Mood Analyzer Setup**
+```bash
+# Navigate to mood analyzer directory
+cd ../polly-demo/dum
 
-# 2. Create a .env from example
-```cp .env.example .env  # Fill real values```
+# Setup virtual environment and dependencies
+pip install -r requirements.txt
 
-# 3. Run app
-```python app/main.py```
+# Create environment configuration
+cp .env.example .env  # Fill with real values
 
+# Run the mood analyzer application
+python app/main.py
+```
 
 **5. Access the Application**
 - 🌐 **Frontend**: http://localhost:5174
@@ -130,14 +139,6 @@ npm run build
 cd server
 npm start
 # Deploy to your preferred cloud platform
-```
-
-### AWS Lambda Deployment
-```bash
-cd vedio-Sumarization
-# Follow AWS SAM deployment guidelines
-sam build
-sam deploy --guided
 ```
 
 ## 🔧 Available Scripts
@@ -273,7 +274,6 @@ Beautiful, **data-rich user profiles** with complete viewing analytics:
 ## 🧠 System Modules
 
 ### 1. 🔄 Co-Watching & Sync Engine
-![Co-Watching Engine](./Docs/sync.jpeg)
 - Real-time **WebSocket servers** (`ws-1` to `ws-n`)
 - `room state manager` to sync play/pause/seek across users
 - `chat handler` pushing and receiving messages through **Redis**
@@ -282,7 +282,6 @@ Beautiful, **data-rich user profiles** with complete viewing analytics:
 ---
 
 ### 2. 🧼 Video Summarizer
-![Video Summarizer](./Docs/summarizer.jpeg)
 - Uses **Amazon Transcribe** to convert video speech to text
 - Queries **DynamoDB** for pre-summarized content
 - LLM prompt construction via custom Phrase Pro Module
@@ -303,7 +302,6 @@ Beautiful, **data-rich user profiles** with complete viewing analytics:
 ---
 
 ### 4. 🎮 Gamification Layer
-![Gamification System](./Docs/quiz.jpeg)
 - **Question Engine** triggers context-aware questions
 - **Rule Evaluator** manages engagement criteria
 - **Leaderboard Engine** tracks user rank in real time
@@ -313,7 +311,6 @@ Beautiful, **data-rich user profiles** with complete viewing analytics:
 ---
 
 ### 5. 👤 User Management
-![User Management](./Docs/profile.jpeg)
 - Authenticated via **Amazon Cognito + JWT**
 - **Secrets Manager** securely stores and rotates keys
 - `Profile Manager`, `Preferences Manager`, and `Viewing History Logger` track user state
@@ -427,18 +424,3 @@ This project is licensed under the **MIT License**. See `LICENSE` file for detai
 ## 🤝 Connect With Our Team
 
 > **Built with ❤️ for Amazon HackOn 2025** 💡  
-
-### 🎥 **Live Demo Available**
-Ready to see FireTV in action? [Schedule a demo](mailto:demo@firetv.com) or try our live instance!
-
-### 📧 **Contact Us**
-- **Project Lead**: [Your Name](mailto:your.email@example.com)
-- **GitHub**: [JaiBansal007](https://github.com/JaiBansal007)
-- **LinkedIn**: [Connect with us](https://linkedin.com/in/yourprofile)
-
-### ⭐ **Show Your Support**
-If you find FireTV impressive, please ⭐ this repository and share it with your network!
-
----
-
-**🎬 Ready to revolutionize co-watching? Let's build the future of entertainment together!** 🚀
