@@ -306,7 +306,7 @@ const PartyPage = ({ onJoinRoom }) => {
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center space-x-4">
                 <Button
-                  onClick={() => navigate("/")}
+                  onClick={() => navigate("/home")}
                   variant="ghost"
                   className="p-2 text-gray-400 hover:text-white hover:bg-gray-800/50 rounded-xl transition-all duration-200"
                 >

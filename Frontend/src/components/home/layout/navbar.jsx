@@ -454,13 +454,13 @@ export function Navbar({
               {/* Enter Room button - Only show for non-host users (guests) */}
               {!isHost && (
                 <Button
-                  onClick={() => setShowEnterRoomModal(true)}
+                  onClick={onJoinRoom}
                   size="sm"
                   variant="outline"
                   className="border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white rounded-full px-3 py-1 text-xs h-8"
                 >
                   <MapPin className="w-3 h-3 mr-1" />
-                  Enter Room
+                  Join Room
                 </Button>
               )}
               
@@ -579,8 +579,8 @@ export function Navbar({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 p-4"
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 p-4 flex items-center justify-center min-h-screen"
+            style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             onClick={(e) => e.target === e.currentTarget && setShowJoinPartyModal(false)}
           >
             <motion.div

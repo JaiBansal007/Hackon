@@ -1201,51 +1201,103 @@ const HomePage = ({ startPictureInPicture, isPiPActive }) => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
+              className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 p-4"
               style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
               <motion.div
-                initial={{ scale: 0.96, opacity: 0, y: 30 }}
+                initial={{ scale: 0.8, opacity: 0, y: 50 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
-                exit={{ scale: 0.96, opacity: 0, y: 30 }}
+                exit={{ scale: 0.8, opacity: 0, y: 50 }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className="relative bg-[#181818] border border-neutral-700 rounded-2xl max-w-sm w-full shadow-lg p-0 mx-auto"
+                className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-black to-gray-900 border border-blue-500/30 rounded-3xl max-w-md w-full shadow-2xl"
                 style={{ margin: 'auto' }}
               >
-                <div className="px-7 py-8">
+                {/* Close button */}
+                <button
+                  onClick={() => {
+                    setShowJoinDialog(false)
+                    setJoinRoomId("")
+                  }}
+                  className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors z-10"
+                >
+                  <span className="sr-only">Close</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+
+                {/* Animated background */}
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-cyan-500/5 to-blue-500/5" />
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 via-cyan-500 to-blue-400" />
+
+                <div className="relative p-8">
                   <div className="flex items-center space-x-3 mb-6">
-                    <div className="p-2 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20">
+                    <div className="p-3 rounded-full bg-gradient-to-r from-blue-500/20 to-cyan-500/20">
                       <Users className="w-6 h-6 text-blue-400" />
                     </div>
-                    <h3 className="text-xl font-bold text-white">Join Room</h3>
+                    <h3 className="text-2xl font-bold text-white">Join Room</h3>
                   </div>
-                  <p className="text-neutral-300 mb-6 text-sm">
-                    Enter the Room ID shared by your friend to join their watch party.
-                  </p>
-                  <Input
-                    value={joinRoomId}
-                    onChange={(e) => setJoinRoomId(e.target.value.toUpperCase())}
-                    placeholder="Enter Room ID"
-                    className="h-11 bg-neutral-800 border border-neutral-700 text-white text-center text-base font-mono tracking-wider rounded-lg mb-6"
-                  />
-                  <div className="flex space-x-3">
-                    <Button
-                      onClick={joinRoom}
-                      className="flex-1 h-11 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold rounded-lg transition-all duration-200"
-                    >
-                      <Users className="w-5 h-5 mr-2" />
-                      Join
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        setShowJoinDialog(false)
-                        setJoinRoomId("")
-                      }}
-                      variant="outline"
-                      className="flex-1 h-11 border border-neutral-700 text-black rounded-lg hover:bg-neutral-800 transition-all duration-200"
-                    >
-                      Cancel
-                    </Button>
+
+                  <div className="mb-6">
+                    <h4 className="text-lg font-semibold text-white mb-2">Room ID</h4>
+                    <p className="text-gray-400 text-sm mb-4">Enter the room ID to join a specific room</p>
+                    <div className="flex space-x-3">
+                      <Input
+                        value={joinRoomId}
+                        onChange={(e) => setJoinRoomId(e.target.value.toUpperCase())}
+                        placeholder="Enter Room ID..."
+                        className="flex-1 bg-gray-800/50 border-2 border-gray-600 focus:border-blue-500 text-white text-center text-lg font-mono tracking-wider rounded-xl h-12"
+                      />
+                      <Button
+                        onClick={joinRoom}
+                        disabled={!joinRoomId.trim()}
+                        className="bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-400 hover:to-cyan-500 text-white font-semibold rounded-xl px-6 h-12"
+                      >
+                        <Users className="w-4 h-4 mr-2" />
+                        Join
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Info Section */}
+                  <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
+                    <div className="flex items-start space-x-3">
+                      <div className="p-2 rounded-full bg-blue-500/20">
+                        <Users className="w-4 h-4 text-blue-400" />
+                      </div>
+                      <div>
+                        <h5 className="font-semibold text-white mb-1">Room vs Party</h5>
+                        <p className="text-gray-300 text-sm">
+                          Rooms are for direct video watching sessions. Use this if someone shared a specific room ID with you.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Alternative Actions */}
+                  <div className="mt-6 pt-4 border-t border-gray-700">
+                    <div className="flex space-x-3">
+                      <Button
+                        onClick={() => {
+                          setShowJoinDialog(false)
+                          setShowJoinPartyModal(true)
+                        }}
+                        variant="outline"
+                        className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white rounded-xl"
+                      >
+                        <MessageSquareIcon className="w-4 h-4 mr-2" />
+                        Join Party Instead
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          setShowJoinDialog(false)
+                          setShowCreateDialog(true)
+                        }}
+                        variant="outline"
+                        className="flex-1 border-red-500/50 text-red-300 hover:bg-red-500/10 hover:text-red-200 rounded-xl"
+                      >
+                        <Crown className="w-4 h-4 mr-2" />
+                        Create Room
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </motion.div>
