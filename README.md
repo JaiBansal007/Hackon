@@ -150,7 +150,7 @@ sam deploy --guided
 
 # 🎥 FireTV - Co-Watching Platform with Real-Time Sync, Mood-Based Recommendation & Gamification
 
-![FireTV Banner](./Docs/Amazon%20Final.pdf)
+
 
 Welcome to **FireTV** — a scalable, cloud-native co-watching platform built for **Amazon HackOn 2025**. This system enables **millions of users** to watch videos together in real time, interact through chat, get personalized content suggestions, and engage with gamified trivia — all in a **serverless and distributed architecture**.
 
@@ -158,7 +158,7 @@ Welcome to **FireTV** — a scalable, cloud-native co-watching platform built fo
 
 ## 🏗️ System Architecture
 
-![System Architecture](./Docs/architecture.png)
+![System Architecture](./Docs/architecture.jpeg)
 
 *The above diagram illustrates our scalable, cloud-native architecture designed to handle millions of concurrent users with real-time synchronization, mood-based recommendations, and gamification features.*
 
@@ -291,7 +291,7 @@ Beautiful, **data-rich user profiles** with complete viewing analytics:
 ---
 
 ### 3. 📊 Mood-Based Recommendation Engine
-![Recommendation Engine](./Docs/architecture.png)
+![Recommendation Engine](./Docs/architecture.jpeg)
 - Trains on:
   - User behavior
   - OTT item metadata
@@ -322,7 +322,7 @@ Beautiful, **data-rich user profiles** with complete viewing analytics:
 
 ## ⚖️ Scaling Strategy
 
-![Scaling Architecture](./Docs/architecture.png)
+![Scaling Architecture](./Docs/architecture.jpeg)
 
 | Component            | Scaling Method                                  |
 |----------------------|-------------------------------------------------|
@@ -338,7 +338,7 @@ Beautiful, **data-rich user profiles** with complete viewing analytics:
 
 ## 🔐 Security Considerations
 
-![Security Architecture](./Docs/architecture.png)
+![Security Architecture](./Docs/architecture.jpeg)
 
 - OAuth2 / JWT-based token validation using **Amazon Cognito**
 - All inter-service calls secured via IAM roles & scoped policies
@@ -379,7 +379,7 @@ Beautiful, **data-rich user profiles** with complete viewing analytics:
 
 ## 🛠 Future Enhancements
 
-![Future Roadmap](./Docs/architecture.png)
+![Future Roadmap](./Docs/architecture.jpeg)
 
 - 🎥 Replace OTT stubs with real playbook via **MediaConnect / IVS**
 - 📊 Add **real-time analytics dashboard** (Grafana + CloudWatch)
@@ -390,7 +390,7 @@ Beautiful, **data-rich user profiles** with complete viewing analytics:
 
 ## 🏆 Amazon HackOn 2025 Submission
 
-![FireTV Architecture](./Docs/architecture.png)
+![FireTV Architecture](./Docs/architecture.jpeg)
 
 ### 🎯 **Challenge Statement**
 Building a scalable, cloud-native co-watching platform that can handle **millions of concurrent users** with real-time synchronization, AI-powered recommendations, and gamified user engagement.
