@@ -381,7 +381,7 @@ This project is licensed under the **MIT License**. See `LICENSE` file for detai
 Connect with us on LinkedIn:
 
 - [Nayan Jindal](https://www.linkedin.com/in/nayan-jindal)
-- [Tushar Sachdeva](https://www.linkedin.com/in/tushar-sachdeva-1b0b2b1b7/)
+- [Tushar Sachdeva](https://www.linkedin.com/in/tushar-sachdeva-573891287/)
 - [Jai Bansal](https://www.linkedin.com/in/jaibansal007/)
 - [Rohan Jhanwar](https://www.linkedin.com/in/rohan-jhanwar/)
 
