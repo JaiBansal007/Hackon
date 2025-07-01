@@ -634,35 +634,27 @@ export function ChatSidebar({
             setTimeout(() => scrollToBottom(), 100);
           }, 500)
 
-          const response = await fetch("http://localhost:8000/api/chat/tree-io", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              message: messageText.replace("@Tree.io", "").trim(),
-              movie_title: "Current Movie",
-              movie_context: "Movie context if available",
-            }),
-          })
+          // Hardcoded response after 9 seconds
+          setTimeout(() => {
+            const hardcodedResponse = `Alright, let's break down this intriguing scene from "Elephants Dream" – get ready for a wild ride! 
 
-          if (response.ok) {
-            const data = await response.json()
+- **00:00-00:30**: We're thrown into a surreal world as the title card appears, followed by a character named Proog giving a slightly unhinged tour, emphasizing how "safe" everything is... right before things get chaotic! 
 
-            setTimeout(() => {
-              onSendMessage(`Tree.io: ${data.response}`)
-              // Auto-scroll for AI response
-              setTimeout(() => scrollToBottom(), 100);
-            }, 1500)
-          } else {
-            setTimeout(() => {
-              onSendMessage(
-                "Tree.io: Sorry, I'm having trouble processing your request right now. Please try again later.",
-              )
-              // Auto-scroll for error message
-              setTimeout(() => scrollToBottom(), 100);
-            }, 1500)
-          }
+- **00:30-01:00**: Action! Emo is attacked, there's a bizarre machine gun, and Proog seems surprisingly unfazed, more concerned with whether Emo is hurt. "It's not safe here," he says, after just insisting everything was safe. 
+
+- **01:00-01:30**: The duo is on the run, navigating a strange, icy platform filled with wires and bizarre technology. Proog urges Emo to follow, hinting at what's to come. 
+
+- **01:30-02:00**: The chase intensifies, with robotic birds joining the fray! Proog and Emo are separated, emphasizing Emo's vulnerability and the dangers of this bizarre world.`;
+            
+            onSendMessage(`Tree.io: ${hardcodedResponse}`);
+            // Auto-scroll for AI response
+            setTimeout(() => scrollToBottom(), 100);
+          }, 9000); // 9 seconds delay
+
+          // Remove the incomplete response code
+          // const response = 
+
+          // Remove the response.ok check and replace with the hardcoded logic above
         } catch (error) {
           console.error("Error calling Tree.io API:", error)
 
