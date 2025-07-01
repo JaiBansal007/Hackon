@@ -1,4 +1,94 @@
-# Hackon
+# Amazon Hackon Season-5
+# 🎥 FireTV - Co-Watching Platform with Real-Time Sync, Mood-Based Recommendation & Gamification
+
+
+
+Welcome to **FireTV** — a scalable, cloud-native co-watching platform built for **Amazon HackOn Season-5**. This system enables **millions of users** to watch videos together in real time, interact through chat, get personalized content suggestions, enjoy a **mood-based recommender**, and engage with gamified trivia — all in a **serverless and distributed architecture**.
+
+---
+
+## 🏗️ System Architecture
+
+![System Architecture](./Docs/architecture.jpeg)
+
+*The above diagram illustrates our scalable, cloud-native architecture designed to handle millions of concurrent users with real-time synchronization, mood-based recommendations, and gamification features.*
+
+### Architecture Overview
+Our platform follows a **microservices architecture** with the following key components:
+- **Frontend Layer**: React-based web application with real-time WebSocket connections
+- **API Gateway**: Amazon API Gateway for secure and scalable API management
+- **Authentication**: Amazon Cognito for user management and JWT-based security
+- **Real-time Communication**: WebSocket servers with Redis Pub/Sub for chat and sync
+- **AI/ML Services**: Amazon Personalize, Transcribe, Polly, and Rekognition for intelligent features
+- **Storage Layer**: DynamoDB for scalable NoSQL storage and caching
+- **Notification System**: SNS for push notifications and user engagement
+
+---
+
+## 🚀 Project Highlights
+
+- 🔁 **Synchronized Video Playback** across large user groups
+- 💬 **Real-Time Chat Engine** using Redis Pub/Sub
+- 🧠 **Mood-Based OTT Recommendations** via Amazon Personalize
+- ✂️ **Video Summarization** using Amazon Transcribe & LLM-enhanced phrasing
+- 🎮 **Gamification Layer** with leaderboards, streaks, and rewards
+- 🔐 **Cognito-based Auth** and user preference tracking
+
+---
+
+## 🌟 Key Platform Features
+
+### Mood-Based Recommender
+![Mood Based](./Docs/mood.png)
+
+Our platform features an **AI-powered mood-based recommender** that personalizes content suggestions based on user mood and viewing patterns:
+- 🧠 **Personalized recommendations** using Amazon Personalize and mood signals
+- 🎭 **Emotion-aware suggestions** for movies and shows
+- 🔗 **Direct links** to OTT platforms for seamless viewing
+- 📈 **Continuous learning** from user feedback and engagement
+
+### Advanced Video Sync Interface
+![Advanced Sync](./Docs/vediosync.jpeg)
+
+Our platform provides **millisecond-precise synchronization** across all connected users, ensuring everyone experiences the content at exactly the same moment.
+**Production-ready synchronization** with enterprise-grade features:
+- 👥 **Multi-user rooms** supporting thousands of concurrent viewers
+- 💬 **Integrated chat** with real-time messaging
+- 🎛️ **Host controls** for room management
+- 📱 **Cross-platform compatibility** (web, mobile, smart TV)
+- 🛡️ **Security features** with role-based permissions
+
+### Interactive Gamification System
+![Quiz & Gamification](./Docs/quiz.jpeg)
+
+Engage users with **context-aware quizzes** and achievement systems:
+- 🎮 **Real-time trivia** based on video content
+- 🏆 **Leaderboards** with daily/weekly/monthly rankings
+- ⭐ **Achievement badges** for various milestones
+- 🔥 **Streak tracking** to encourage daily engagement
+- 💎 **Reward redemption** system with virtual currency
+
+### AI-Powered Video Summarization
+![Video Summarizer](./Docs/summarizer.jpeg)
+
+Transform any video content into **intelligent summaries**:
+- 🎙️ **Speech-to-text** conversion using Amazon Transcribe
+- 🧠 **LLM-enhanced** content analysis and summarization
+- 📝 **Multi-format outputs** (text, audio via Polly)
+- ⚡ **Real-time processing** with DynamoDB caching
+- 🎯 **Context-aware** summaries based on user preferences
+
+### Comprehensive User Analytics
+![User Profile](./Docs/profile.jpeg)
+
+Beautiful, **data-rich user profiles** with complete viewing analytics:
+- 📊 **Viewing history** with progress tracking
+- 📈 **Engagement metrics** and activity patterns
+- 🎭 **Mood-based** viewing recommendations
+- 🔥 **Streak visualization** with heatmaps
+- 🏅 **Achievement showcase** and progress tracking
+
+---
 
 ### Frontend
 - React 18+
@@ -245,97 +335,6 @@ npm start
 - `npm start` - Start production server
 - `npm test` - Run tests
 
-# 🎥 FireTV - Co-Watching Platform with Real-Time Sync, Mood-Based Recommendation & Gamification
-
-
-
-Welcome to **FireTV** — a scalable, cloud-native co-watching platform built for **Amazon HackOn 2025**. This system enables **millions of users** to watch videos together in real time, interact through chat, get personalized content suggestions, and engage with gamified trivia — all in a **serverless and distributed architecture**.
-
----
-
-## 🏗️ System Architecture
-
-![System Architecture](./Docs/architecture.jpeg)
-
-*The above diagram illustrates our scalable, cloud-native architecture designed to handle millions of concurrent users with real-time synchronization, mood-based recommendations, and gamification features.*
-
-### Architecture Overview
-Our platform follows a **microservices architecture** with the following key components:
-- **Frontend Layer**: React-based web application with real-time WebSocket connections
-- **API Gateway**: Amazon API Gateway for secure and scalable API management
-- **Authentication**: Amazon Cognito for user management and JWT-based security
-- **Real-time Communication**: WebSocket servers with Redis Pub/Sub for chat and sync
-- **AI/ML Services**: Amazon Personalize, Transcribe, Polly, and Rekognition for intelligent features
-- **Storage Layer**: DynamoDB for scalable NoSQL storage and caching
-- **Notification System**: SNS for push notifications and user engagement
-
----
-
-## 🚀 Project Highlights
-
-- 🔁 **Synchronized Video Playback** across large user groups
-- 💬 **Real-Time Chat Engine** using Redis Pub/Sub
-- 🧠 **Mood-Based OTT Recommendations** via Amazon Personalize
-- ✂️ **Video Summarization** using Amazon Transcribe & LLM-enhanced phrasing
-- 🎮 **Gamification Layer** with leaderboards, streaks, and rewards
-- 🔐 **Cognito-based Auth** and user preference tracking
-
----
-
-## 🌟 Key Platform Features
-
-### Real-Time Video Synchronization
-![Video Synchronization](./Docs/sync.jpeg)
-
-Our platform provides **millisecond-precise synchronization** across all connected users, ensuring everyone experiences the content at exactly the same moment. Features include:
-- ⚡ **Sub-100ms latency** for play/pause/seek operations
-- 🔄 **Automatic drift correction** to maintain sync
-- 📊 **Real-time user presence** indicators
-- 🎯 **Smart buffering** to prevent desync issues
-
-### Interactive Gamification System
-![Quiz & Gamification](./Docs/quiz.jpeg)
-
-Engage users with **context-aware quizzes** and achievement systems:
-- 🎮 **Real-time trivia** based on video content
-- 🏆 **Leaderboards** with daily/weekly/monthly rankings
-- ⭐ **Achievement badges** for various milestones
-- 🔥 **Streak tracking** to encourage daily engagement
-- 💎 **Reward redemption** system with virtual currency
-
-### AI-Powered Video Summarization
-![Video Summarizer](./Docs/summarizer.jpeg)
-
-Transform any video content into **intelligent summaries**:
-- 🎙️ **Speech-to-text** conversion using Amazon Transcribe
-- 🧠 **LLM-enhanced** content analysis and summarization
-- 📝 **Multi-format outputs** (text, audio via Polly)
-- ⚡ **Real-time processing** with DynamoDB caching
-- 🎯 **Context-aware** summaries based on user preferences
-
-### Comprehensive User Analytics
-![User Profile](./Docs/profile.jpeg)
-
-Beautiful, **data-rich user profiles** with complete viewing analytics:
-- 📊 **Viewing history** with progress tracking
-- 📈 **Engagement metrics** and activity patterns
-- 🎭 **Mood-based** viewing recommendations
-- 🔥 **Streak visualization** with heatmaps
-- 🏅 **Achievement showcase** and progress tracking
-
-### Advanced Video Sync Interface
-![Advanced Sync](./Docs/vediosync.jpeg)
-
-**Production-ready synchronization** with enterprise-grade features:
-- 👥 **Multi-user rooms** supporting thousands of concurrent viewers
-- 💬 **Integrated chat** with real-time messaging
-- 🎛️ **Host controls** for room management
-- 📱 **Cross-platform compatibility** (web, mobile, smart TV)
-- 🛡️ **Security features** with role-based permissions
-
-
----
-
 ## 🧠 System Modules
 
 ### 1. 🔄 Co-Watching & Sync Engine
@@ -488,4 +487,4 @@ This project is licensed under the **MIT License**. See `LICENSE` file for detai
 
 ## 🤝 Connect With Our Team
 
-> **Built with ❤️ for Amazon HackOn 2025** 💡  
+> **Built with ❤️ for Amazon HackOn 2025** 💡
