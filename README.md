@@ -1,5 +1,5 @@
 # Amazon Hackon Season-5
-# 🎥 FireTV - Co-Watching Platform with Real-Time Sync, Mood-Based Recommendation, Smart Summarization & Gamification
+# 🎥 FireTV - Co-Watching Platform with Real-Time Sync, Mood-Based Recommendation & Gamification
 
 
 
@@ -175,12 +175,6 @@ cp .env.example .env  # Fill with real values
 python app/main.py
 ```
 
-**5. Access the Application**
-- 🌐 **Frontend**: http://localhost:5174
-- 🔧 **Backend API**: http://localhost:5001
-- 📊 **Health Check**: http://localhost:5001/health
-
-
 ### 🎯 Try These Features:
 1. **🎬 Create Watch Party**: Start synchronized viewing
 2. **👥 Join Friends**: Use room codes for group sessions
@@ -193,114 +187,11 @@ python app/main.py
 ```
 📁 Hackon/
 ├── 📁 Frontend/                          # React 18+ Frontend Application
-│   ├── 📁 public/                        # Static Assets
-│   │   ├── 🖼️ logo.jpg                   # FireTV Brand Logo
-│   │   └── 📄 index.html                 # HTML Entry Point
-│   ├── 📁 src/                           # Source Code
-│   │   ├── 📁 components/                # Reusable Components
-│   │   │   ├── 📁 auth/                  # Authentication Components
-│   │   │   │   └── 🔐 ProtectedRoute.jsx # Route Protection
-│   │   │   ├── 📁 home/                  # Home Page Components
-│   │   │   │   ├── 📁 chat/              # Real-time Chat System
-│   │   │   │   │   └── 💬 chat-sidebar.jsx # Chat UI with polls & AI
-│   │   │   │   ├── 📁 content/           # Content Management
-│   │   │   │   │   ├── 🎬 featured-section.jsx # Hero Content
-│   │   │   │   │   ├── 📚 movie-categories.jsx # Content Grid
-│   │   │   │   │   ├── 🎥 movie-data.js  # Movie Database
-│   │   │   │   │   └── 📝 movie-name.js  # Movie Names List
-│   │   │   │   ├── 📁 layout/            # Layout Components
-│   │   │   │   │   ├── 🧭 navbar.jsx     # Navigation with Search
-│   │   │   │   │   └── 📋 sidebar.jsx    # App Sidebar
-│   │   │   │   ├── 📁 party/             # Watch Party System
-│   │   │   │   │   └── 🎉 party-manager.jsx # Party Management
-│   │   │   │   ├── 📁 room/              # Room Management
-│   │   │   │   │   ├── 👥 room-members-sidebar.jsx # Members UI
-│   │   │   │   │   └── 🛡️ permission-manager.jsx # Permissions
-│   │   │   │   └── 📁 video/             # Video Player System
-│   │   │   │       ├── 🎮 video-player.jsx # Main Video Player
-│   │   │   │       ├── 📺 picture-in-picture-player.jsx # PiP Mode
-│   │   │   │       ├── 😊 floating-reactions.jsx # Live Reactions
-│   │   │   │       └── 🎭 reactions-panel.jsx # Reaction Controls
-│   │   │   └── 📁 ui/                    # UI Components Library
-│   │   │       ├── 🎨 beautiful-loader.jsx # Loading States
-│   │   │       ├── 🔘 button.jsx         # Button Component
-│   │   │       ├── 📝 input.jsx          # Input Fields
-│   │   │       ├── 📊 toast.jsx          # Notifications
-│   │   │       └── 🧩 [other-ui-components] # Additional UI
-│   │   ├── 📁 contexts/                  # React Contexts
-│   │   │   └── 🔑 AuthContext.js         # Authentication State
-│   │   ├── 📁 firebase/                  # Firebase Integration
-│   │   │   ├── 🔧 config.js              # Firebase Configuration
-│   │   │   ├── 🔐 auth.js                # Authentication Service
-│   │   │   ├── 💬 chat.js                # Chat Service
-│   │   │   ├── 🎬 movies.js              # Movie Data Service
-│   │   │   ├── 🗳️ polls.js               # Polling Service
-│   │   │   ├── 🎉 parties.js             # Party Service
-│   │   │   └── 🎥 videoSync.js           # Video Synchronization
-│   │   ├── 📁 lib/                       # Utility Libraries
-│   │   │   ├── 🎮 gamification.js        # Points & Achievements
-│   │   │   ├── 📊 viewing-history.js     # History Tracking
-│   │   │   ├── 🔌 websocket.js           # WebSocket Manager
-│   │   │   └── 🛠️ utils.jsx              # Helper Functions
-│   │   ├── 📁 pages/                     # Application Pages
-│   │   │   ├── 🏠 home/                  # Home Dashboard
-│   │   │   │   └── 📄 page.jsx           # Main Home Page
-│   │   │   ├── 🎬 movie/                 # Movie Details
-│   │   │   │   └── 📄 page.jsx           # Movie Page
-│   │   │   ├── 🎉 party/                 # Party Management
-│   │   │   │   └── 📄 page.jsx           # Party Dashboard
-│   │   │   ├── 👤 profile/               # User Profile
-│   │   │   │   └── 📄 page.jsx           # Profile & Analytics
-│   │   │   ├── 🎮 quiz/                  # Interactive Quizzes
-│   │   │   │   └── 📄 page.jsx           # Quiz Interface
-│   │   │   ├── 💰 redeem/                # Rewards System
-│   │   │   │   └── 📄 page.jsx           # Redemption Center
-│   │   │   ├── 🔐 signin/                # Authentication
-│   │   │   │   └── 📄 page.jsx           # Sign In Page
-│   │   │   ├── 📝 signup/                # User Registration
-│   │   │   │   └── 📄 page.jsx           # Sign Up Page
-│   │   │   └── 📄 page.jsx               # Landing Page
-│   │   ├── 📄 App.jsx                    # Main App Component
-│   │   ├── 📄 main.jsx                   # React Entry Point
-│   │   ├── 🎨 index.css                  # Global Styles
-│   │   └── 🎨 App.css                    # App-specific Styles
-│   ├── 📄 package.json                   # Dependencies & Scripts
-│   ├── ⚙️ vite.config.js                # Vite Configuration
-│   ├── 🎨 tailwind.config.js            # Tailwind CSS Config
-│   ├── 📋 eslint.config.js               # ESLint Rules
-│   └── 📖 README.md                      # Frontend Documentation
-│
 ├── 📁 server/                            # Express.js Backend Server
-│   ├── 📁 temp/                          # Temporary Processing
-│   │   └── 📄 index.js                   # Mood Recommendations API
-│   ├── 📄 server.js                      # Main Server Entry Point
-│   ├── 📄 package.json                   # Backend Dependencies
-│   ├── ⚙️ .env                           # Environment Variables
-│   └── 📄 .env.example                   # Environment Template
-│
 ├── 📁 vedio-Sumarization/                # AI Video Processing Service
-│   ├── 📁 src/                           # Source Code
-│   ├── 📄 requirements.txt               # Python Dependencies
-│   ├── ☁️ template.yaml                  # AWS Lambda Template
-│   └── 📖 README.md                      # Service Documentation
-│
 ├── 📁 polly-demo/                        # Amazon Polly Integration
-│   └── 📁 dum/                           # Mood Analyzer Service
-│       ├── 📁 app/                       # Application Code
-│       │   └── 📄 main.py                # Main Processing Script
-│       ├── 📄 requirements.txt           # Python Dependencies
-│       └── ⚙️ .env.example               # Environment Template
-│
+├── 📁 mood_recommender/                  # Mood Based recommender
 ├── 📁 Docs/                              # Documentation Assets
-│   ├── 🖼️ architecture.jpeg             # System Architecture
-│   ├── 🖼️ profile.jpeg                  # User Profile Interface
-│   ├── 🖼️ quiz.jpeg                     # Quiz System Demo
-│   ├── 🖼️ summarizer.jpeg               # AI Summarization
-│   ├── 🖼️ sync.jpeg                     # Video Synchronization
-│   ├── 🖼️ vediosync.jpeg                # Advanced Sync Interface
-│   └── 📁 images/                        # Additional Assets
-│       └── 📖 README.md                  # Image Documentation
-│
 ├── 📖 README.md                          # Main Project Documentation
 └── 📄 .gitignore                         # Git Ignore Rules
 
@@ -442,16 +333,16 @@ npm start
 
 <!-- ![Future Roadmap](./Docs/architecture.jpeg) -->
 
-- 🎥 Replace OTT stubs with real playbook via **MediaConnect / IVS**
-- 📊 Add **real-time analytics dashboard** (Grafana + CloudWatch)
-- 🎯 Integrate emotion detection to enhance recommendation inputs
-- 📦 Convert video summarizer to fully async & queue-driven via SQS
+- Expanding smart summarizer and co-watching features across Amazon MiniTV, Audible,     Chime, and Amazon Shopping.
+- Enabling leaderboards, progress sharing, and friendly challenges to boost user engagement and competitiveness.
+- Evolving from text summaries to dynamic video summarization
+- Expanding from text based interaction to voice-enabled, multilingual Alexa interactions.
 
 ---
 
-## 🏆 Amazon HackOn 2025 Submission
+<!-- ## 🏆 Amazon HackOn 2025 Submission
 
-<!-- ![FireTV Architecture](./Docs/architecture.jpeg) -->
+![FireTV Architecture](./Docs/architecture.jpeg)
 
 ### 🎯 **Challenge Statement**
 Building a scalable, cloud-native co-watching platform that can handle **millions of concurrent users** with real-time synchronization, AI-powered recommendations, and gamified user engagement.
@@ -483,8 +374,15 @@ Building a scalable, cloud-native co-watching platform that can handle **million
 
 This project is licensed under the **MIT License**. See `LICENSE` file for details.
 
----
+--- -->
 
 ## 🤝 Connect With Our Team
 
-> **Built with ❤️ for Amazon HackOn 2025** 💡
+Connect with us on LinkedIn:
+
+- [Nayan Jindal](https://www.linkedin.com/in/nayan-jindal)
+- [Tushar Sachdeva](https://www.linkedin.com/in/tushar-sachdeva-1b0b2b1b7/)
+- [Jai Bansal](https://www.linkedin.com/in/jaibansal007/)
+- [Rohan Jhanwar](https://www.linkedin.com/in/rohan-jhanwar/)
+
+> **Built with ❤️ for Amazon HackOn 2025**
